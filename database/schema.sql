@@ -919,6 +919,21 @@ CREATE TABLE IF NOT EXISTS task_review (
 ALTER TABLE `task` 
 ADD COLUMN `is_visible` TINYINT(1) NOT NULL DEFAULT 1 COMMENT 'Task visibility to employees' AFTER `is_self_assigned`,
 ADD INDEX `idx_task_visibility` (`is_visible`);
+-- Migration to add professional_role and professional_role_other fields to user table
+-- This separates application role (access_level) from professional role
+
+-- Add professional_role field
+ALTER TABLE `user` 
+ADD COLUMN `professional_role` VARCHAR(50) DEFAULT NULL COMMENT 'Professional role: developer, designer, qa_engineer, business_analyst, other' 
+AFTER `phone`;
+
+-- Add professional_role_other field for custom roles
+ALTER TABLE `user` 
+ADD COLUMN `professional_role_other` VARCHAR(100) DEFAULT NULL COMMENT 'Custom professional role when professional_role is "other"' 
+AFTER `professional_role`;
+
+-- Update existing users to have a default professional role if needed
+UPDATE `user` SET `professional_role` = 'developer' WHERE `professional_role` IS NULL;
 -- Migration to add application_role column to user table
 -- This explicitly stores whether a user is an employee or project manager
 
@@ -956,21 +971,6 @@ CREATE TABLE IF NOT EXISTS `invite_code` (
   CONSTRAINT `fk_invite_org`     FOREIGN KEY (`org_id`)     REFERENCES `organization` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_invite_creator` FOREIGN KEY (`created_by`) REFERENCES `user` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
--- Migration to add professional_role and professional_role_other fields to user table
--- This separates application role (access_level) from professional role
-
--- Add professional_role field
-ALTER TABLE `user` 
-ADD COLUMN `professional_role` VARCHAR(50) DEFAULT NULL COMMENT 'Professional role: developer, designer, qa_engineer, business_analyst, other' 
-AFTER `phone`;
-
--- Add professional_role_other field for custom roles
-ALTER TABLE `user` 
-ADD COLUMN `professional_role_other` VARCHAR(100) DEFAULT NULL COMMENT 'Custom professional role when professional_role is "other"' 
-AFTER `professional_role`;
-
--- Update existing users to have a default professional role if needed
-UPDATE `user` SET `professional_role` = 'developer' WHERE `professional_role` IS NULL;
 -- Migration: Add pm_settings table for per-PM scheduling and notification preferences
 
 CREATE TABLE IF NOT EXISTS `pm_settings` (
