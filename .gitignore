@@ -1,0 +1,69 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.thumbs.db
+
+# Dependencies
+node_modules/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# Quasar & Build Outputs
+.quasar/
+dist/
+/quasar.config.*.temporary.compiled*
+/src-cordova/node_modules
+/src-cordova/platforms
+/src-cordova/plugins
+/src-cordova/www
+/src-capacitor/www
+/src-capacitor/node_modules
+
+# Database Backups (keep schema and seed, ignore rest)
+*.sql
+!database/schema.sql
+!database/seed.sql
+
+# Editor / IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Vercel / Netlify / Hosting
+.vercel
+.netlify
+
+# Temporary scripts/files
+scratch*
+*.cjs
+!postcss.config.js
+!eslint.config.js
+!quasar.config.ts

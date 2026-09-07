@@ -1,0 +1,2701 @@
+<template>
+  <q-page class="app-page q-pa-lg">
+    <!-- ========================================================= -->
+    <!-- PAGE HEADER -->
+    <!-- ========================================================= -->
+
+    <div class="row items-center justify-between q-mb-lg">
+      <div>
+        <h1 class="page-title">Task Manager</h1>
+
+        <p class="page-subtitle">Organize your work, manage subtasks and track your progress.</p>
+      </div>
+
+      <div class="row items-center q-gutter-sm">
+        <!-- Points Badge -->
+        <div class="points-badge">
+          <q-icon name="monetization_on" size="20px" color="#FFD700" />
+          <span class="points-text">{{ userPoints }}</span>
+          <q-badge color="amber-8" :label="`Rank #${userRank}`" class="q-ml-sm" />
+        </div>
+
+        <q-btn
+          flat
+          icon="lightbulb"
+          color="primary"
+          @click="showInsightsDialog = true"
+          label="Insights"
+          class="q-px-md"
+        >
+          <q-tooltip> View employee insights </q-tooltip>
+        </q-btn>
+
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- STAT CARDS -->
+    <!-- ========================================================= -->
+
+    <div class="row q-col-gutter-md q-mb-lg">
+      <div v-for="stat in stats" :key="stat.label" class="col-12 col-sm-6 col-md-3">
+        <EmployeeStatCard
+          :label="stat.label"
+          :value="stat.value"
+          :description="stat.description"
+          :icon="stat.icon"
+          :color="stat.color"
+          :background="stat.background"
+          :trend="stat.trend"
+          :positive="stat.positive"
+        />
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- QUICK ADD TASK -->
+    <!-- ========================================================= -->
+
+    <QuickAddTaskCard @create="openAddTask" />
+
+    <!-- ========================================================= -->
+    <!-- MY TASKS -->
+    <!-- ========================================================= -->
+
+    <q-card flat bordered class="my-tasks-card overflow-hidden">
+      <!-- ======================================================= -->
+      <!-- TASK HEADER -->
+      <!-- ======================================================= -->
+
+      <TaskListHeader
+        title="My Tasks"
+        :task-count="filteredTasks.length"
+        :active-tab="activeTab"
+        :active-tab-label="activeTabLabel"
+        :view-mode="viewMode"
+        :tabs="[
+          { name: 'all', label: 'All Tasks' },
+          { name: 'my', label: 'My Tasks' },
+          { name: 'progress', label: 'In Progress' },
+          { name: 'completed', label: 'Completed' },
+        ]"
+        @view-change="viewMode = $event"
+        @tab-change="activeTab = $event"
+      />
+
+      <!-- ===================================================== -->
+      <!-- FILTERS -->
+      <!-- ===================================================== -->
+
+      <TaskFilters
+        :search-query="search"
+        :selected-project="projectFilter"
+        :selected-priority="priorityFilter"
+        :selected-status="statusFilter"
+        :projects="projectOptions"
+        @search="search = $event"
+        @project-change="projectFilter = $event"
+        @priority-change="priorityFilter = $event"
+        @status-change="statusFilter = $event"
+        @clear-filters="clearFilters"
+      />
+
+      <q-separator />
+
+      <!-- ========================================================= -->
+      <!-- LIST VIEW -->
+      <!-- ========================================================= -->
+
+      <q-table
+        v-if="viewMode === 'list'"
+        :rows="filteredTasks"
+        :columns="columns"
+        row-key="id"
+        flat
+        hide-pagination
+        :rows-per-page-options="[0]"
+        class="task-table"
+      >
+        <!-- TASK -->
+
+        <template #body-cell-task="props">
+          <q-td :props="props" class="cursor-pointer" @click="viewTask(props.row)">
+            <div class="row items-center no-wrap">
+              <q-avatar
+                size="42px"
+                :style="{
+                  background: projectColor(props.row.project).bg,
+
+                  color: projectColor(props.row.project).color,
+                }"
+              >
+                <q-icon :name="projectIcon(props.row.project)" size="21px" />
+              </q-avatar>
+
+              <div class="q-ml-md">
+                <div class="task-name">
+                  {{ props.row.name }}
+                </div>
+
+                <div class="task-description">
+                  {{ props.row.description }}
+                </div>
+              </div>
+            </div>
+          </q-td>
+        </template>
+
+        <!-- PROJECT -->
+
+        <template #body-cell-project="props">
+          <q-td :props="props">
+            <div class="text-body2 text-weight-medium">
+              {{ props.row.project }}
+            </div>
+
+            <div class="row items-center q-gutter-xs q-mt-xs">
+              <q-badge
+                :color="props.row.assignedBy === 'Self-Assigned' ? 'purple-1' : 'blue-1'"
+                :text-color="props.row.assignedBy === 'Self-Assigned' ? 'purple-9' : 'blue-9'"
+                :label="props.row.assignedBy"
+                class="text-weight-medium q-px-xs"
+              />
+            </div>
+          </q-td>
+        </template>
+
+        <!-- SUBTASKS -->
+
+        <template #body-cell-subtasks="props">
+          <q-td :props="props">
+            <div class="subtask-count">
+              <q-icon name="checklist" size="17px" class="q-mr-xs" />
+
+              {{ completedSubtasks(props.row) }}
+              /
+              {{ props.row.subtasks.length }}
+            </div>
+          </q-td>
+        </template>
+
+        <!-- PRIORITY -->
+
+        <template #body-cell-priority="props">
+          <q-td :props="props">
+            <q-chip
+              dense
+              square
+              :style="{
+                background: priorityStyle(props.row.priority).bg,
+
+                color: priorityStyle(props.row.priority).color,
+              }"
+            >
+              <q-icon name="flag" size="14px" class="q-mr-xs" />
+
+              {{ props.row.priority }}
+            </q-chip>
+          </q-td>
+        </template>
+
+        <!-- STATUS -->
+
+        <template #body-cell-status="props">
+          <q-td :props="props">
+            <q-chip
+              dense
+              square
+              :style="{
+                background: statusStyle(props.row.status).bg,
+
+                color: statusStyle(props.row.status).color,
+              }"
+            >
+              {{ props.row.status }}
+            </q-chip>
+          </q-td>
+        </template>
+
+        <!-- PROGRESS -->
+
+        <template #body-cell-progress="props">
+          <q-td :props="props">
+            <div style="min-width: 145px">
+              <div class="row justify-between">
+                <span class="text-caption text-grey-6"> Progress </span>
+
+                <span class="text-caption text-weight-bold"> {{ taskProgress(props.row) }}% </span>
+              </div>
+
+              <q-linear-progress
+                :value="taskProgress(props.row) / 100"
+                color="primary"
+                track-color="grey-3"
+                rounded
+                size="7px"
+                class="q-mt-xs"
+              />
+            </div>
+          </q-td>
+        </template>
+
+        <!-- DEADLINE -->
+
+        <template #body-cell-deadline="props">
+          <q-td :props="props">
+            <div :class="isOverdue(props.row) ? 'text-negative text-weight-bold' : 'text-dark'">
+              {{ formatDate(props.row.deadline) }}
+            </div>
+
+            <div v-if="isOverdue(props.row)" class="text-caption text-negative">Overdue</div>
+          </q-td>
+        </template>
+
+        <!-- ACTIONS -->
+
+        <template #body-cell-actions="props">
+          <q-td :props="props">
+            <q-btn flat round icon="more_horiz" color="grey-7">
+              <q-menu>
+                <q-list style="min-width: 190px">
+                  <!-- VIEW -->
+
+                  <q-item clickable v-close-popup @click="viewTask(props.row)">
+                    <q-item-section avatar>
+                      <q-icon name="visibility" />
+                    </q-item-section>
+
+                    <q-item-section> View Task </q-item-section>
+                  </q-item>
+
+                  <!-- EDIT -->
+
+                  <q-item clickable v-close-popup @click="openEditSubtasks(props.row)">
+                    <q-item-section avatar>
+                      <q-icon name="edit" />
+                    </q-item-section>
+
+                    <q-item-section> Edit Subtasks </q-item-section>
+                  </q-item>
+
+                  <!-- MANAGE -->
+
+                  <q-item clickable v-close-popup @click="openManage(props.row)">
+                    <q-item-section avatar>
+                      <q-icon name="tune" color="primary" />
+                    </q-item-section>
+
+                    <q-item-section> Manage Progress </q-item-section>
+                  </q-item>
+
+                  <q-separator />
+
+                  <!-- DELETE -->
+
+                  <q-item clickable v-close-popup @click="deleteTask(props.row)">
+                    <q-item-section avatar>
+                      <q-icon name="delete" color="negative" />
+                    </q-item-section>
+
+                    <q-item-section class="text-negative"> Delete Task </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-btn>
+          </q-td>
+        </template>
+      </q-table>
+
+      <!-- ========================================================= -->
+      <!-- GRID VIEW -->
+      <!-- ========================================================= -->
+
+      <div v-else class="row q-col-gutter-md q-pa-lg">
+        <div v-for="task in filteredTasks" :key="task.id" class="col-12 col-md-6 col-lg-4">
+          <q-card flat bordered class="task-grid-card q-pa-md">
+            <!-- CARD TOP -->
+
+            <div class="row items-center justify-between">
+              <q-chip
+                dense
+                square
+                :style="{
+                  background: priorityStyle(task.priority).bg,
+
+                  color: priorityStyle(task.priority).color,
+                }"
+              >
+                {{ task.priority }}
+              </q-chip>
+
+              <q-btn flat round dense icon="more_horiz" color="grey-6">
+                <q-menu>
+                  <q-list>
+                    <q-item clickable v-close-popup @click="openEditSubtasks(task)">
+                      <q-item-section> Edit Subtasks </q-item-section>
+                    </q-item>
+
+                    <q-item clickable v-close-popup @click="openManage(task)">
+                      <q-item-section> Manage Progress </q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-btn>
+            </div>
+
+            <!-- NAME -->
+
+            <div class="task-grid-title q-mt-md">
+              {{ task.name }}
+            </div>
+
+            <div class="task-description grid-description">
+              {{ task.description }}
+            </div>
+
+            <!-- PROJECT -->
+
+            <div class="row items-center justify-between q-mt-lg">
+              <div class="row items-center">
+                <q-icon name="folder" color="grey-6" size="18px" />
+
+                <span class="text-body2 q-ml-xs">
+                  {{ task.project }}
+                </span>
+              </div>
+
+              <q-badge
+                :color="task.assignedBy === 'Self-Assigned' ? 'purple-1' : 'blue-1'"
+                :text-color="task.assignedBy === 'Self-Assigned' ? 'purple-9' : 'blue-9'"
+                :label="task.assignedBy"
+                class="text-weight-medium q-px-xs"
+              />
+            </div>
+
+            <!-- SUBTASK PROGRESS -->
+
+            <div class="q-mt-lg">
+              <div class="row justify-between">
+                <span class="text-caption text-grey-6"> Subtasks </span>
+
+                <span class="text-caption text-weight-bold">
+                  {{ completedSubtasks(task) }}
+                  /
+                  {{ task.subtasks.length }}
+                </span>
+              </div>
+
+              <q-linear-progress
+                :value="taskProgress(task) / 100"
+                color="primary"
+                track-color="grey-3"
+                rounded
+                size="8px"
+                class="q-mt-xs"
+              />
+            </div>
+
+            <!-- BOTTOM -->
+
+            <div class="row items-center justify-between q-mt-lg">
+              <q-chip
+                dense
+                square
+                :style="{
+                  background: statusStyle(task.status).bg,
+
+                  color: statusStyle(task.status).color,
+                }"
+              >
+                {{ task.status }}
+              </q-chip>
+
+              <span class="text-caption text-grey-6">
+                {{ formatDate(task.deadline) }}
+              </span>
+            </div>
+
+            <!-- MANAGE BUTTON -->
+
+            <q-btn
+              unelevated
+              no-caps
+              color="primary"
+              label="Manage"
+              icon="tune"
+              class="full-width q-mt-md"
+              @click="openManage(task)"
+            />
+          </q-card>
+        </div>
+      </div>
+
+      <!-- EMPTY STATE -->
+
+      <div v-if="filteredTasks.length === 0" class="column items-center justify-center q-pa-xl">
+        <q-icon name="task_alt" size="64px" color="grey-4" />
+
+        <div class="text-h6 q-mt-md">No tasks found</div>
+
+        <div class="text-body2 text-grey-6">Try changing your filters.</div>
+      </div>
+    </q-card>
+
+    <!-- ========================================================= -->
+    <!-- ADD TASK DIALOG -->
+    <!-- ========================================================= -->
+
+    <q-dialog v-model="showAddDialog">
+      <q-card class="create-dialog-card">
+        <!-- DIALOG HEADER — matched to Project Manager -->
+        <q-card-section class="create-dialog-header row items-center q-pb-md">
+          <q-avatar
+            color="white"
+            text-color="indigo"
+            icon="add_task"
+            size="42px"
+            class="q-mr-md"
+          />
+
+          <div>
+            <div class="text-h6 text-weight-bold">Create New Task</div>
+
+            <div class="text-caption text-indigo-1">
+              Turn the next piece of work into a clear action
+            </div>
+          </div>
+
+          <q-space />
+
+          <q-btn
+            icon="close"
+            flat
+            round
+            dense
+            color="white"
+            @click="showAddDialog = false"
+          />
+        </q-card-section>
+
+        <q-card-section class="q-pa-lg">
+          <q-form @submit.prevent="createTask" class="q-gutter-md">
+            <!-- PROJECT -->
+
+            <q-select
+              v-model="newTask.project"
+              :options="createProjectOptions"
+              label="Project *"
+              outlined
+              dense
+              emit-value
+              map-options
+              :rules="[(val) => !!val || 'Project is required']"
+            />
+
+            <!-- TASK NAME -->
+
+            <q-input
+              v-model="newTask.name"
+              label="Task Title *"
+              outlined
+              dense
+              :rules="[(val) => !!val || 'Task title is required']"
+            />
+
+            <!-- DESCRIPTION -->
+
+            <q-input
+              v-model="newTask.description"
+              label="Description"
+              type="textarea"
+              outlined
+              dense
+              rows="3"
+            />
+
+            <!-- PRIORITY / DEADLINE -->
+
+            <div class="row q-col-md" style="gap: 10px">
+              <div class="col-12 col-sm-6">
+                <q-select
+                  v-model="newTask.priority"
+                  :options="priorityOptions.slice(1)"
+                  label="Priority"
+                  outlined
+                  dense
+                />
+              </div>
+
+              <div class="col-12 col-sm-5">
+                <q-input
+                  v-model="newTask.deadline"
+                  label="Deadline"
+                  type="date"
+                  outlined
+                  dense
+                  stack-label
+                />
+              </div>
+            </div>
+
+            <!-- DEPENDENCIES -->
+            <q-select
+              v-model="newTask.depends_on_ids"
+              :options="taskOptions"
+              label="Dependencies (Optional)"
+              outlined
+              dense
+              multiple
+              use-chips
+              emit-value
+              map-options
+              hint="Tasks that must be completed first"
+            />
+
+            <!-- SUBTASKS -->
+
+            <div class="subtask-editor">
+              <div class="row items-center justify-between q-mb-sm">
+                <div>
+                  <div class="text-subtitle1 text-weight-bold">Subtasks</div>
+
+                  <div class="text-caption text-grey-6">
+                    Break the task into smaller steps.
+                  </div>
+                </div>
+
+                <q-btn
+                  flat
+                  no-caps
+                  color="primary"
+                  icon="add"
+                  label="Add Subtask"
+                  @click="addNewTaskSubtask"
+                />
+              </div>
+
+              <div v-if="newTask.subtasks.length === 0" class="empty-subtasks">
+                <q-icon name="playlist_add" size="30px" color="grey-5" />
+
+                <div class="text-caption text-grey-6 q-mt-xs">
+                  No subtasks added yet
+                </div>
+              </div>
+
+              <div
+                v-for="(subtask, index) in newTask.subtasks"
+                :key="subtask.id"
+                class="subtask-row q-mt-sm row"
+              >
+                <q-input
+                  v-model="subtask.title"
+                  outlined
+                  dense
+                  :placeholder="`Subtask ${index + 1}`"
+                  class="col"
+                />
+
+                <q-input
+                  v-model.number="subtask.estimated_hours"
+                  type="number"
+                  outlined
+                  dense
+                  placeholder="Hours"
+                  style="width: 80px"
+                  class="q-ml-sm"
+                />
+
+                <q-btn
+                  flat
+                  round
+                  dense
+                  icon="delete_outline"
+                  color="negative"
+                  @click="removeNewTaskSubtask(index)"
+                />
+              </div>
+            </div>
+
+            <!-- ACTIONS -->
+
+            <div class="row justify-end q-mt-lg">
+              <q-btn
+                label="Cancel"
+                color="grey"
+                flat
+                type="button"
+                @click="showAddDialog = false"
+                class="q-mr-sm"
+              />
+
+              <q-btn
+                unelevated
+                no-caps
+                color="primary"
+                icon="add"
+                label="Create Task"
+                type="submit"
+              />
+            </div>
+          </q-form>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <!-- ========================================================= -->
+    <!-- EDIT SUBTASKS DIALOG -->
+    <!-- ========================================================= -->
+
+    <q-dialog v-model="showEditDialog">
+      <q-card class="task-dialog" v-if="selectedTask">
+        <q-card-section>
+          <div class="text-h6 text-weight-bold">Edit Subtasks</div>
+
+          <div class="text-body2 text-grey-6 q-mt-xs">
+            {{ selectedTask.name }}
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-section>
+          <div v-for="subtask in editSubtasks" :key="subtask.id" class="edit-subtask-row row q-mt-sm">
+            <q-input v-model="subtask.title" outlined dense class="col" />
+
+            <q-input
+              v-model.number="subtask.estimated_hours"
+              type="number"
+              outlined
+              dense
+              placeholder="Hours"
+              style="width: 80px"
+              class="q-ml-sm"
+            />
+
+            <q-btn
+              flat
+              round
+              dense
+              icon="delete_outline"
+              color="negative"
+              @click="removeEditSubtask(subtask.id)"
+            />
+          </div>
+
+          <q-btn
+            outline
+            no-caps
+            color="primary"
+            icon="add"
+            label="Add Subtask"
+            class="full-width q-mt-md"
+            @click="addEditSubtask"
+          />
+        </q-card-section>
+
+        <q-card-actions align="right" class="q-pa-md">
+          <q-btn flat no-caps label="Cancel" @click="showEditDialog = false" />
+
+          <q-btn
+            unelevated
+            no-caps
+            color="primary"
+            label="Save Changes"
+            @click="saveEditedSubtasks"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- ========================================================= -->
+    <!-- MANAGE DRAWER -->
+    <!-- ========================================================= -->
+
+    <q-drawer
+      v-model="showManageDrawer"
+      side="right"
+      bordered
+      overlay
+      :width="480"
+      class="manage-drawer"
+    >
+      <div v-if="selectedTask" class="full-height column">
+        <!-- DRAWER HEADER -->
+
+        <div class="manage-header q-pa-lg">
+          <div class="row items-start justify-between">
+            <div>
+              <div class="text-h6 text-weight-bold">Manage Task</div>
+
+              <div class="text-body2 text-grey-6 q-mt-xs">Update your work progress</div>
+            </div>
+
+            <q-btn flat round dense icon="close" color="grey-7" @click="showManageDrawer = false" />
+          </div>
+
+          <!-- TASK -->
+
+          <div class="manage-task-title q-mt-lg">
+            {{ selectedTask.name }}
+          </div>
+
+          <div class="text-caption text-grey-6 row items-center q-gutter-xs q-mt-xs">
+            <span>{{ selectedTask.project }}</span>
+            <span>•</span>
+            <q-badge
+              :color="selectedTask.assignedBy === 'Self-Assigned' ? 'purple-1' : 'blue-1'"
+              :text-color="selectedTask.assignedBy === 'Self-Assigned' ? 'purple-9' : 'blue-9'"
+              :label="selectedTask.assignedBy"
+              class="text-weight-medium q-px-xs"
+            />
+          </div>
+        </div>
+
+        <q-separator />
+
+        <q-tabs
+          v-model="manageTab"
+          dense
+          class="bg-white text-grey-7 q-px-lg"
+          active-color="primary"
+          indicator-color="primary"
+          align="left"
+          narrow-indicator
+        >
+          <q-tab name="details" label="Details" />
+          <q-tab name="timeline" label="Progress Timeline" />
+          <q-tab name="impact" label="Simulate Impact" />
+        </q-tabs>
+
+        <q-separator />
+
+        <!-- DRAWER CONTENT -->
+
+        <q-tab-panels v-model="manageTab" animated class="col scroll bg-grey-1">
+          <q-tab-panel name="details" class="q-pa-lg">
+          <!-- PROGRESS -->
+
+          <div class="manage-progress-card q-pa-md">
+            <div class="row items-center justify-between">
+              <div>
+                <div class="text-caption text-grey-6">Overall Progress</div>
+
+                <div class="text-h4 text-weight-bold q-mt-xs">
+                  {{ taskProgress(selectedTask) }}%
+                </div>
+              </div>
+
+              <q-circular-progress
+                :value="taskProgress(selectedTask)"
+                size="72px"
+                :thickness="0.16"
+                color="primary"
+                track-color="grey-3"
+                show-value
+              >
+                {{ taskProgress(selectedTask) }}%
+              </q-circular-progress>
+            </div>
+
+            <q-linear-progress
+              :value="taskProgress(selectedTask) / 100"
+              color="primary"
+              track-color="grey-3"
+              rounded
+              size="9px"
+              class="q-mt-md"
+            />
+          </div>
+
+          <!-- SUBTASKS -->
+
+          <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Subtasks</div>
+
+          <div v-if="selectedTask.subtasks.length === 0" class="empty-subtasks">
+            <q-icon name="playlist_add" size="32px" color="grey-5" />
+
+            <div class="text-body2 text-grey-6 q-mt-sm">No subtasks added.</div>
+
+            <q-btn
+              flat
+              no-caps
+              color="primary"
+              label="Add Subtasks"
+              class="q-mt-sm"
+              @click="openEditFromManage"
+            />
+          </div>
+
+          <div v-for="subtask in selectedTask.subtasks" :key="subtask.id" class="manage-subtask">
+            <div class="row items-start no-wrap">
+              <q-checkbox
+                v-model="subtask.completed"
+                color="primary"
+                :disable="subtask.originally_completed"
+                @update:model-value="updateSubtaskCompletion(selectedTask, subtask)"
+              />
+
+              <div class="col q-ml-sm">
+                <div
+                  class="manage-subtask-title"
+                  :class="{
+                    'completed-subtask': subtask.completed,
+                  }"
+                >
+                  {{ subtask.title }}
+                  <span v-if="subtask.estimated_hours" class="text-caption text-grey-6 q-ml-sm">
+                    ({{ subtask.estimated_hours }} hr)
+                  </span>
+                </div>
+
+                <q-select
+                  v-model="subtask.status"
+                  :options="subtaskStatusOptions"
+                  dense
+                  outlined
+                  class="q-mt-sm"
+                  style="max-width: 180px"
+                  :disable="subtask.originally_completed"
+                  @update:model-value="updateSubtaskStatus(selectedTask, subtask)"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- STATUS -->
+
+          <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Task Status</div>
+
+          <q-select
+            v-model="selectedTask.status"
+            :options="taskStatusOptions"
+            outlined
+            label="Current status"
+            @update:model-value="handleTaskStatusChange(selectedTask)"
+          />
+
+          <!-- TODAY'S NOTE -->
+
+          <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Today's Update</div>
+
+          <q-input
+            v-model="selectedTask.todayNote"
+            outlined
+            type="textarea"
+            autogrow
+            placeholder="What did you work on today?"
+          />
+
+          <!-- COMMENTS -->
+
+          <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Task Comment</div>
+
+          <div class="row q-gutter-sm">
+            <q-input
+              v-model="newComment"
+              outlined
+              dense
+              class="col"
+              placeholder="Add a comment to the timeline..."
+            />
+            <q-btn
+              color="primary"
+              icon="send"
+              dense
+              flat
+              @click="submitComment"
+            />
+          </div>
+
+          <!-- DEADLINE -->
+
+          <div
+            class="deadline-box q-mt-lg"
+            :class="{
+              'deadline-overdue': isOverdue(selectedTask),
+            }"
+          >
+            <q-icon name="event" size="20px" />
+
+            <div class="q-ml-sm">
+              <div class="text-caption">Deadline</div>
+
+              <div class="text-body2 text-weight-bold">
+                {{ formatDate(selectedTask.deadline) }}
+              </div>
+            </div>
+          </div>
+          </q-tab-panel>
+
+          <q-tab-panel name="timeline" class="q-pa-lg">
+            <q-card flat bordered class="bg-white q-pa-md">
+              <div class="text-subtitle1 text-weight-bold q-mb-md">Progress Timeline</div>
+              <div class="text-body2 text-grey-7">Track updates and comments for this task here.</div>
+              <div class="q-mt-lg text-caption text-grey-6">Current status: {{ selectedTask?.status }}</div>
+              <div class="q-mt-sm text-caption text-grey-6">Last recorded progress: {{ selectedTask ? taskProgress(selectedTask) : 0 }}%</div>
+            </q-card>
+          </q-tab-panel>
+
+          <q-tab-panel name="impact" class="q-pa-lg">
+            <q-card flat bordered class="bg-white q-pa-md">
+              <div class="text-subtitle1 text-weight-bold q-mb-md">Simulate Impact</div>
+              <div class="text-body2 text-grey-7">Review the task's current progress, deadline and remaining work before making an update.</div>
+              <q-linear-progress :value="selectedTask ? taskProgress(selectedTask) / 100 : 0" color="primary" track-color="grey-3" rounded size="8px" class="q-mt-lg" />
+              <div class="row justify-between text-caption text-grey-6 q-mt-sm">
+                <span>Progress</span><span>{{ selectedTask ? taskProgress(selectedTask) : 0 }}%</span>
+              </div>
+            </q-card>
+          </q-tab-panel>
+        </q-tab-panels>
+
+        <!-- SAVE -->
+
+        <div class="q-pa-lg manage-footer">
+          <q-btn
+            unelevated
+            no-caps
+            color="primary"
+            icon="save"
+            label="Save Update"
+            class="full-width"
+            size="md"
+            @click="saveTaskUpdate"
+          />
+
+          <q-btn
+            v-if="selectedTask.status === 'completed'"
+            unelevated
+            no-caps
+            color="positive"
+            icon="rate_review"
+            label="Put for Review"
+            class="full-width q-mt-md"
+            size="md"
+            @click="openReviewDialog"
+          />
+
+          <q-btn
+            v-if="selectedTask.status === 'in-progress'"
+            unelevated
+            outline
+            no-caps
+            color="negative"
+            icon="warning"
+            label="Interrupt Task"
+            class="full-width q-mt-md"
+            size="md"
+            @click="showInterruptDialog = true"
+          />
+        </div>
+      </div>
+    </q-drawer>
+
+    <!-- ========================================================= -->
+    <!-- REVIEW DIALOG -->
+    <!-- ========================================================= -->
+
+    <q-dialog v-model="showReviewDialog">
+      <q-card class="review-dialog" style="min-width: 400px">
+        <q-card-section>
+          <div class="text-h6 text-weight-bold">Put Task for Review</div>
+
+          <div class="text-body2 text-grey-6 q-mt-xs">
+            {{ selectedTask?.name }}
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-section class="q-gutter-md">
+          <q-select
+            v-model="selectedReviewer"
+            :options="colleagues"
+            outlined
+            label="Select Colleague for Review"
+            option-label="name"
+            option-value="id"
+            emit-value
+            map-options
+          />
+        </q-card-section>
+
+        <q-card-actions align="right" class="q-pa-md">
+          <q-btn flat no-caps label="Cancel" @click="showReviewDialog = false" />
+
+          <q-btn
+            unelevated
+            no-caps
+            color="positive"
+            label="Submit for Review"
+            @click="submitForReview"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="showInterruptDialog">
+      <q-card style="min-width: 400px">
+        <q-card-section>
+          <div class="text-h6 text-weight-bold text-negative">Interrupt Task</div>
+          <div class="text-body2 text-grey-6 q-mt-xs">
+            {{ selectedTask?.name }}
+          </div>
+        </q-card-section>
+        <q-separator />
+        <q-card-section>
+          <div class="text-caption q-mb-md">
+            Interrupting a task indicates a blocker, bug, or priority shift. Your PM will be notified and this task will be rescheduled.
+          </div>
+          <q-input v-model="interruptReason" type="textarea" outlined label="Reason for interruption *" />
+        </q-card-section>
+        <q-card-actions align="right" class="q-pa-md">
+          <q-btn flat no-caps label="Cancel" @click="showInterruptDialog = false" />
+          <q-btn unelevated no-caps color="negative" label="Submit Interrupt" @click="submitInterrupt" :disable="!interruptReason" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- ========================================================= -->
+    <!-- INSIGHTS DIALOG -->
+    <!-- ========================================================= -->
+
+    <q-dialog v-model="showInsightsDialog">
+      <q-card style="min-width: 500px; max-width: 600px">
+        <q-card-section>
+          <div class="text-h6 text-weight-bold">
+            <q-icon name="lightbulb" class="q-mr-sm" color="primary" />
+            Employee Insights
+          </div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <q-list separator v-if="insights.length > 0">
+            <q-item v-for="(insight, index) in insights" :key="index">
+              <q-item-section avatar>
+                <q-icon name="info" color="primary" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ insight }}</q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+          <div v-else class="text-center q-pa-xl text-grey-6">
+            <q-icon name="lightbulb" size="48px" class="q-mb-sm text-grey-4" />
+            <div class="text-h6">No insights available</div>
+            <div class="text-caption">Complete more tasks to see insights</div>
+          </div>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Close" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+  </q-page>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue';
+import { useAuthStore } from '@/stores/authStore';
+import { useQuasar } from 'quasar';
+import EmployeeStatCard from '@/components/EmployeeStatCard.vue';
+import QuickAddTaskCard from '@/components/QuickAddTaskCard.vue';
+import TaskListHeader from '@/components/TaskListHeader.vue';
+import TaskFilters from '@/components/TaskFilters.vue';
+
+// ============================================================
+// QUASAR
+// ============================================================
+
+const $q = useQuasar();
+const authStore = useAuthStore();
+
+// ============================================================
+// TYPES
+// ============================================================
+
+type TaskStatus = 'not-started' | 'in-progress' | 'completed' | 'blocked' | 'in-review';
+
+type SubtaskStatus = 'not-started' | 'in-progress' | 'completed';
+
+interface Subtask {
+  id: number;
+
+  title: string;
+
+  completed: boolean;
+
+  status: SubtaskStatus;
+
+  estimated_hours?: number;
+
+  originally_completed?: boolean;
+}
+
+interface Task {
+  id: number;
+
+  name: string;
+
+  description: string;
+
+  project: string;
+
+  priority: string;
+
+  status: TaskStatus;
+
+  deadline: string;
+
+  assignedBy: string;
+
+  subtasks: Subtask[];
+
+  todayNote: string;
+
+  createdAt: string;
+
+  progress: number;
+}
+
+// ============================================================
+// STATE
+// ============================================================
+
+const search = ref('');
+
+const activeTab = ref('all');
+
+const viewMode = ref<'list' | 'grid'>('list');
+
+const projectFilter = ref('All Projects');
+
+const priorityFilter = ref('All Priorities');
+
+const statusFilter = ref('All Statuses');
+
+const showAddDialog = ref(false);
+
+const showEditDialog = ref(false);
+
+const showManageDrawer = ref(false);
+
+const showInsightsDialog = ref(false);
+
+const userPoints = ref(0);
+const userRank = ref(0);
+
+const selectedTask = ref<Task | null>(null);
+const manageTab = ref('details');
+
+// ============================================================
+// FETCH TASKS FROM BACKEND
+// ============================================================
+
+const tasks = ref<Task[]>([]);
+
+const newComment = ref('');
+
+const submitComment = async () => {
+  if (!selectedTask.value || !newComment.value.trim()) return;
+
+  try {
+    const response = await fetch(`http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/comment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
+      },
+      body: JSON.stringify({ content: newComment.value.trim() }),
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      $q.notify({
+        message: 'Comment added successfully',
+        color: 'positive',
+        icon: 'check_circle',
+      });
+      newComment.value = '';
+    } else {
+      $q.notify({
+        message: result.error || 'Failed to add comment',
+        color: 'negative',
+        icon: 'error',
+      });
+    }
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    $q.notify({
+      message: 'Error adding comment',
+      color: 'negative',
+      icon: 'error',
+    });
+  }
+};
+
+
+
+// Review dialog state
+const showReviewDialog = ref(false);
+const selectedReviewer = ref<number | null>(null);
+const colleagues = ref<{ id: number; name: string }[]>([]);
+
+// Fetch colleagues for review selection
+const fetchColleagues = async () => {
+  try {
+    const response = await fetch('http://localhost:3001/api/users/employees');
+    const result = await response.json();
+    if (result.success && result.users) {
+      colleagues.value = result.users
+        .filter((u: any) => u.id !== authStore.user?.id) // Exclude current user
+        .map((u: any) => ({
+          id: u.id,
+          name: `${u.first_name} ${u.last_name}`,
+        }));
+    }
+  } catch (error) {
+    console.error('Error fetching colleagues:', error);
+  }
+};
+
+// Open review dialog
+const openReviewDialog = () => {
+  selectedReviewer.value = null;
+  showReviewDialog.value = true;
+  fetchColleagues();
+};
+
+// Submit task for review
+const submitForReview = async () => {
+  if (!selectedTask.value || !selectedReviewer.value) {
+    $q.notify({
+      message: 'Please select a colleague for review',
+      color: 'negative',
+      icon: 'error',
+    });
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:3001/api/employee/reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        task_id: selectedTask.value.id,
+        reviewer_id: selectedReviewer.value,
+        task_owner_id: authStore.user?.id,
+        completion_comment: 'Task completed, please review',
+      }),
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      // Update task status to in-review
+      await updateTaskProgress(selectedTask.value.id, 100, 'in-review');
+
+      showReviewDialog.value = false;
+      showManageDrawer.value = false;
+
+      $q.notify({
+        message: 'Task submitted for review successfully',
+        color: 'positive',
+        icon: 'check_circle',
+      });
+    } else {
+      $q.notify({
+        message: result.error || 'Failed to submit for review',
+        color: 'negative',
+        icon: 'error',
+      });
+    }
+  } catch (error) {
+    console.error('Error submitting for review:', error);
+    $q.notify({
+      message: 'Error submitting for review',
+      color: 'negative',
+      icon: 'error',
+    });
+  }
+};
+
+const fetchTasks = async () => {
+    if (!authStore.user?.id) {
+    console.error('No user ID found for fetching tasks');
+    return;
+  }
+
+  try {
+    const response = await fetch(`http://localhost:3001/api/tasks/employee/${authStore.user?.id}`);
+    const result = await response.json();
+
+    if (result.success && result.tasks) {
+      // Fetch subtasks for each task
+      const tasksWithSubtasks = await Promise.all(
+        result.tasks.map(async (task: any) => {
+          try {
+            const subtaskResponse = await fetch(
+              `http://localhost:3001/api/employee/tasks/${task.id}/subtasks`,
+            );
+            const subtaskResult = await subtaskResponse.json();
+            const subtasks = subtaskResult.success
+              ? subtaskResult.subtasks.map((st: any) => ({
+                  id: st.id,
+                  title: st.title,
+                  completed: st.completed === 1,
+                  status: st.status,
+                  estimated_hours: st.estimated_hours || 0,
+                  originally_completed: st.completed === 1,
+                }))
+              : [];
+
+            const isSelf = 
+              Boolean(task.is_self_assigned) || 
+              task.is_self_assigned === 1 || 
+              task.is_self_assigned === '1' ||
+              (authStore.user?.id != null && String(task.created_by) === String(authStore.user.id)) ||
+              (authStore.user?.id != null && String(task.assignment_assigned_by) === String(authStore.user.id));
+
+            return {
+              id: task.id,
+              name: task.title,
+              description: task.description || '',
+              project: task.project_name || 'Unknown Project',
+              priority: task.priority || 'medium',
+              status: task.status || 'not-started',
+              deadline: task.deadline || '',
+              assignedBy: isSelf ? 'Self-Assigned' : 'Assigned by PM',
+              todayNote: '',
+              createdAt: task.created_at || '',
+              subtasks: subtasks,
+              progress: parseFloat(task.progress) || 0,
+            };
+          } catch (error) {
+            console.error('Error fetching subtasks for task:', task.id, error);
+            const isSelf = 
+              Boolean(task.is_self_assigned) || 
+              task.is_self_assigned === 1 || 
+              task.is_self_assigned === '1' ||
+              (authStore.user?.id != null && String(task.created_by) === String(authStore.user.id)) ||
+              (authStore.user?.id != null && String(task.assignment_assigned_by) === String(authStore.user.id));
+
+            return {
+              id: task.id,
+              name: task.title,
+              description: task.description || '',
+              project: task.project_name || 'Unknown Project',
+              priority: task.priority || 'medium',
+              status: task.status || 'not-started',
+              deadline: task.deadline || '',
+              assignedBy: isSelf ? 'Self-Assigned' : 'Assigned by PM',
+              todayNote: '',
+              createdAt: task.created_at || '',
+              subtasks: [],
+              progress: parseFloat(task.progress) || 0,
+            };
+          }
+        }),
+      );
+
+      tasks.value = tasksWithSubtasks;
+      console.log('Mapped tasks with subtasks:', tasks.value);
+    } else {
+      console.error('Failed to fetch tasks:', result.error);
+    }
+  } catch (error) {
+    console.error('Error fetching tasks:', error);
+  }
+};
+
+// Fetch tasks on component mount
+onMounted(() => {
+  fetchProjects();
+  fetchTasks();
+  fetchColleagues();
+  fetchUserPointsAndRank();
+});
+
+const projects = ref<any[]>([]);
+
+const fetchProjects = async () => {
+  try {
+    const response = await fetch('http://localhost:3001/api/pm/projects');
+    const result = await response.json();
+    if (result.success && result.projects) {
+      projects.value = result.projects;
+    }
+  } catch (error) {
+    console.error('Error fetching projects:', error);
+  }
+};
+
+const createProjectOptions = computed(() => 
+  projects.value.map((p: any) => ({
+    label: p.name,
+    value: p.id,
+  }))
+);
+
+// Watch for tab changes and reset status filter when switching to completed tab
+watch(activeTab, (newTab) => {
+  if (newTab === 'completed') {
+    statusFilter.value = 'All Statuses';
+  }
+});
+
+// Fetch user points and rank
+const fetchUserPointsAndRank = async () => {
+  if (!authStore.user?.id) return;
+
+  try {
+    // Fetch user points
+    const userResponse = await fetch(`http://localhost:3001/api/users/${authStore.user?.id}`);
+    const userResult = await userResponse.json();
+    if (userResult.success && userResult.user) {
+      userPoints.value = userResult.user.points || 0;
+    }
+
+    // Fetch all users to calculate rank
+    const allUsersResponse = await fetch('http://localhost:3001/api/users');
+    const allUsersResult = await allUsersResponse.json();
+    if (allUsersResult.success && allUsersResult.users) {
+      const sortedUsers = allUsersResult.users.sort(
+        (a: any, b: any) => (b.points || 0) - (a.points || 0),
+      );
+      console.log(
+        'Sorted users:',
+        sortedUsers.map((u: any) => ({ id: u.id, points: u.points })),
+      );
+      const userRankIndex = sortedUsers.findIndex((u: any) => u.id === authStore.user?.id);
+      console.log('User ID:', authStore.user?.id, 'Rank index:', userRankIndex);
+      userRank.value = userRankIndex >= 0 ? userRankIndex + 1 : 1; // Default to rank 1 if not found
+    }
+  } catch (error) {
+    console.error('Error fetching user points and rank:', error);
+    userRank.value = 1; // Default to rank 1 on error
+  }
+};
+
+// Employee Insights
+const insights = computed(() => {
+  const insightsList: string[] = [];
+  const total = tasks.value.length;
+  const completed = tasks.value.filter((t) => t.status === 'completed').length;
+  const inProgress = tasks.value.filter((t) => t.status === 'in-progress').length;
+  const notStarted = tasks.value.filter((t) => t.status === 'not-started').length;
+  const blocked = tasks.value.filter((t) => t.status === 'blocked').length;
+
+  const avgProgress =
+    total > 0 ? Math.round(tasks.value.reduce((sum, t) => sum + taskProgress(t), 0) / total) : 0;
+
+  if (total === 0) {
+    insightsList.push('No tasks assigned yet. Check with your Project Manager.');
+  } else {
+    if (inProgress > 0) {
+      insightsList.push(`${inProgress} tasks are currently in progress.`);
+    }
+
+    if (completed > 0) {
+      insightsList.push(`${completed} tasks completed. Great work!`);
+    }
+
+    if (notStarted > 0) {
+      insightsList.push(`${notStarted} tasks haven't been started yet.`);
+    }
+
+    if (blocked > 0) {
+      insightsList.push(`${blocked} tasks are blocked. Consider resolving dependencies.`);
+    }
+
+    if (avgProgress < 50 && total > 0) {
+      insightsList.push('Average progress is below 50%. Focus on completing tasks.');
+    }
+
+    const overdue = tasks.value.filter((t) => isOverdue(t)).length;
+    if (overdue > 0) {
+      insightsList.push(`${overdue} tasks are overdue. Prioritize these!`);
+    }
+
+    const highPriority = tasks.value.filter(
+      (t) => t.priority === 'high' && t.status !== 'completed',
+    ).length;
+    if (highPriority > 0) {
+      insightsList.push(`${highPriority} high-priority tasks need attention.`);
+    }
+  }
+
+  return insightsList;
+});
+
+// Update task progress/status to backend
+const updateTaskProgress = async (taskId: number, progress: number, status: string, todayNote?: string) => {
+  try {
+    console.log('Updating task:', taskId, 'progress:', progress, 'status:', status);
+    const response = await fetch(`http://localhost:3001/api/employee/tasks/${taskId}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}` 
+      },
+      body: JSON.stringify({ progress, status, todayNote, user_id: authStore.user?.id }),
+    });
+    const result = await response.json();
+    console.log('Update task result:', result);
+    if (result.success) {
+      // If task was completed, switch to completed tab
+      if (status === 'completed') {
+        activeTab.value = 'completed';
+      }
+      // Refresh tasks to get latest data
+      await fetchTasks();
+    } else {
+      console.error('Update task failed:', result.error);
+      $q.notify({
+        message: result.error || 'Update task failed',
+        color: 'negative',
+        icon: 'error',
+      });
+      // Revert the local changes by refreshing tasks
+      await fetchTasks();
+    }
+  } catch (error) {
+    console.error('Error updating task progress:', error);
+    $q.notify({
+      message: 'Server error updating progress',
+      color: 'negative',
+      icon: 'error',
+    });
+  }
+};
+
+// ============================================================
+// NEW TASK
+// ============================================================
+
+const newTask = ref({
+  name: '',
+
+  description: '',
+
+  project: null as number | null,
+
+  priority: 'Medium',
+
+  deadline: '',
+
+  subtasks: [] as { id?: number; title: string; estimated_hours: number }[],
+
+  depends_on_ids: [] as number[],
+});
+
+const taskOptions = computed(() => {
+  return tasks.value.map(t => ({ label: t.name, value: t.id }));
+});
+
+// ============================================================
+// EDIT SUBTASK COPY
+// ============================================================
+
+const editSubtasks = ref<Subtask[]>([]);
+
+// ============================================================
+// OPTIONS
+// ============================================================
+
+const projectOptions = computed(() => [
+  { label: 'All Projects', value: 'All Projects' },
+  ...Array.from(new Set(tasks.value.map((task) => task.project))).map((p) => ({
+    label: p,
+    value: p,
+  })),
+]);
+
+const priorityOptions = ['All Priorities', 'Critical', 'High', 'Medium', 'Low'];
+
+const taskStatusOptions: TaskStatus[] = [
+  'not-started',
+
+  'in-progress',
+
+  'completed',
+
+  'blocked',
+
+  'in-review',
+];
+
+const subtaskStatusOptions: SubtaskStatus[] = ['not-started', 'in-progress', 'completed'];
+
+// ============================================================
+// TAB LABEL
+// ============================================================
+
+const activeTabLabel = computed(() => {
+  switch (activeTab.value) {
+    case 'my':
+      return 'Assigned to you';
+
+    case 'progress':
+      return 'Currently active';
+
+    case 'completed':
+      return 'Finished tasks';
+
+    default:
+      return 'All tasks';
+  }
+});
+
+// ============================================================
+// FILTERED TASKS
+// ============================================================
+
+const filteredTasks = computed(() => {
+  // For completed tab, show all completed tasks regardless of other filters
+  if (activeTab.value === 'completed') {
+    return tasks.value.filter(task => task.status === 'completed' || task.progress === 100);
+  }
+
+  const query = search.value.toLowerCase();
+
+  const result = tasks.value.filter((task) => {
+    const matchesSearch =
+      !query ||
+      task.name.toLowerCase().includes(query) ||
+      task.description.toLowerCase().includes(query) ||
+      task.project.toLowerCase().includes(query);
+
+    const matchesProject =
+      projectFilter.value === 'All Projects' || task.project === projectFilter.value;
+
+    const matchesPriority =
+      priorityFilter.value === 'All Priorities' || task.priority === priorityFilter.value;
+
+    const matchesStatus =
+      statusFilter.value === 'All Statuses' || task.status === statusFilter.value;
+
+    let matchesTab = true;
+
+    if (activeTab.value === 'progress') {
+      matchesTab = task.status === 'in-progress';
+    }
+
+    if (activeTab.value === 'my') {
+      matchesTab = task.assignedBy === 'Assigned by PM' || task.assignedBy === 'Self-Assigned';
+    }
+
+    return matchesSearch && matchesProject && matchesPriority && matchesStatus && matchesTab;
+  });
+
+  return result;
+});
+
+// ============================================================
+// STATISTICS
+// ============================================================
+
+const stats = computed(() => [
+  {
+    label: 'Total Tasks',
+
+    value: tasks.value.length,
+
+    description: 'Assigned to you',
+
+    icon: 'assignment',
+
+    color: '#7c3aed',
+
+    background: '#f3e8ff',
+
+    trend: 'All tasks',
+
+    positive: true,
+  },
+
+  {
+    label: 'In Progress',
+
+    value: tasks.value.filter((task) => task.status === 'in-progress').length,
+
+    description: 'Currently active',
+
+    icon: 'pending_actions',
+
+    color: '#3b82f6',
+
+    background: 'var(--color-blue-light)',
+
+    trend: 'Active',
+
+    positive: true,
+  },
+
+  {
+    label: 'Completed',
+
+    value: tasks.value.filter((task) => task.status === 'completed').length,
+
+    description: 'Successfully finished',
+
+    icon: 'check_circle',
+
+    color: '#22c55e',
+
+    background: '#ecfdf3',
+
+    trend: 'Good progress',
+
+    positive: true,
+  },
+
+  {
+    label: 'Overdue',
+
+    value: tasks.value.filter((task) => isOverdue(task)).length,
+
+    description: 'Need attention',
+
+    icon: 'warning',
+
+    color: '#ef4444',
+
+    background: '#fef2f2',
+
+    trend: 'Review',
+
+    positive: false,
+  },
+]);
+
+// ============================================================
+// TABLE COLUMNS
+// ============================================================
+
+const columns = [
+  {
+    name: 'task',
+
+    label: 'TASK',
+
+    field: 'name',
+
+    align: 'left' as const,
+
+    sortable: true,
+  },
+
+  {
+    name: 'project',
+
+    label: 'PROJECT',
+
+    field: 'project',
+
+    align: 'left' as const,
+
+    sortable: true,
+  },
+
+  {
+    name: 'subtasks',
+
+    label: 'SUBTASKS',
+
+    field: 'subtasks',
+
+    align: 'left' as const,
+  },
+
+  {
+    name: 'priority',
+
+    label: 'PRIORITY',
+
+    field: 'priority',
+
+    align: 'left' as const,
+  },
+
+  {
+    name: 'status',
+
+    label: 'STATUS',
+
+    field: 'status',
+
+    align: 'left' as const,
+  },
+
+  {
+    name: 'progress',
+
+    label: 'PROGRESS',
+
+    field: 'progress',
+
+    align: 'left' as const,
+  },
+
+  {
+    name: 'deadline',
+
+    label: 'DEADLINE',
+
+    field: 'deadline',
+
+    align: 'left' as const,
+  },
+
+  {
+    name: 'actions',
+
+    label: '',
+
+    field: 'actions',
+
+    align: 'right' as const,
+  },
+];
+
+// ============================================================
+// SUBTASK CALCULATIONS
+// ============================================================
+
+function completedSubtasks(task: Task) {
+  return task.subtasks.filter((subtask) => subtask.completed).length;
+}
+
+function taskProgress(task: Task) {
+  // If task has no subtasks, use database progress
+  if (task.subtasks.length === 0) {
+    if (task.status === 'completed') {
+      return 100;
+    }
+    return task.progress || 0;
+  }
+
+  const completed = completedSubtasks(task);
+
+  return Math.round((completed / task.subtasks.length) * 100);
+}
+
+// ============================================================
+// AUTOMATIC STATUS
+// ============================================================
+
+function recalculateTask(task: Task) {
+  const progress = taskProgress(task);
+
+  if (task.subtasks.length > 0 && progress === 100) {
+    task.status = 'completed';
+
+    return;
+  }
+
+  if (progress > 0) {
+    task.status = 'in-progress';
+
+    return;
+  }
+
+  task.status = 'not-started';
+}
+
+// ============================================================
+// SUBTASK COMPLETION
+// ============================================================
+
+function updateSubtaskCompletion(task: Task, subtask: Subtask) {
+  if (subtask.completed) {
+    subtask.status = 'completed';
+  } else {
+    subtask.status = 'not-started';
+  }
+}
+
+function updateSubtaskStatus(task: Task, subtask: Subtask) {
+  // Update completed based on status
+  if (subtask.status === 'completed') {
+    subtask.completed = true;
+  } else {
+    subtask.completed = false;
+  }
+}
+
+// ============================================================
+// TASK STATUS CHANGE
+// ============================================================
+
+function handleTaskStatusChange(task: Task) {
+  if (task.status === 'completed') {
+    task.subtasks.forEach((subtask) => {
+      subtask.completed = true;
+
+      subtask.status = 'completed';
+    });
+  }
+
+  if (task.status === 'not-started') {
+    task.subtasks.forEach((subtask) => {
+      subtask.completed = false;
+
+      subtask.status = 'not-started';
+    });
+  }
+
+  // Sync with backend
+  const progress = taskProgress(task);
+  updateTaskProgress(task.id, progress, task.status, task.todayNote);
+}
+
+// ============================================================
+// ADD TASK
+// ============================================================
+
+function openAddTask() {
+  newTask.value = {
+    name: '',
+
+    description: '',
+
+    project: null,
+
+    priority: 'Medium',
+
+    deadline: '',
+
+    subtasks: [],
+    
+    depends_on_ids: [],
+  };
+
+  showAddDialog.value = true;
+}
+
+function addNewTaskSubtask() {
+  newTask.value.subtasks.push({
+    id: Date.now(),
+    title: '',
+    estimated_hours: 0,
+  });
+}
+
+function removeNewTaskSubtask(index: number) {
+  newTask.value.subtasks.splice(index, 1);
+}
+
+async function createTask() {
+  if (!newTask.value.name.trim()) {
+    $q.notify({
+      message: 'Please enter a task name',
+      color: 'negative',
+      icon: 'error',
+    });
+    return;
+  }
+
+  if (!newTask.value.project) {
+    $q.notify({
+      message: 'Please select a project',
+      color: 'negative',
+      icon: 'error',
+    });
+    return;
+  }
+
+  try {
+    const payload = {
+      title: newTask.value.name.trim(),
+      description: newTask.value.description || 'No description added.',
+      project_id: newTask.value.project,
+      priority: newTask.value.priority.toLowerCase(),
+      deadline: newTask.value.deadline || new Date().toISOString().split('T')[0],
+      user_id: authStore.user?.id ? Number(authStore.user.id) : undefined,
+      assignee_ids: authStore.user ? [Number(authStore.user.id)] : [],
+      is_self_assigned: 1,
+      depends_on_ids: newTask.value.depends_on_ids,
+    };
+
+    const response = await fetch('http://localhost:3001/api/employee/tasks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+    if (!result.success) throw new Error(result.error);
+
+    const taskId = result.taskId || result.task?.id;
+
+    // Create subtasks
+    const subtasks = newTask.value.subtasks
+      .filter((subtask) => subtask.title.trim());
+      
+    for (const subtask of subtasks) {
+      await fetch(`http://localhost:3001/api/employee/tasks/${taskId}/subtasks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authStore.token}`,
+        },
+        body: JSON.stringify({ 
+          title: subtask.title.trim(),
+          estimated_hours: subtask.estimated_hours || 0
+        }),
+      });
+    }
+
+    await fetchTasks();
+
+    showAddDialog.value = false;
+    $q.notify({
+      message: 'Task created successfully',
+      color: 'positive',
+      icon: 'check_circle',
+    });
+  } catch (error) {
+    console.error('Error creating task:', error);
+    $q.notify({
+      message: 'Error creating task',
+      color: 'negative',
+      icon: 'error',
+    });
+  }
+}
+
+// ============================================================
+// EDIT SUBTASKS
+// ============================================================
+
+function openEditSubtasks(task: Task) {
+  selectedTask.value = task;
+
+  editSubtasks.value = task.subtasks.map((subtask) => ({
+    ...subtask,
+  }));
+
+  showEditDialog.value = true;
+}
+
+function addEditSubtask() {
+  editSubtasks.value.push({
+    id: Date.now(),
+
+    title: '',
+
+    completed: false,
+
+    status: 'not-started',
+    
+    estimated_hours: 0,
+  });
+}
+
+function removeEditSubtask(id: number) {
+  editSubtasks.value = editSubtasks.value.filter((subtask) => subtask.id !== id);
+}
+
+async function saveEditedSubtasks() {
+  if (!selectedTask.value) {
+    return;
+  }
+
+  try {
+    const originalSubtasks = selectedTask.value.subtasks;
+    const newSubtaskIds = editSubtasks.value.map(s => s.id);
+
+    // Delete subtasks that were removed
+    const subtasksToDelete = originalSubtasks.filter(s => !newSubtaskIds.includes(s.id));
+    for (const subtask of subtasksToDelete) {
+      await fetch(`http://localhost:3001/api/employee/subtasks/${subtask.id}`, {
+        method: 'DELETE',
+      });
+    }
+
+    for (const subtask of editSubtasks.value) {
+      if (!subtask.title.trim()) continue;
+
+      if (originalSubtasks.find(s => s.id === subtask.id)) {
+        // Update existing subtask
+        await fetch(`http://localhost:3001/api/employee/subtasks/${subtask.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: subtask.title.trim(),
+            status: subtask.status,
+            completed: subtask.completed,
+            user_id: authStore.user?.id,
+          }),
+        });
+      } else {
+        // Create new subtask
+        const response = await fetch(`http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/subtasks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            title: subtask.title.trim(),
+            estimated_hours: subtask.estimated_hours || 0
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Failed to add subtask');
+        }
+      }
+    }
+
+    // Refresh tasks to get updated subtasks
+    await fetchTasks();
+    const updatedTask = tasks.value.find(t => t.id === selectedTask.value!.id);
+    if (updatedTask) {
+      selectedTask.value = updatedTask;
+      recalculateTask(selectedTask.value);
+      const progress = taskProgress(selectedTask.value);
+      await updateTaskProgress(selectedTask.value.id, progress, selectedTask.value.status);
+    }
+
+    showEditDialog.value = false;
+
+    $q.notify({
+      message: 'Subtasks updated successfully',
+      color: 'positive',
+      icon: 'check_circle',
+    });
+  } catch (error: any) {
+    console.error('Error saving subtasks:', error);
+    $q.notify({
+      message: error.message || 'Error saving subtasks',
+      color: 'negative',
+      icon: 'error',
+    });
+  }
+}
+
+// ============================================================
+// MANAGE DRAWER
+// ============================================================
+
+function openManage(task: Task) {
+  selectedTask.value = task;
+  manageTab.value = 'details';
+
+  showManageDrawer.value = true;
+}
+
+function openEditFromManage() {
+  if (!selectedTask.value) {
+    return;
+  }
+
+  showManageDrawer.value = false;
+
+  openEditSubtasks(selectedTask.value);
+}
+
+async function saveTaskUpdate() {
+  if (!selectedTask.value) {
+    return;
+  }
+
+  // Save to database
+  try {
+    const promises = selectedTask.value.subtasks.map(subtask => 
+      fetch(`http://localhost:3001/api/employee/subtasks/${subtask.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: subtask.title,
+          status: subtask.status,
+          completed: subtask.completed,
+          user_id: authStore.user?.id,
+        }),
+      })
+    );
+    await Promise.all(promises);
+  } catch (error) {
+    console.error('Error saving subtasks:', error);
+  }
+
+  recalculateTask(selectedTask.value);
+  const progress = taskProgress(selectedTask.value);
+  await updateTaskProgress(selectedTask.value.id, progress, selectedTask.value.status, selectedTask.value.todayNote);
+
+  // Refresh tasks to get latest state including originally_completed
+  await fetchTasks();
+  if (selectedTask.value) {
+    const updatedTask = tasks.value.find(t => t.id === selectedTask.value!.id);
+    if (updatedTask) selectedTask.value = updatedTask;
+  }
+
+  $q.notify({
+    message: 'Task progress updated',
+
+    color: 'positive',
+
+    icon: 'save',
+  });
+}
+
+// ============================================================
+// VIEW TASK
+// ============================================================
+
+function viewTask(task: Task) {
+  selectedTask.value = task;
+
+  showManageDrawer.value = true;
+}
+
+// ============================================================
+// DELETE
+// ============================================================
+
+function deleteTask(task: Task) {
+  $q.dialog({
+    title: 'Delete Task',
+
+    message: `Delete "${task.name}"?`,
+
+    cancel: true,
+
+    persistent: true,
+  }).onOk(() => {
+    tasks.value = tasks.value.filter((item) => item.id !== task.id);
+
+    $q.notify({
+      message: 'Task deleted',
+
+      color: 'positive',
+
+      icon: 'delete',
+    });
+  });
+}
+
+// ============================================================
+// FILTERS
+// ============================================================
+
+function clearFilters() {
+  search.value = '';
+
+  projectFilter.value = 'All Projects';
+
+  priorityFilter.value = 'All Priorities';
+
+  statusFilter.value = 'All Statuses';
+}
+
+
+// ============================================================
+// PRIORITY STYLE
+// ============================================================
+
+function priorityStyle(priority: string) {
+  switch (priority) {
+    case 'Critical':
+      return {
+        bg: 'var(--priority-critical-bg)',
+
+        color: 'var(--priority-critical)',
+      };
+
+    case 'High':
+      return {
+        bg: 'var(--priority-high-bg)',
+
+        color: 'var(--priority-high)',
+      };
+
+    case 'Medium':
+      return {
+        bg: 'var(--priority-medium-bg)',
+
+        color: 'var(--priority-medium)',
+      };
+
+    default:
+      return {
+        bg: 'var(--priority-low-bg)',
+
+        color: 'var(--priority-low)',
+      };
+  }
+}
+
+// ============================================================
+// STATUS STYLE
+// ============================================================
+
+function statusStyle(status: string) {
+  switch (status) {
+    case 'Completed':
+      return {
+        bg: 'var(--status-completed-bg)',
+
+        color: 'var(--status-completed)',
+      };
+
+    case 'In Progress':
+      return {
+        bg: 'var(--status-progress-bg)',
+
+        color: 'var(--status-progress)',
+      };
+
+    default:
+      return {
+        bg: 'var(--status-not-started-bg)',
+
+        color: 'var(--status-not-started)',
+      };
+  }
+}
+
+// ============================================================
+// PROJECT STYLE
+// ============================================================
+
+function projectColor(project: string) {
+  if (project === 'Mobile Banking') {
+    return {
+      bg: '#eff6ff',
+
+      color: '#3b82f6',
+    };
+  }
+
+  if (project === 'Website Redesign') {
+    return {
+      bg: '#f3e8ff',
+
+      color: '#7c3aed',
+    };
+  }
+
+  return {
+    bg: 'var(--color-teal-light)',
+
+    color: 'var(--color-teal)',
+  };
+}
+
+function projectIcon(project: string) {
+  if (project === 'Mobile Banking') {
+    return 'account_balance';
+  }
+
+  if (project === 'Website Redesign') {
+    return 'web';
+  }
+
+  return 'folder';
+}
+
+// ============================================================
+// DATE
+// ============================================================
+
+function formatDate(date: string) {
+  if (!date) {
+    return '-';
+  }
+
+  const parsedDate = new Date(date);
+  if (isNaN(parsedDate.getTime())) {
+    return '-';
+  }
+
+  return parsedDate.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+// ============================================================
+// OVERDUE
+// ============================================================
+
+function isOverdue(task: Task) {
+  if (task.status === 'completed') {
+    return false;
+  }
+
+  return new Date(task.deadline) < new Date();
+}
+const showInterruptDialog = ref(false);
+const interruptReason = ref('');
+
+async function submitInterrupt() {
+  if (!selectedTask.value || !interruptReason.value) return;
+  try {
+    const response = await fetch(
+      `http://localhost:3001/api/pm/tasks/${selectedTask.value.id}/interrupt`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authStore.token}`,
+        },
+        body: JSON.stringify({ reason: interruptReason.value }),
+      },
+    );
+
+    const data = await response.json();
+    if (data.success) {
+      $q.notify({ color: 'positive', message: 'Task interrupted successfully. PM notified.' });
+      showInterruptDialog.value = false;
+      showManageDrawer.value = false;
+      interruptReason.value = '';
+    } else {
+      $q.notify({ color: 'negative', message: data.error || 'Failed to interrupt task' });
+    }
+  } catch (error) {
+    console.error('Interrupt task error:', error);
+    $q.notify({ color: 'negative', message: 'Server error' });
+  }
+}
+</script>
+
+<style scoped>
+.stat-card {
+  border-radius: var(--radius-lg);
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-trend {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.quick-add-card {
+  border-radius: var(--radius-lg);
+
+  background: linear-gradient(110deg, #6c63ff, #eeecff);
+}
+
+.quick-add-icon {
+  background: rgba(159, 226, 63, 0.15);
+
+  color: var(--color-secondary);
+}
+
+.quick-add-title {
+  color: white;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.quick-add-subtitle {
+  color: #b8bac8;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.my-tasks-card {
+  border-radius: var(--radius-lg);
+  background: white;
+}
+
+.my-task-icon {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+.task-name {
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.3;
+  color: #111827;
+}
+
+.task-description {
+  max-width: 330px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-table :deep(th) {
+  background: #fafbfc;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.task-table :deep(td) {
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-color: #edf0f5;
+}
+
+.task-table :deep(tbody tr) {
+  transition: background 0.15s ease;
+}
+
+.task-table :deep(tbody tr:hover) {
+  background: #fafaff;
+}
+
+.subtask-count {
+  display: flex;
+  align-items: center;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.task-grid-card {
+  border-radius: var(--radius-lg);
+  transition: all 0.2s ease;
+}
+
+.task-grid-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.task-grid-title {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #111827;
+}
+
+.grid-description {
+  white-space: normal;
+  max-width: none;
+}
+
+/* Create Task dialog — visually matched to the Project Manager dialog */
+.create-dialog-card {
+  width: 540px;
+  max-width: 90vw;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.create-dialog-header {
+  color: white;
+  background: linear-gradient(135deg, #3949ab, #5c6bc0);
+}
+
+.subtask-editor {
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-hover);
+}
+
+.subtask-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.empty-subtasks {
+  padding: 25px;
+  text-align: center;
+  border: 1px dashed #e5e7eb;
+  border-radius: var(--radius-md);
+  background: #ffffff;
+}
+
+.points-badge {
+  background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+  padding: 6px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.points-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: #8b4513;
+}
+
+.edit-subtask-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.manage-header {
+  background: #ffffff;
+}
+
+.manage-task-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.manage-progress-card {
+  border-radius: var(--radius-lg);
+  background: #f3e8ff;
+}
+
+.manage-subtask {
+  padding: 14px;
+  margin-bottom: 10px;
+  border: 1px solid #edf0f5;
+  border-radius: var(--radius-md);
+  background: white;
+  transition: all 0.15s ease;
+}
+
+.manage-subtask:hover {
+  border-color: #7c3aed;
+  box-shadow: var(--shadow-sm);
+}
+
+.manage-subtask-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.completed-subtask {
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.deadline-box {
+  display: flex;
+  align-items: center;
+  padding: 13px;
+  border-radius: var(--radius-md);
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.deadline-overdue {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.manage-footer {
+  border-top: 1px solid #e5e7eb;
+  background: white;
+}
+</style>
