@@ -825,3 +825,166 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- ============================================================
 -- END OF SCHEMA
 -- ============================================================
+-- Migration: Add daily_log_compliance table
+-- Tracks the submission and PM review state of daily work logs
+
+CREATE TABLE IF NOT EXISTS daily_log_compliance (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  log_date DATE NOT NULL,
+  status ENUM('submitted', 'reviewed') NOT NULL DEFAULT 'submitted',
+  pm_comment TEXT,
+  reviewed_by INT UNSIGNED,
+  reviewed_at DATETIME,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_compliance (user_id, log_date),
+  CONSTRAINT fk_compliance_user FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE,
+  CONSTRAINT fk_compliance_reviewer FOREIGN KEY (reviewed_by) REFERENCES user (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Migration: Add daily_tracker table
+-- This creates the daily_tracker table for employee daily task tracking
+
+CREATE TABLE IF NOT EXISTS daily_tracker (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  employee_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  date DATE NOT NULL,
+  progress DECIMAL(5,2) DEFAULT 0.00,
+  status VARCHAR(50) DEFAULT 'Not Started',
+  project_id INT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_employee_date (employee_id, date),
+  INDEX idx_project (project_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Migration: Add daily_work_log table
+-- This creates the daily_work_log table for tracking employee daily work logs
+
+CREATE TABLE IF NOT EXISTS daily_work_log (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  log_date DATE NOT NULL,
+  task_id INT,
+  task_title VARCHAR(255) NOT NULL,
+  project VARCHAR(255),
+  progress DECIMAL(5,2) DEFAULT 0.00,
+  hours_spent DECIMAL(5,2) DEFAULT 0.00,
+  notes TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_user_date (user_id, log_date),
+  INDEX idx_task (task_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Migration: Add day_status to daily_log_compliance
+ALTER TABLE daily_log_compliance 
+ADD COLUMN day_status ENUM('worked', 'leave', 'holiday', 'weekend', 'no-entry') DEFAULT 'worked';
+-- Migration: Add subtask table
+-- This creates the subtask table for tracking task subtasks
+
+CREATE TABLE IF NOT EXISTS subtask (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  task_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  status ENUM('not-started', 'in-progress', 'completed') DEFAULT 'not-started',
+  completed TINYINT(1) DEFAULT 0,
+  progress DECIMAL(5,2) DEFAULT 0.00,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_task_id (task_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Migration: Add task_review table
+-- This creates the task_review table for tracking task reviews
+
+CREATE TABLE IF NOT EXISTS task_review (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  task_id INT NOT NULL,
+  task_owner_id INT NOT NULL,
+  reviewer_id INT NOT NULL,
+  completion_comment TEXT,
+  review_comment TEXT,
+  pm_final_comment TEXT,
+  status ENUM('pending', 'review-done', 'finalized', 'changes-requested') DEFAULT 'pending',
+  submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  completed_at DATETIME NULL,
+  task_owner_points INT DEFAULT 0,
+  reviewer_points INT DEFAULT 0,
+  INDEX idx_task_id (task_id),
+  INDEX idx_task_owner_id (task_owner_id),
+  INDEX idx_reviewer_id (reviewer_id),
+  INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Add visibility field to task table
+ALTER TABLE `task` 
+ADD COLUMN `is_visible` TINYINT(1) NOT NULL DEFAULT 1 COMMENT 'Task visibility to employees' AFTER `is_self_assigned`,
+ADD INDEX `idx_task_visibility` (`is_visible`);
+-- Migration to add application_role column to user table
+-- This explicitly stores whether a user is an employee or project manager
+
+-- Add application_role field
+ALTER TABLE `user` 
+ADD COLUMN `application_role` ENUM('employee', 'project_manager') DEFAULT NULL COMMENT 'Application role: employee or project_manager' 
+AFTER `professional_role_other`;
+
+-- Update existing users based on their role access_level
+UPDATE `user` u 
+JOIN `role` r ON u.role_id = r.id 
+SET u.application_role = CASE 
+  WHEN r.access_level = 'manager' THEN 'project_manager'
+  WHEN r.access_level = 'employee' THEN 'employee'
+  ELSE 'employee'
+END 
+WHERE u.application_role IS NULL;
+-- Migration: Add invite_code table for organisation-managed invite codes
+-- Replaces hardcoded invite codes with DB-managed codes
+
+CREATE TABLE IF NOT EXISTS `invite_code` (
+  `id`            INT UNSIGNED     NOT NULL AUTO_INCREMENT,
+  `org_id`        INT UNSIGNED     NOT NULL,
+  `code`          VARCHAR(20)      NOT NULL,
+  `created_by`    INT UNSIGNED     NOT NULL      COMMENT 'PM who generated the code',
+  `max_uses`      INT UNSIGNED     NOT NULL DEFAULT 50,
+  `current_uses`  INT UNSIGNED     NOT NULL DEFAULT 0,
+  `is_active`     TINYINT(1)       NOT NULL DEFAULT 1,
+  `expires_at`    DATETIME         NOT NULL,
+  `created_at`    DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_invite_code` (`code`),
+  INDEX `idx_invite_org` (`org_id`),
+  INDEX `idx_invite_active` (`is_active`, `org_id`),
+  CONSTRAINT `fk_invite_org`     FOREIGN KEY (`org_id`)     REFERENCES `organization` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_invite_creator` FOREIGN KEY (`created_by`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Migration to add professional_role and professional_role_other fields to user table
+-- This separates application role (access_level) from professional role
+
+-- Add professional_role field
+ALTER TABLE `user` 
+ADD COLUMN `professional_role` VARCHAR(50) DEFAULT NULL COMMENT 'Professional role: developer, designer, qa_engineer, business_analyst, other' 
+AFTER `phone`;
+
+-- Add professional_role_other field for custom roles
+ALTER TABLE `user` 
+ADD COLUMN `professional_role_other` VARCHAR(100) DEFAULT NULL COMMENT 'Custom professional role when professional_role is "other"' 
+AFTER `professional_role`;
+
+-- Update existing users to have a default professional role if needed
+UPDATE `user` SET `professional_role` = 'developer' WHERE `professional_role` IS NULL;
+-- Migration: Add pm_settings table for per-PM scheduling and notification preferences
+
+CREATE TABLE IF NOT EXISTS `pm_settings` (
+  `id`                        INT UNSIGNED     NOT NULL AUTO_INCREMENT,
+  `user_id`                   INT UNSIGNED     NOT NULL,
+  `strict_resource_limits`    TINYINT(1)       NOT NULL DEFAULT 0   COMMENT 'Prevent over-100% capacity assignments',
+  `dynamic_deadline_shifting` TINYINT(1)       NOT NULL DEFAULT 1   COMMENT 'Auto-adjust dependent task deadlines',
+  `high_priority_interruption` TINYINT(1)      NOT NULL DEFAULT 0   COMMENT 'Allow critical tasks to bump lower priority',
+  `alert_missing_logs`        TINYINT(1)       NOT NULL DEFAULT 1   COMMENT 'Alert on missing daily logs',
+  `alert_conflicts`           TINYINT(1)       NOT NULL DEFAULT 1   COMMENT 'Alert on cross-project conflicts',
+  `max_hours_threshold`       DECIMAL(5,2)     NOT NULL DEFAULT 40.00 COMMENT 'Weekly hours threshold for overload detection',
+  `created_at`                DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`                DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_settings_user` (`user_id`),
+  CONSTRAINT `fk_settings_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
