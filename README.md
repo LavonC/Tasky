@@ -79,3 +79,5 @@ When adding new features, please ensure:
 - Your code follows the ESLint and Prettier configurations.
 - You do not commit `.env` files.
 - Any database changes are accompanied by an updated `schema.sql`.
+
+lmao
