@@ -2,11 +2,6 @@
   <q-page
     class="q-pa-md text-black"
     style="
-      height: 100vh;
-      max-height: 100vh;
-      min-height: 0 !important;
-      display: flex;
-      flex-direction: column;
       background-color: #f8f9fa;
     "
   >
@@ -28,20 +23,7 @@
       </div>
       <div class="column items-end">
         <div class="row items-center q-gutter-md q-mb-md">
-          <q-input
-            v-model="filters.search"
-            outlined
-            dense
-            rounded
-            bg-color="white"
-            placeholder="Search tasks, descriptions..."
-            style="width: 320px"
-            @update:model-value="applyFilters"
-          >
-            <template v-slot:prepend>
-              <q-icon name="search" />
-            </template>
-          </q-input>
+          
           <q-avatar size="36px" class="cursor-pointer">
             <img :src="authStore.currentUser?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
             <q-menu anchor="bottom right" self="top right">
@@ -96,50 +78,97 @@
     </div>
 
     <!-- Toolbar -->
-    <div class="row items-center justify-between q-mb-md" style="flex: 0 0 auto">
-      <div class="row items-center q-gutter-x-sm">
+    <div class="row items-center q-mb-md" style="flex: 0 0 auto">
+    <q-input
+            v-model="filters.search"
+            outlined
+            dense
+            rounded
+            bg-color="white"
+            placeholder="Search tasks, descriptions..."
+            style="width: 320px"
+            @update:model-value="applyFilters"
+          >
+            <template v-slot:prepend>
+              <q-icon name="search" />
+            </template>
+          </q-input>
+      <div class="row items-center q-gutter-x-sm q-ml-auto">
         <q-select
           v-model="filters.project"
           outlined
           dense
           :options="projectOptions"
-          style="width: 170px"
+          style="width: 150px"
           bg-color="white"
           rounded
           emit-value
           map-options
           @update:model-value="applyFilters"
         >
-          <template v-slot:prepend><q-icon name="o_folder" size="18px" /></template>
+          <template v-slot:prepend><q-icon name="o_folder" size="17px" /></template>
         </q-select>
         <q-select
           v-model="filters.status"
           outlined
           dense
           :options="statusOptions"
-          style="width: 170px"
+          style="width: 150px"
           bg-color="white"
           rounded
           emit-value
           map-options
           @update:model-value="applyFilters"
         >
-          <template v-slot:prepend><q-icon name="o_settings" size="18px" /></template>
+          <template v-slot:prepend><q-icon name="o_settings" size="17px" /></template>
         </q-select>
         <q-select
           v-model="filters.priority"
           outlined
           dense
           :options="priorityOptions"
-          style="width: 170px"
+          style="width: 150px"
           bg-color="white"
           rounded
           emit-value
           map-options
           @update:model-value="applyFilters"
         >
-          <template v-slot:prepend><q-icon name="o_flag" size="18px" /></template>
+          <template v-slot:prepend><q-icon name="o_flag" size="17px" /></template>
         </q-select>
+        <q-select
+  v-model="filters.assignee"
+  outlined
+  dense
+  :options="assigneeOptions"
+  style="width: 150px"
+  bg-color="white"
+  rounded
+  emit-value
+  map-options
+  @update:model-value="applyFilters"
+>
+  <template v-slot:prepend>
+    <q-icon name="o_person" size="17px" />
+  </template>
+</q-select>
+
+<q-select
+  v-model="filters.deadline"
+  outlined
+  dense
+  :options="deadlineOptions"
+  style="width: 150px"
+  bg-color="white"
+  rounded
+  emit-value
+  map-options
+  @update:model-value="applyFilters"
+>
+  <template v-slot:prepend>
+    <q-icon name="o_event" size="17px" />
+  </template>
+</q-select>
       </div>
 
       <div class="row items-center q-gutter-x-sm">
@@ -159,6 +188,7 @@
     </div>
 
     <!-- Data Table -->
+    <div class="row items-center justify-between q-mb-md" style="flex: 0 0 auto">
     <TasksTable
       @edit="openEditDialog"
       @delete="confirmDelete"
@@ -166,6 +196,24 @@
       @assign-reviewer="openAssignReviewerDialog"
       @finalize-review="openFinalizeReviewDialog"
     />
+    </div>
+
+    <div class="row q-col-gutter-lg">
+      <!-- Left Column -->
+      <div class="col-5 column">
+        <ProjectProgressWidget />
+      </div>
+
+      <!-- Right Column -->
+      <div class="col-4 column">
+        <TaskStatusDistribution />
+      </div>
+
+      <div class="col-3 column">
+        <ProjectSummary />
+      </div>
+    </div>
+
 
     <!-- Dialogs -->
     <CreateTaskDialog v-model="showCreateDialog" :task-to-edit="taskToEdit" @saved="onTaskSaved" />
@@ -251,6 +299,10 @@ import { useQuasar } from 'quasar';
 import TasksTable from '../components/TasksTable.vue';
 import CreateTaskDialog from '../components/CreateTaskDialog.vue';
 import TaskDetailDialog from '../components/TaskDetailDialog.vue';
+import ProjectProgressWidget from '../components/ProjectProgressWidget.vue';
+import TaskStatusDistribution from '../components/TaskStatusDistribution.vue';
+import ProjectSummary from '../components/ProjectSummary.vue';
+import { useOrgStore } from '../stores/orgStore';
 
 const router = useRouter();
 const route = useRoute();
@@ -259,12 +311,15 @@ const taskStore = usePmTaskStore();
 const projectStore = useProjectStore();
 const taskStoreCommon = useTaskStore();
 const $q = useQuasar();
+const orgStore = useOrgStore();
 
 const filters = ref({
   search: (route.query.search as string) || '',
   project: 'all',
   status: 'all',
   priority: 'all',
+  assignee: 'all',
+  deadline: 'all',
 });
 
 const statusOptions = [
@@ -283,6 +338,27 @@ const priorityOptions = [
   { label: 'Low', value: 'low' },
 ];
 
+const assigneeOptions = computed(() => {
+  const opts = [{ label: 'All Assignees', value: 'all' }];
+
+  orgStore.members.forEach((member: any) => {
+    opts.push({
+      label: `${member.first_name} ${member.last_name}`,
+      value: member.id,
+    });
+  });
+
+  return opts;
+});
+
+const deadlineOptions = [
+  { label: 'All Deadlines', value: 'all' },
+  { label: 'Overdue', value: 'overdue' },
+  { label: 'Due Today', value: 'today' },
+  { label: 'Next 7 Days', value: 'next-7-days' },
+  { label: 'Next 30 Days', value: 'next-30-days' },
+];
+
 const projectOptions = computed(() => {
   const opts = [{ label: 'All Projects', value: 'all' }];
   projectStore.projects.forEach((p: any) => {
@@ -296,7 +372,9 @@ const hasActiveFilters = computed(() => {
     filters.value.search !== '' ||
     filters.value.project !== 'all' ||
     filters.value.status !== 'all' ||
-    filters.value.priority !== 'all'
+    filters.value.priority !== 'all' ||
+    filters.value.assignee !== 'all' ||
+    filters.value.deadline !== 'all'
   );
 });
 
@@ -308,6 +386,9 @@ onMounted(async () => {
     await projectStore.fetchProjects();
   }
   console.log('Fetching tasks with filters:', filters.value);
+  if (orgStore.members.length === 0) {
+  await orgStore.fetchMembers();
+}
   await applyFilters();
   console.log('Tasks loaded:', taskStore.tasks.length);
   console.log('Tasks stats:', taskStore.stats);
@@ -324,7 +405,15 @@ const applyFilters = async () => {
 };
 
 const clearFilters = () => {
-  filters.value = { search: '', project: 'all', status: 'all', priority: 'all' };
+  filters.value = {
+    search: '',
+    project: 'all',
+    status: 'all',
+    priority: 'all',
+    assignee: 'all',
+    deadline: 'all',
+  };
+
   applyFilters();
 };
 

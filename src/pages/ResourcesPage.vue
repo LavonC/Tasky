@@ -10,17 +10,7 @@
         </div>
       </div>
       <div class="row items-center q-gutter-sm">
-        <q-input
-          v-model="searchQuery"
-          outlined
-          dense
-          rounded
-          placeholder="Search resources..."
-          bg-color="white"
-          style="width: 250px"
-        >
-          <template v-slot:prepend><q-icon name="search" /></template>
-        </q-input>
+        
         <q-avatar size="36px" class="cursor-pointer">
             <img :src="authStore.currentUser?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
             <q-menu anchor="bottom right" self="top right">
@@ -42,6 +32,17 @@
     </div>
 
     <div class="row items-center justify-between q-mb-md">
+    <q-input
+          v-model="searchQuery"
+          outlined
+          dense
+          rounded
+          placeholder="Search resources..."
+          bg-color="white"
+          style="width: 250px"
+        >
+          <template v-slot:prepend><q-icon name="search" /></template>
+        </q-input>
       <div class="row items-center">
       <q-select
           v-model="roleFilter"
