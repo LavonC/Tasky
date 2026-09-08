@@ -404,7 +404,7 @@ const getDeadlineText = (task: any) => {
 
 const pagination = ref({
   page: 1,
-  rowsPerPage: 10,
+  rowsPerPage: 5,
 });
 
 const totalPages = computed(() =>

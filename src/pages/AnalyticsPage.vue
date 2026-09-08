@@ -18,21 +18,10 @@
           </div>
         </div>
       </div>
+      <div class="column">
       <div class="column items-end">
         <div class="row items-center q-gutter-md q-mb-md">
-          <q-input
-            v-model="searchQuery"
-            outlined
-            dense
-            rounded
-            bg-color="white"
-            placeholder="Search reports..."
-            style="width: 320px"
-          >
-            <template v-slot:prepend>
-              <q-icon name="search" />
-            </template>
-          </q-input>
+          
           <q-avatar size="36px" class="cursor-pointer">
             <img :src="authStore.currentUser?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
             <q-menu anchor="bottom right" self="top right">
@@ -49,8 +38,23 @@
               </q-list>
             </q-menu>
           </q-avatar>
-        </div>
-        <div class="row q-gutter-sm">
+        </div></div>
+        <div class="row items-center q-mb-md" style="flex: 0 0 auto">
+        
+        <q-input
+            v-model="searchQuery"
+            outlined
+            dense
+            rounded
+            bg-color="white"
+            placeholder="Search reports..."
+            style="width: 320px"
+          >
+            <template v-slot:prepend>
+              <q-icon name="search" />
+            </template>
+          </q-input>
+        <div class="row items-center q-gutter-x-sm q-ml-auto">
           <q-select
             v-model="filterMonth"
             outlined
@@ -73,7 +77,7 @@
             @click="exportReport"
           />
         </div>
-      </div>
+      </div></div>
     </div>
 
     <!-- Summary Cards -->
