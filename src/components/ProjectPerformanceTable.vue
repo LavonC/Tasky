@@ -20,8 +20,9 @@
       :columns="columns"
       row-key="id"
       flat
-      hide-bottom
       dense
+      :pagination="{ rowsPerPage: 3 }"
+  :rows-per-page-options="[3, 5, 7, 10, 0]"
       :loading="analyticsStore.loading"
     >
       <template v-slot:loading>
@@ -94,7 +95,8 @@
       </template>
 
       <template v-slot:no-data>
-        <div class="full-width row flex-center text-grey-6 q-pa-md">
+        <div v-if="!analyticsStore.loading"
+        class="full-width row flex-center text-grey-6 q-pa-md">
           <span class="q-ml-sm">No project performance data available.</span>
         </div>
       </template>
@@ -126,6 +128,8 @@ const getBarColor = (progress: number) => {
   if (p > 0) return 'orange';
   return 'grey-4';
 };
+
+
 </script>
 
 <style scoped>

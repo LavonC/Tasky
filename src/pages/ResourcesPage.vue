@@ -146,6 +146,12 @@
       </div>
     </div>
 
+    <div class="q-mt-lg">
+  <ResourceUtilizationChart
+    :resources="filteredEmployees"
+  />
+</div>
+
     <!-- Resource Detail Dialog -->
     <ResourceDetailDialog
       v-model="showResourceDialog"
@@ -158,6 +164,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import ResourceDetailDialog from '../components/ResourceDetailDialog.vue';
+import ResourceUtilizationChart from '../components/ResourceUtilizationChart.vue';
 import { useAuthStore } from '../stores/authStore'
 
 const authStore = useAuthStore()

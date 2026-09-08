@@ -20,7 +20,6 @@ export const useAnalyticsStore = defineStore('analytics', {
     },
 
     async fetchOverview() {
-      this.loading = true;
       try {
         const response = await fetch('http://localhost:3001/api/pm/analytics/overview', {
           headers: this.getHeaders(),
@@ -29,9 +28,7 @@ export const useAnalyticsStore = defineStore('analytics', {
         if (data.success) this.overview = data.overview;
       } catch (err: any) {
         this.error = err.message;
-      } finally {
-        this.loading = false;
-      }
+      } 
     },
 
     async fetchProjectProgress() {

@@ -44,6 +44,22 @@
       </div>
     </div>
 
+<div class="row q-col-gutter-lg">
+      <!-- Left Column -->
+      <div class="col-6 column">
+        <ProjectPerformanceTable />
+      </div>
+
+<div class="col-3 column">
+        <TaskCompletionTrend />
+      </div>
+
+      <!-- Right Column -->
+      <div class="col-3 column">
+        <TaskPriorityDistribution />
+      </div>
+    </div>
+
     <!-- Tabs -->
     <q-tabs
       v-model="activeTab"
@@ -1100,9 +1116,13 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useAuthStore } from '../stores/authStore';
 import { useDashboardStore } from '../stores/dashboardStore';
+import { useAnalyticsStore } from '../stores/analyticsStore';
 import EmployeePerformanceReport from '../components/EmployeePerformanceReport.vue';
 import ScheduleReviewDialog from '../components/ScheduleReviewDialog.vue';
 import DailyLogReviewDialog from '../components/DailyLogReviewDialog.vue';
+import ProjectPerformanceTable from '../components/ProjectPerformanceTable.vue';
+import TaskPriorityDistribution from '../components/TaskPriorityDistribution.vue';
+import TaskCompletionTrend from '../components/TaskCompletionTrend.vue';
 
 const showDailyLogReview = ref(false);
 const pendingDailyLogsCount = ref(0);
@@ -1121,6 +1141,7 @@ const fetchPendingDailyLogs = async () => {
 const authStore = useAuthStore();
 const { logout } = authStore;
 const dashboardStore = useDashboardStore();
+const analyticsStore = useAnalyticsStore();
 
 const searchQuery = ref('');
 const teamSearchQuery = ref('');
@@ -1139,6 +1160,7 @@ onMounted(() => {
   console.log('Auth store token:', authStore.token);
   console.log('Auth store authenticated:', authStore.isAuthenticated);
   dashboardStore.loadAll();
+analyticsStore.loadAll();
   console.log('Users loaded:', dashboardStore.users);
   // Pre-load completed reviews
   fetchCompletedReviews();

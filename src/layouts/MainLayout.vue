@@ -4,10 +4,10 @@
     <q-drawer
       v-model="leftDrawerOpen"
       show-if-above
-      :width="280"
+      :width="260"
       :mini="sidebarCollapsed"
       class="text-white column employee-sidebar"
-      style="background-color: #01366e !important"
+      style="background-color: #01366e !important; border-radius: 0 32px 32px 0"
       content-style="background-color: #01366E !important"
     >
       <!-- Background decorative shapes -->
@@ -75,7 +75,7 @@
             :to="link.link"
             :active="link.link === $route.path"
             active-class="nav-active"
-            class="nav-item q-py-sm text-blue-grey-4"
+            class="nav-item q-py-sm text-grey-4"
             :class="sidebarCollapsed ? 'justify-center' : ''"
           >
             <q-item-section avatar>
