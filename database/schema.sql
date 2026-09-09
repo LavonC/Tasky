@@ -890,6 +890,7 @@ CREATE TABLE IF NOT EXISTS subtask (
   status ENUM('not-started', 'in-progress', 'completed') DEFAULT 'not-started',
   completed TINYINT(1) DEFAULT 0,
   progress DECIMAL(5,2) DEFAULT 0.00,
+  estimated_hours DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_task_id (task_id)

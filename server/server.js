@@ -92,6 +92,15 @@ pool
     }
 
     try {
+      await connection.query(
+        'ALTER TABLE subtask ADD COLUMN estimated_hours DECIMAL(5,2) NOT NULL DEFAULT 0 AFTER progress;'
+      );
+      console.log('Added estimated_hours column to subtask table');
+    } catch (e) {
+      // Ignore error if column already exists
+    }
+
+    try {
       await connection.query(`
         CREATE TABLE IF NOT EXISTS invite_code (
           id INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -726,16 +735,22 @@ app.get('/api/employee/tasks/:id/subtasks', async (req, res) => {
       connection.release();
     }
   } catch (error) {
-    console.error('Get subtasks error:', error);
+    console.error('Get subtasks error:', {
+      message: error.message,
+      code: error.code,
+      errno: error.errno,
+      sqlState: error.sqlState,
+      sql: error.sql,
+    });
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
-// PUT /api/employee/subtasks/:id - Update subtask completion status
+// PUT /api/employee/subtasks/:id - Update subtask details and completion status
 app.put('/api/employee/subtasks/:id', async (req, res) => {
   try {
     const subtaskId = req.params.id;
-    const { completed, user_id } = req.body;
+    const { title, status, completed, user_id } = req.body;
 
     const connection = await pool.getConnection();
     try {
@@ -755,10 +770,13 @@ app.put('/api/employee/subtasks/:id', async (req, res) => {
         }
       }
 
-      // Update subtask completion status
+      const nextCompleted = completed ? 1 : 0;
+      const nextStatus = status || (nextCompleted ? 'completed' : 'not-started');
+
+      // Update the submitted fields while keeping completion/status consistent with the client.
       await connection.execute(
-        'UPDATE subtask SET completed = ?, status = ?, updated_at = NOW() WHERE id = ?',
-        [completed ? 1 : 0, completed ? 'completed' : 'not-started', subtaskId]
+        'UPDATE subtask SET title = COALESCE(?, title), completed = ?, status = ?, updated_at = NOW() WHERE id = ?',
+        [title || null, nextCompleted, nextStatus, subtaskId]
       );
 
       if (subtask && subtask.length > 0) {
@@ -820,7 +838,13 @@ app.put('/api/employee/subtasks/:id', async (req, res) => {
       connection.release();
     }
   } catch (error) {
-    console.error('Update subtask error:', error);
+    console.error('Update subtask error:', {
+      message: error.message,
+      code: error.code,
+      errno: error.errno,
+      sqlState: error.sqlState,
+      sql: error.sql,
+    });
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });
@@ -898,7 +922,13 @@ app.post('/api/employee/tasks/:id/subtasks', async (req, res) => {
       connection.release();
     }
   } catch (error) {
-    console.error('Create subtask error:', error);
+    console.error('Create subtask error:', {
+      message: error.message,
+      code: error.code,
+      errno: error.errno,
+      sqlState: error.sqlState,
+      sql: error.sql,
+    });
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });
@@ -951,7 +981,13 @@ app.delete('/api/employee/subtasks/:id', async (req, res) => {
       connection.release();
     }
   } catch (error) {
-    console.error('Delete subtask error:', error);
+    console.error('Delete subtask error:', {
+      message: error.message,
+      code: error.code,
+      errno: error.errno,
+      sqlState: error.sqlState,
+      sql: error.sql,
+    });
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });
@@ -1039,6 +1075,69 @@ app.delete('/api/employee/daily-tracker/:id', async (req, res) => {
     }
   } catch (error) {
     console.error('Delete daily tracker error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// Get active employees for reviewer selection. Keep this before /api/users/:id.
+app.get('/api/users/employees', async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.execute(
+        `SELECT u.id, u.employee_code, u.first_name, u.last_name, u.email, u.phone, u.points,
+                r.name AS role_name, r.access_level
+         FROM user u
+         JOIN role r ON u.role_id = r.id
+         WHERE u.is_active = 1 AND r.access_level = 'employee'
+         ORDER BY u.first_name, u.last_name`
+      );
+      res.json({ success: true, users: rows });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Get employee users error:', {
+      message: error.message,
+      code: error.code,
+      errno: error.errno,
+      sqlState: error.sqlState,
+      sql: error.sql,
+    });
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// Get a single user, including points used by the employee dashboard.
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.execute(
+        `SELECT u.id, u.employee_code, u.first_name, u.last_name, u.email, u.phone,
+                u.points, u.avatar, r.name AS role_name, r.access_level
+         FROM user u
+         JOIN role r ON u.role_id = r.id
+         WHERE u.id = ?`,
+        [req.params.id]
+      );
+
+      if (rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'User not found' });
+      }
+
+      res.json({ success: true, user: rows[0] });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Get user by ID error:', {
+      message: error.message,
+      code: error.code,
+      errno: error.errno,
+      sqlState: error.sqlState,
+      sql: error.sql,
+    });
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });

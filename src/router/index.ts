@@ -35,9 +35,9 @@ export default defineRouter((/* { store, ssrContext } */) => {
   });
 
   // Navigation guards - DISABLED for testing without authentication
-  Router.beforeEach((to, from, next) => {
+  Router.beforeEach(() => {
     // Allow all routes without authentication check
-    next();
+    return true;
   });
   return Router;
 });

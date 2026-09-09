@@ -56,7 +56,7 @@
 
       <!-- Right Column -->
       <div class="col-3 column">
-        <TaskPriorityDistribution />
+        <TaskPriorityDonut />
       </div>
     </div>
 
@@ -1121,7 +1121,7 @@ import EmployeePerformanceReport from '../components/EmployeePerformanceReport.v
 import ScheduleReviewDialog from '../components/ScheduleReviewDialog.vue';
 import DailyLogReviewDialog from '../components/DailyLogReviewDialog.vue';
 import ProjectPerformanceTable from '../components/ProjectPerformanceTable.vue';
-import TaskPriorityDistribution from '../components/TaskPriorityDistribution.vue';
+import TaskPriorityDonut from '../components/TaskPriorityDonut.vue';
 import TaskCompletionTrend from '../components/TaskCompletionTrend.vue';
 
 const showDailyLogReview = ref(false);
