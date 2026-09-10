@@ -32,7 +32,7 @@ defineEmits(['create']);
 <style scoped>
 .quick-add-card {
   border-radius: 12px;
-  background: rgb(32, 67, 182);
+  background: #06518e;
   color: #faffd9;
   border-color: #e5eaf0;
   box-shadow: 0 7px 20px rgba(32, 54, 83, 0.05);

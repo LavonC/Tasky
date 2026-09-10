@@ -4,25 +4,23 @@
     <!-- PAGE HEADER -->
     <!-- ========================================================= -->
 
-    <div class="row items-center justify-between q-mb-lg">
+    <div class="row items-center justify-end q-mb-lg">
       <div class="row items-center q-gutter-sm">
-        <!-- Points Badge -->
+        <q-btn
+          flat
+          icon="lightbulb"
+          color="blue-10"
+          @click="showInsightsDialog = true"
+          label="Insights"
+          class="q-px-md"
+        >
+          <q-tooltip>View employee insights</q-tooltip>
+        </q-btn>
         <div class="points-badge">
           <q-icon name="monetization_on" size="20px" color="#FFD700" />
           <span class="points-text">{{ userPoints }}</span>
           <q-badge color="amber-8" :label="`Rank #${userRank}`" class="q-ml-sm" />
         </div>
-
-        <q-btn
-          flat
-          icon="lightbulb"
-          color="primary"
-          @click="showInsightsDialog = true"
-          label="Insights"
-          class="q-px-md"
-        >
-          <q-tooltip> View employee insights </q-tooltip>
-        </q-btn>
       </div>
     </div>
 
@@ -54,7 +52,7 @@
     <!-- MY TASKS -->
     <!-- ========================================================= -->
 
-    <q-card flat bordered class="my-tasks-card overflow-hidden">
+    <q-card flat bordered class="my-tasks-card overflow-hidden" style="align-self: flex-start">
       <!-- ======================================================= -->
       <!-- TASK HEADER -->
       <!-- ======================================================= -->
@@ -67,7 +65,6 @@
         :view-mode="viewMode"
         :tabs="[
           { name: 'all', label: 'All Tasks' },
-          { name: 'my', label: 'My Tasks' },
           { name: 'progress', label: 'In Progress' },
           { name: 'completed', label: 'Completed' },
         ]"
@@ -85,10 +82,13 @@
         :selected-priority="priorityFilter"
         :selected-status="statusFilter"
         :projects="projectOptions"
+        :task-view="taskView"
         @search="search = $event"
+        @search-type-change="searchType = $event"
         @project-change="projectFilter = $event"
         @priority-change="priorityFilter = $event"
         @status-change="statusFilter = $event"
+        @task-view-change="taskView = $event"
         @clear-filters="clearFilters"
       />
 
@@ -412,7 +412,7 @@
             <q-btn
               unelevated
               no-caps
-              color="primary"
+              color="blue-10"
               label="Manage"
               icon="tune"
               class="full-width q-mt-md"
@@ -456,8 +456,8 @@
           <q-btn icon="close" flat round dense color="white" @click="showAddDialog = false" />
         </q-card-section>
 
-        <q-card-section class="q-pa-lg">
-          <q-form @submit.prevent="createTask" class="q-gutter-md">
+        <q-card-section class="create-dialog-body q-pa-lg">
+          <q-form @submit.prevent="createTask" class="q-gutter-sm">
             <!-- PROJECT -->
 
             <q-select
@@ -494,8 +494,8 @@
 
             <!-- PRIORITY / DEADLINE -->
 
-            <div class="row q-col-md" style="gap: 10px">
-              <div class="col-12 col-sm-6">
+            <div class="row q-mt-lg row q-my-lg" style="gap: 39px">
+              <div class="col-12 col-sm-5">
                 <q-select
                   v-model="newTask.priority"
                   :options="priorityOptions.slice(1)"
@@ -505,7 +505,7 @@
                 />
               </div>
 
-              <div class="col-12 col-sm-5">
+              <div class="col-12 col-sm-6">
                 <q-input
                   v-model="newTask.deadline"
                   label="Deadline"
@@ -534,60 +534,100 @@
             <!-- SUBTASKS -->
 
             <div class="subtask-editor">
-              <div class="row items-center justify-between q-mb-sm">
+              <!-- SUBTASK HEADER -->
+              <div class="row items-center justify-between">
                 <div>
                   <div class="text-subtitle1 text-weight-bold">Subtasks</div>
-
                   <div class="text-caption text-grey-6">Break the task into smaller steps.</div>
                 </div>
 
                 <q-btn
                   flat
-                  no-caps
-                  color="primary"
-                  icon="add"
-                  label="Add Subtask"
-                  @click="addNewTaskSubtask"
-                />
-              </div>
-
-              <div v-if="newTask.subtasks.length === 0" class="empty-subtasks">
-                <q-icon name="playlist_add" size="30px" color="grey-5" />
-
-                <div class="text-caption text-grey-6 q-mt-xs">No subtasks added yet</div>
-              </div>
-
-              <div
-                v-for="(subtask, index) in newTask.subtasks"
-                :key="subtask.id"
-                class="subtask-row q-mt-sm row"
-              >
-                <q-input
-                  v-model="subtask.title"
-                  outlined
-                  dense
-                  :placeholder="`Subtask ${index + 1}`"
-                  class="col"
-                />
-
-                <q-input
-                  v-model.number="subtask.estimated_hours"
-                  type="number"
-                  outlined
-                  dense
-                  placeholder="Hours"
-                  style="width: 80px"
-                  class="q-ml-sm"
-                />
-
-                <q-btn
-                  flat
                   round
                   dense
-                  icon="delete_outline"
-                  color="negative"
-                  @click="removeNewTaskSubtask(index)"
+                  :icon="showSubtasks ? 'expand_less' : 'expand_more'"
+                  color="grey-7"
+                  @click="showSubtasks = !showSubtasks"
                 />
+              </div>
+
+              <!-- COLLAPSED ADD SUBTASK LINE -->
+              <div
+                v-if="!showSubtasks"
+                class="row items-center q-mt-sm cursor-pointer text-primary"
+                @click="showSubtasks = true"
+              ></div>
+
+              <!-- EXPANDED SUBTASKS -->
+              <div v-if="showSubtasks">
+                <div class="row justify-end q-mt-sm">
+                  <q-btn
+                    flat
+                    no-caps
+                    dense
+                    color="primary"
+                    icon="add"
+                    label="Add Subtask"
+                    @click="addNewTaskSubtask"
+                  />
+                </div>
+
+                <div v-if="newTask.subtasks.length === 0" class="empty-subtasks q-mt-sm">
+                  <q-icon name="playlist_add" size="30px" color="grey-5" />
+
+                  <div class="text-caption text-grey-6 q-mt-xs">No subtasks added yet</div>
+                </div>
+
+                <div
+                  v-for="(subtask, index) in newTask.subtasks"
+                  :key="subtask.id"
+                  class="subtask-row q-mt-sm row items-center"
+                >
+                  <!-- DRAG / SHUFFLE HANDLE -->
+                  <q-icon name="drag_indicator" size="22px" color="grey-6" class="cursor-grab" />
+
+                  <q-input
+                    v-model="subtask.title"
+                    outlined
+                    dense
+                    :placeholder="`Subtask ${index + 1}`"
+                    class="col"
+                  />
+
+                  <q-input
+                    v-model.number="subtask.estimated_hours"
+                    type="number"
+                    outlined
+                    dense
+                    placeholder="Hours"
+                    style="width: 80px"
+                    class="q-ml-sm"
+                  />
+
+                  <q-btn
+                    flat
+                    round
+                    dense
+                    icon="delete_outline"
+                    color="negative"
+                    @click="removeNewTaskSubtask(index)"
+                  />
+                </div>
+
+                <!-- COLLAPSE LINE -->
+                <div
+                  class="row items-center q-mt-md cursor-pointer text-grey-7"
+                  @click="showSubtasks = false"
+                >
+                  <q-separator class="col q-mr-md" />
+
+                  <div class="row items-center no-wrap">
+                    <q-icon name="expand_less" size="18px" class="q-mr-xs" />
+                    <span class="text-caption">Collapse</span>
+                  </div>
+
+                  <q-separator class="col q-ml-md" />
+                </div>
               </div>
             </div>
 
@@ -622,8 +662,9 @@
     <!-- ========================================================= -->
 
     <q-dialog v-model="showEditDialog">
-      <q-card class="task-dialog" v-if="selectedTask">
-        <q-card-section>
+      <q-card class="task-dialog" v-if="selectedTask" style="width: 600px; max-width: 90vw">
+        <!-- HEADER -->
+        <q-card-section class="q-pb-md">
           <div class="text-h6 text-weight-bold">Edit Subtasks</div>
 
           <div class="text-body2 text-grey-6 q-mt-xs">
@@ -633,45 +674,62 @@
 
         <q-separator />
 
-        <q-card-section>
+        <!-- SUBTASKS -->
+        <q-card-section class="q-pa-lg">
           <div
-            v-for="subtask in editSubtasks"
+            v-for="(subtask, index) in editSubtasks"
             :key="subtask.id"
-            class="edit-subtask-row row q-mt-sm"
+            class="edit-subtask-row row items-center q-mt-md"
           >
-            <q-input v-model="subtask.title" outlined dense class="col" />
+            <!-- SUBTASK TITLE -->
+            <q-input
+              v-model="subtask.title"
+              outlined
+              dense
+              :placeholder="`Subtask ${index + 1}`"
+              class="col"
+            />
 
+            <!-- HOURS -->
             <q-input
               v-model.number="subtask.estimated_hours"
               type="number"
               outlined
               dense
               placeholder="Hours"
-              style="width: 80px"
-              class="q-ml-sm"
+              min="0"
+              step="0.5"
+              style="width: 100px"
+              class="q-ml-md"
             />
 
+            <!-- DELETE -->
             <q-btn
               flat
               round
               dense
               icon="delete_outline"
               color="negative"
+              class="q-ml-sm"
               @click="removeEditSubtask(subtask.id)"
             />
           </div>
 
+          <!-- ADD SUBTASK -->
           <q-btn
             outline
             no-caps
             color="primary"
             icon="add"
             label="Add Subtask"
-            class="full-width q-mt-md"
+            class="full-width q-mt-lg"
             @click="addEditSubtask"
           />
         </q-card-section>
 
+        <q-separator />
+
+        <!-- ACTIONS -->
         <q-card-actions align="right" class="q-pa-md">
           <q-btn flat no-caps label="Cancel" @click="showEditDialog = false" />
 
@@ -690,86 +748,119 @@
     <!-- MANAGE DRAWER -->
     <!-- ========================================================= -->
 
-    <q-drawer
-      v-model="showManageDrawer"
-      side="right"
-      bordered
-      overlay
-      :width="480"
-      class="manage-drawer"
-    >
-      <div v-if="selectedTask" class="full-height column">
-        <!-- DRAWER HEADER -->
+    <q-dialog v-model="showManageDrawer" transition-show="scale" transition-hide="scale">
+      <q-card v-if="selectedTask" class="manage-dialog">
+        <!-- ================= HEADER ================= -->
 
-        <div class="manage-header q-pa-lg">
-          <div class="row items-start justify-between">
-            <div>
-              <div class="text-h6 text-weight-bold">Manage Task</div>
+        <q-card-section class="manage-header q-pa-lg">
+          <div class="row items-start no-wrap">
+            <!-- TASK ICON -->
+            <q-avatar
+              size="50px"
+              color="blue-1"
+              text-color="primary"
+              icon="task_alt"
+              class="q-mr-md"
+            />
 
-              <div class="text-body2 text-grey-6 q-mt-xs">Update your work progress</div>
+            <!-- TASK INFO -->
+            <div class="col">
+              <!-- TASK NAME = MAIN HEADING -->
+              <div class="manage-task-name">
+                {{ selectedTask.name }}
+              </div>
+
+              <!-- PROJECT + ASSIGNED BY -->
+              <div class="row items-center q-gutter-sm q-mt-sm">
+                <div class="task-project">
+                  <q-icon name="folder" size="17px" class="q-mr-xs" />
+                  {{ selectedTask.project }}
+                </div>
+
+                <q-badge
+                  :color="selectedTask.assignedBy === 'Self-Assigned' ? 'purple-1' : 'blue-1'"
+                  :text-color="selectedTask.assignedBy === 'Self-Assigned' ? 'purple-9' : 'blue-9'"
+                  :label="selectedTask.assignedBy"
+                  class="text-weight-medium"
+                />
+              </div>
             </div>
 
-            <q-btn flat round dense icon="close" color="grey-7" @click="showManageDrawer = false" />
-          </div>
+            <!-- DEADLINE -->
+            <div class="header-deadline q-mr-lg">
+              <div class="row items-center no-wrap q-mt-xs">
+                <q-icon name="event" size="19px" color="red" class="q-mr-xs" />
+                <span class="text-body2 text-weight-bold text-red">
+                  {{ formatDate(selectedTask.deadline) }}
+                </span>
+              </div>
+              <div class="text-caption text-grey-6"></div>
+            </div>
 
-          <!-- TASK -->
-
-          <div class="manage-task-title q-mt-lg">
-            {{ selectedTask.name }}
-          </div>
-
-          <div class="text-caption text-grey-6 row items-center q-gutter-xs q-mt-xs">
-            <span>{{ selectedTask.project }}</span>
-            <span>•</span>
-            <q-badge
-              :color="selectedTask.assignedBy === 'Self-Assigned' ? 'purple-1' : 'blue-1'"
-              :text-color="selectedTask.assignedBy === 'Self-Assigned' ? 'purple-9' : 'blue-9'"
-              :label="selectedTask.assignedBy"
-              class="text-weight-medium q-px-xs"
+            <!-- CLOSE -->
+            <q-btn
+              flat
+              round
+              dense
+              icon="close"
+              color="grey-7"
+              class="manage-close-btn"
+              @click="showManageDrawer = false"
             />
           </div>
-        </div>
+        </q-card-section>
 
-        <q-separator />
+        <!-- ================= TABS ================= -->
 
         <q-tabs
           v-model="manageTab"
-          dense
-          class="bg-white text-grey-7 q-px-lg"
+          class="manage-tabs"
           active-color="primary"
           indicator-color="primary"
-          align="left"
-          narrow-indicator
+          align="justify"
+          no-caps
+          broad-indicator
         >
-          <q-tab name="details" label="Details" />
-          <q-tab name="timeline" label="Progress Timeline" />
-          <q-tab name="impact" label="Simulate Impact" />
+          <q-tab name="details" icon="tune" label="Details" />
+
+          <q-tab name="timeline" icon="timeline" label="Progress Timeline" />
+
+          <q-tab name="impact" icon="analytics" label="Simulate Impact" />
         </q-tabs>
 
-        <q-separator />
+        <!-- ================= CONTENT ================= -->
 
-        <!-- DRAWER CONTENT -->
+        <q-tab-panels
+          v-model="manageTab"
+          animated
+          swipeable
+          transition-prev="slide-right"
+          transition-next="slide-left"
+          class="manage-panels"
+        >
+          <!-- ================================================= -->
+          <!-- DETAILS -->
+          <!-- ================================================= -->
 
-        <q-tab-panels v-model="manageTab" animated class="col scroll bg-grey-1">
-          <q-tab-panel name="details" class="q-pa-lg">
+          <q-tab-panel name="details" class="manage-panel">
             <!-- PROGRESS -->
 
-            <div class="manage-progress-card q-pa-md">
+            <div class="manage-progress-card">
               <div class="row items-center justify-between">
                 <div>
                   <div class="text-caption text-grey-6">Overall Progress</div>
 
-                  <div class="text-h4 text-weight-bold q-mt-xs">
+                  <div class="text-h3 text-weight-bold text-primary q-mt-xs">
                     {{ taskProgress(selectedTask) }}%
                   </div>
                 </div>
 
                 <q-circular-progress
                   :value="taskProgress(selectedTask)"
-                  size="72px"
+                  size="78px"
                   :thickness="0.16"
                   color="primary"
-                  track-color="grey-3"
+                  track-color="blue-1"
                   show-value
                 >
                   {{ taskProgress(selectedTask) }}%
@@ -779,19 +870,21 @@
               <q-linear-progress
                 :value="taskProgress(selectedTask) / 100"
                 color="primary"
-                track-color="grey-3"
+                track-color="blue-1"
                 rounded
                 size="9px"
                 class="q-mt-md"
               />
             </div>
 
-            <!-- SUBTASKS -->
+            <!-- ================= SUBTASKS ================= -->
 
-            <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Subtasks</div>
+            <div class="section-title q-mt-xl q-mb-md">Subtasks</div>
+
+            <!-- EMPTY -->
 
             <div v-if="selectedTask.subtasks.length === 0" class="empty-subtasks">
-              <q-icon name="playlist_add" size="32px" color="grey-5" />
+              <q-icon name="playlist_add" size="36px" color="blue-3" />
 
               <div class="text-body2 text-grey-6 q-mt-sm">No subtasks added.</div>
 
@@ -799,11 +892,14 @@
                 flat
                 no-caps
                 color="primary"
+                icon="add"
                 label="Add Subtasks"
                 class="q-mt-sm"
                 @click="openEditFromManage"
               />
             </div>
+
+            <!-- SUBTASKS -->
 
             <div v-for="subtask in selectedTask.subtasks" :key="subtask.id" class="manage-subtask">
               <div class="row items-start no-wrap">
@@ -822,8 +918,9 @@
                     }"
                   >
                     {{ subtask.title }}
+
                     <span v-if="subtask.estimated_hours" class="text-caption text-grey-6 q-ml-sm">
-                      ({{ subtask.estimated_hours }} hr)
+                      {{ subtask.estimated_hours }} hr
                     </span>
                   </div>
 
@@ -833,7 +930,7 @@
                     dense
                     outlined
                     class="q-mt-sm"
-                    style="max-width: 180px"
+                    style="max-width: 200px"
                     :disable="subtask.originally_completed"
                     @update:model-value="updateSubtaskStatus(selectedTask, subtask)"
                   />
@@ -841,21 +938,22 @@
               </div>
             </div>
 
-            <!-- STATUS -->
+            <!-- ================= TASK STATUS ================= -->
 
-            <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Task Status</div>
+            <div class="section-title q-mt-xl q-mb-md">Task Status</div>
 
             <q-select
               v-model="selectedTask.status"
               :options="taskStatusOptions"
               outlined
+              dense
               label="Current status"
               @update:model-value="handleTaskStatusChange(selectedTask)"
             />
 
-            <!-- TODAY'S NOTE -->
+            <!-- ================= TODAY'S UPDATE ================= -->
 
-            <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Today's Update</div>
+            <div class="section-title q-mt-xl q-mb-sm">Today's Update</div>
 
             <q-input
               v-model="selectedTask.todayNote"
@@ -865,11 +963,11 @@
               placeholder="What did you work on today?"
             />
 
-            <!-- COMMENTS -->
+            <!-- ================= COMMENTS ================= -->
 
-            <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Task Comment</div>
+            <div class="section-title q-mt-xl q-mb-sm">Task Comment</div>
 
-            <div class="row q-gutter-sm">
+            <div class="row items-center no-wrap q-gutter-sm q-mb-lg">
               <q-input
                 v-model="newComment"
                 outlined
@@ -877,10 +975,11 @@
                 class="col"
                 placeholder="Add a comment to the timeline..."
               />
-              <q-btn color="primary" icon="send" dense flat @click="submitComment" />
+
+              <q-btn color="primary" icon="send" dense flat round @click="submitComment" />
             </div>
 
-            <!-- DEADLINE -->
+            <!-- ================= DEADLINE ================= 
 
             <div
               class="deadline-box q-mt-lg"
@@ -888,7 +987,7 @@
                 'deadline-overdue': isOverdue(selectedTask),
               }"
             >
-              <q-icon name="event" size="20px" />
+              <q-icon name="event" size="21px" />
 
               <div class="q-ml-sm">
                 <div class="text-caption">Deadline</div>
@@ -897,61 +996,110 @@
                   {{ formatDate(selectedTask.deadline) }}
                 </div>
               </div>
-            </div>
+            </div> -->
           </q-tab-panel>
 
-          <q-tab-panel name="timeline" class="q-pa-lg">
-            <q-card flat bordered class="bg-white q-pa-md">
-              <div class="text-subtitle1 text-weight-bold q-mb-md">Progress Timeline</div>
+          <!-- ================================================= -->
+          <!-- TIMELINE -->
+          <!-- ================================================= -->
+
+          <q-tab-panel name="timeline" class="manage-panel">
+            <div class="timeline-card">
+              <div class="section-title q-mb-xs">Progress Timeline</div>
+
               <div class="text-body2 text-grey-7">
                 Track updates and comments for this task here.
               </div>
-              <div class="q-mt-lg text-caption text-grey-6">
-                Current status: {{ selectedTask?.status }}
+
+              <q-separator class="q-my-lg" />
+
+              <div class="timeline-item">
+                <q-avatar size="42px" color="blue-1" text-color="primary" icon="flag" />
+
+                <div class="q-ml-md">
+                  <div class="text-body2 text-weight-bold">Current Status</div>
+
+                  <div class="text-caption text-grey-6 q-mt-xs">
+                    {{ selectedTask.status }}
+                  </div>
+                </div>
               </div>
-              <div class="q-mt-sm text-caption text-grey-6">
-                Last recorded progress: {{ selectedTask ? taskProgress(selectedTask) : 0 }}%
+
+              <div class="timeline-item q-mt-sm">
+                <q-avatar size="42px" color="blue-1" text-color="primary" icon="trending_up" />
+
+                <div class="q-ml-md">
+                  <div class="text-body2 text-weight-bold">Current Progress</div>
+
+                  <div class="text-caption text-grey-6 q-mt-xs">
+                    {{ taskProgress(selectedTask) }}% completed
+                  </div>
+                </div>
               </div>
-            </q-card>
+            </div>
           </q-tab-panel>
 
-          <q-tab-panel name="impact" class="q-pa-lg">
-            <q-card flat bordered class="bg-white q-pa-md">
-              <div class="text-subtitle1 text-weight-bold q-mb-md">Simulate Impact</div>
+          <!-- ================================================= -->
+          <!-- IMPACT -->
+          <!-- ================================================= -->
+
+          <q-tab-panel name="impact" class="manage-panel">
+            <div class="timeline-card">
+              <div class="section-title q-mb-sm">Simulate Impact</div>
+
               <div class="text-body2 text-grey-7">
                 Review the task's current progress, deadline and remaining work before making an
                 update.
               </div>
-              <q-linear-progress
-                :value="selectedTask ? taskProgress(selectedTask) / 100 : 0"
-                color="primary"
-                track-color="grey-3"
-                rounded
-                size="8px"
-                class="q-mt-lg"
-              />
-              <div class="row justify-between text-caption text-grey-6 q-mt-sm">
-                <span>Progress</span
-                ><span>{{ selectedTask ? taskProgress(selectedTask) : 0 }}%</span>
+
+              <div class="q-mt-lg">
+                <div class="row justify-between text-caption text-grey-7">
+                  <span>Current Progress</span>
+
+                  <span> {{ taskProgress(selectedTask) }}% </span>
+                </div>
+
+                <q-linear-progress
+                  :value="taskProgress(selectedTask) / 100"
+                  color="primary"
+                  track-color="blue-1"
+                  rounded
+                  size="10px"
+                  class="q-mt-sm"
+                />
               </div>
-            </q-card>
+
+              <div class="impact-info q-mt-lg">
+                <q-icon name="event" size="22px" color="primary" />
+
+                <div class="q-ml-md">
+                  <div class="text-caption text-grey-6">Deadline</div>
+
+                  <div class="text-body2 text-weight-bold">
+                    {{ formatDate(selectedTask.deadline) }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="impact-info q-mt-md">
+                <q-icon name="flag" size="22px" color="primary" />
+
+                <div class="q-ml-md">
+                  <div class="text-caption text-grey-6">Current Status</div>
+
+                  <div class="text-body2 text-weight-bold">
+                    {{ selectedTask.status }}
+                  </div>
+                </div>
+              </div>
+            </div>
           </q-tab-panel>
         </q-tab-panels>
 
-        <!-- SAVE -->
+        <!-- ================= FOOTER ================= -->
 
-        <div class="q-pa-lg manage-footer">
-          <q-btn
-            unelevated
-            no-caps
-            color="primary"
-            icon="save"
-            label="Save Update"
-            class="full-width"
-            size="md"
-            @click="saveTaskUpdate"
-          />
-
+        <q-separator />
+        <div class="manage-footer q-pa-lg row justify-end q-gutter-md">
           <q-btn
             v-if="selectedTask.status === 'completed'"
             unelevated
@@ -959,7 +1107,7 @@
             color="positive"
             icon="rate_review"
             label="Put for Review"
-            class="full-width q-mt-md"
+            class="mid-width"
             size="md"
             @click="openReviewDialog"
           />
@@ -972,13 +1120,23 @@
             color="negative"
             icon="warning"
             label="Interrupt Task"
-            class="full-width q-mt-md"
+            class="mid-width"
             size="md"
             @click="showInterruptDialog = true"
           />
+          <q-btn
+            unelevated
+            no-caps
+            color="primary"
+            icon="save"
+            label="Save Update"
+            class="mid-width"
+            size="md"
+            @click="saveTaskUpdate"
+          />
         </div>
-      </div>
-    </q-drawer>
+      </q-card>
+    </q-dialog>
 
     <!-- ========================================================= -->
     <!-- REVIEW DIALOG -->
@@ -1116,6 +1274,15 @@ const authStore = useAuthStore();
 // ============================================================
 // TYPES
 // ============================================================
+const search = ref('');
+const searchType = ref('task');
+
+const projectFilter = ref('All Projects');
+const priorityFilter = ref('All Priorities');
+const statusFilter = ref('All Statuses');
+const activeTab = ref('all');
+const viewMode = ref<'list' | 'grid'>('list');
+const taskView = ref('all');
 
 type TaskStatus = 'not-started' | 'in-progress' | 'completed' | 'blocked' | 'in-review';
 
@@ -1165,18 +1332,6 @@ interface Task {
 // STATE
 // ============================================================
 
-const search = ref('');
-
-const activeTab = ref('all');
-
-const viewMode = ref<'list' | 'grid'>('list');
-
-const projectFilter = ref('All Projects');
-
-const priorityFilter = ref('All Priorities');
-
-const statusFilter = ref('All Statuses');
-
 const showAddDialog = ref(false);
 
 const showEditDialog = ref(false);
@@ -1191,6 +1346,7 @@ const userRank = ref(0);
 const selectedTask = ref<Task | null>(null);
 const manageTab = ref('details');
 
+const showSubtasks = ref(false);
 // ============================================================
 // FETCH TASKS FROM BACKEND
 // ============================================================
@@ -1662,43 +1818,67 @@ const activeTabLabel = computed(() => {
 // ============================================================
 // FILTERED TASKS
 // ============================================================
-
 const filteredTasks = computed(() => {
-  // For completed tab, show all completed tasks regardless of other filters
-  if (activeTab.value === 'completed') {
-    return tasks.value.filter((task) => task.status === 'completed' || task.progress === 100);
+  let result = tasks.value;
+
+  /* SEARCH */
+
+  if (search.value.trim()) {
+    const query = search.value.toLowerCase().trim();
+
+    result = result.filter((task) => {
+      if (searchType.value === 'project') {
+        return task.project?.toLowerCase().includes(query);
+      }
+
+      if (searchType.value === 'priority') {
+        return task.priority?.toLowerCase().includes(query);
+      }
+
+      if (searchType.value === 'status') {
+        return task.status?.toLowerCase().includes(query);
+      }
+
+      // DEFAULT = TASK NAME
+      return task.name?.toLowerCase().includes(query);
+    });
   }
 
-  const query = search.value.toLowerCase();
+  /* PROJECT FILTER */
 
-  const result = tasks.value.filter((task) => {
-    const matchesSearch =
-      !query ||
-      task.name.toLowerCase().includes(query) ||
-      task.description.toLowerCase().includes(query) ||
-      task.project.toLowerCase().includes(query);
+  if (projectFilter.value !== 'All Projects') {
+    result = result.filter((task) => task.project === projectFilter.value);
+  }
 
-    const matchesProject =
-      projectFilter.value === 'All Projects' || task.project === projectFilter.value;
+  /* PRIORITY FILTER */
 
-    const matchesPriority =
-      priorityFilter.value === 'All Priorities' || task.priority === priorityFilter.value;
+  if (priorityFilter.value !== 'All Priorities') {
+    result = result.filter((task) => task.priority === priorityFilter.value);
+  }
 
-    const matchesStatus =
-      statusFilter.value === 'All Statuses' || task.status === statusFilter.value;
+  /* STATUS FILTER */
 
-    let matchesTab = true;
+  if (statusFilter.value !== 'All Statuses') {
+    result = result.filter((task) => task.status === statusFilter.value);
+  }
 
-    if (activeTab.value === 'progress') {
-      matchesTab = task.status === 'in-progress';
-    }
+  /* SELF / PM */
 
-    if (activeTab.value === 'my') {
-      matchesTab = task.assignedBy === 'Assigned by PM' || task.assignedBy === 'Self-Assigned';
-    }
+  if (taskView.value === 'self') {
+    result = result.filter((task) => task.assignedBy === 'Self-Assigned');
+  }
 
-    return matchesSearch && matchesProject && matchesPriority && matchesStatus && matchesTab;
-  });
+  if (taskView.value === 'pm') {
+    result = result.filter((task) => task.assignedBy !== 'Self-Assigned');
+  }
+
+  if (activeTab.value === 'progress') {
+    result = result.filter((task) => task.status === 'in-progress');
+  }
+
+  if (activeTab.value === 'completed') {
+    result = result.filter((task) => task.status === 'completed');
+  }
 
   return result;
 });
@@ -2491,8 +2671,12 @@ async function submitInterrupt() {
 }
 
 .my-tasks-card {
-  border-radius: var(--radius-lg);
-  background: white;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+
+  background: #f5f8fc;
 }
 
 .my-task-icon {
@@ -2565,8 +2749,15 @@ async function submitInterrupt() {
 }
 
 .grid-description {
-  white-space: normal;
-  max-width: none;
+  height: 40px;
+  line-height: 20px;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Create Task dialog — visually matched to the Project Manager dialog */
@@ -2580,6 +2771,10 @@ async function submitInterrupt() {
 .create-dialog-header {
   color: white;
   background: linear-gradient(135deg, #3949ab, #5c6bc0);
+}
+.create-dialog-body {
+  max-height: calc(90vh - 110px);
+  overflow-y: auto;
 }
 
 .subtask-editor {
@@ -2627,62 +2822,250 @@ async function submitInterrupt() {
   margin-bottom: 10px;
 }
 
+.manage-dialog {
+  width: 850px;
+  max-width: 94vw;
+
+  height: 88vh;
+  max-height: 900px;
+
+  border-radius: 20px;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+
+  background: #f5f8fc;
+}
+
+/* ================= HEADER ================= */
+
 .manage-header {
+  flex-shrink: 0;
+
+  background: #ffffff;
+  color: #263238;
+
+  border-bottom: 1px solid #e3edf7;
+}
+
+.manage-task-name {
+  font-size: 25px;
+  line-height: 1.3;
+
+  font-weight: 800;
+
+  color: #1565c0;
+}
+
+.task-project {
+  display: flex;
+  align-items: center;
+
+  color: #607d8b;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.manage-close-btn {
+  color: #607d8b !important;
+}
+
+.manage-close-btn:hover {
+  background: #eaf4ff;
+  color: #1565c0 !important;
+}
+
+/* ================= TABS ================= */
+.manage-tabs {
+  flex-shrink: 0;
+  min-height: 16px;
   background: #ffffff;
 }
 
-.manage-task-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #111827;
+.manage-tabs .q-tab {
+  min-height: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #78909c;
 }
+
+/* Put icon + text horizontally */
+.manage-tabs .q-tab__content {
+  flex-direction: row !important;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Icon spacing */
+.manage-tabs .q-tab__icon {
+  margin-right: 8px !important;
+  margin-bottom: 0 !important;
+}
+
+/* Text */
+.manage-tabs .q-tab__label {
+  margin: 0 !important;
+}
+
+.manage-tabs .q-tab--active {
+  color: #1565c0;
+}
+/* ================= CONTENT ================= */
+
+.manage-panels {
+  flex: 1;
+  min-height: 0;
+
+  background: #f5f8fc;
+}
+
+.manage-panel {
+  padding: 28px 40px;
+}
+
+/* ================= PROGRESS ================= */
 
 .manage-progress-card {
-  border-radius: var(--radius-lg);
-  background: #f3e8ff;
+  padding: 22px;
+
+  background: #ffffff;
+
+  border: 1px solid #e0eaf4;
+  border-radius: 16px;
+
+  box-shadow: 0 3px 14px rgba(21, 101, 192, 0.06);
 }
 
+/* ================= SECTION TITLES ================= */
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+
+  color: #263238;
+}
+
+/* ================= SUBTASK ================= */
+
 .manage-subtask {
-  padding: 14px;
+  padding: 15px 16px;
+
   margin-bottom: 10px;
-  border: 1px solid #edf0f5;
-  border-radius: var(--radius-md);
-  background: white;
-  transition: all 0.15s ease;
+
+  background: #ffffff;
+
+  border: 1px solid #e1eaf3;
+  border-radius: 13px;
+
+  transition: all 0.2s ease;
 }
 
 .manage-subtask:hover {
-  border-color: #7c3aed;
-  box-shadow: var(--shadow-sm);
+  border-color: #90caf9;
+
+  box-shadow: 0 4px 14px rgba(33, 150, 243, 0.08);
 }
 
 .manage-subtask-title {
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+
+  color: #37474f;
+
+  line-height: 1.5;
+}
+
+.completed-subtask {
+  text-decoration: line-through;
+  color: #9e9e9e;
+}
+
+/* ================= EMPTY ================= */
+
+.empty-subtasks {
+  padding: 36px 20px;
+
+  text-align: center;
+
+  background: #ffffff;
+
+  border: 1px dashed #b8cce0;
+  border-radius: 14px;
+}
+
+/* ================= TIMELINE ================= */
+
+.timeline-card {
+  padding: 24px;
+
+  background: #ffffff;
+
+  border: 1px solid #e0eaf4;
+  border-radius: 16px;
+
+  box-shadow: 0 3px 14px rgba(21, 101, 192, 0.05);
+}
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+
+  padding: 15px;
+
+  background: #f5f9ff;
+
+  border-radius: 12px;
+}
+
+/* ================= IMPACT ================= */
+
+.impact-info {
+  display: flex;
+  align-items: center;
+
+  padding: 16px;
+
+  background: #f5f9ff;
+
+  border: 1px solid #e2edf8;
+  border-radius: 12px;
+}
+
+/* ================= DEADLINE ================= */
+
+.deadline-box {
+  display: flex;
+  align-items: center;
+
+  padding: 15px;
+
+  background: #eaf4ff;
+
+  border: 1px solid #bbdefb;
+  border-radius: 12px;
+
+  color: #1565c0;
+}
+
+.deadline-overdue {
+  background: #ffebee;
+
+  border-color: #ffcdd2;
+
+  color: #c62828;
+}
+
+/* ================= FOOTER ================= */
+
+.manage-footer {
+  flex-shrink: 0;
+
+  background: transparent !important;
 }
 
 .completed-subtask {
   color: #94a3b8;
   text-decoration: line-through;
-}
-
-.deadline-box {
-  display: flex;
-  align-items: center;
-  padding: 13px;
-  border-radius: var(--radius-md);
-  background: #eff6ff;
-  color: #3b82f6;
-}
-
-.deadline-overdue {
-  background: #fef2f2;
-  color: #ef4444;
-}
-
-.manage-footer {
-  border-top: 1px solid #e5e7eb;
-  background: white;
 }
 </style>

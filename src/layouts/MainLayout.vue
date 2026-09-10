@@ -4,10 +4,10 @@
     <q-drawer
       v-model="leftDrawerOpen"
       show-if-above
-      :width="260"
+      :width="280"
       :mini="sidebarCollapsed"
       class="text-white column employee-sidebar"
-      style="background-color: #01366e !important; border-radius: 0 32px 32px 0"
+      style="background-color: #01366e !important"
       content-style="background-color: #01366E !important"
     >
       <!-- Background decorative shapes -->
@@ -75,7 +75,7 @@
             :to="link.link"
             :active="link.link === $route.path"
             active-class="nav-active"
-            class="nav-item q-py-sm text-grey-4"
+            class="nav-item q-py-sm text-blue-grey-4"
             :class="sidebarCollapsed ? 'justify-center' : ''"
           >
             <q-item-section avatar>
@@ -291,7 +291,6 @@
 
 .collapse-btn {
   margin-top: 4px;
-  overflow: hidden !important;
 }
 
 /* ================= HEADER ================= */
