@@ -34,21 +34,77 @@ h3,
 }
 
 body.body--dark {
-  background: #121212;
-  color: #f5f5f5;
+  background: #121a1f;
+  color: #edf2f7;
 }
 
 body.body--dark .q-page,
 body.body--dark .q-page-container,
-body.body--dark .bg-grey-1 {
-  background-color: #121212 !important;
+body.body--dark .bg-grey-1,
+body.body--dark [style*='background-color: #f8f9fa'],
+body.body--dark [style*='background:#f8f9fa'] {
+  background-color: #121a1f !important;
+}
+
+body.body--dark .text-black,
+body.body--dark .text-dark {
+  color: #edf2f7 !important;
 }
 
 body.body--dark .bg-white,
-body.body--dark .surface {
-  background: #1d1d1d !important;
-  border-color: #383838;
-  color: #f5f5f5;
+body.body--dark .surface,
+body.body--dark .q-card,
+body.body--dark .q-menu,
+body.body--dark .q-dialog__inner > .q-card,
+body.body--dark .q-table__container {
+  background: #1d2930 !important;
+  border-color: #34434c;
+  color: #edf2f7;
+}
+
+body.body--dark .q-field--outlined .q-field__control,
+body.body--dark .q-field--filled .q-field__control {
+  background: #26343c !important;
+}
+
+body.body--dark .q-field__native,
+body.body--dark .q-field__input,
+body.body--dark .q-field__label,
+body.body--dark .q-field__marginal,
+body.body--dark .q-item,
+body.body--dark .q-table th,
+body.body--dark .q-table td {
+  color: #edf2f7 !important;
+}
+
+body.body--dark .bg-blue-1,
+body.body--dark .bg-indigo-1,
+body.body--dark .bg-green-1,
+body.body--dark .bg-orange-1,
+body.body--dark .bg-amber-1 {
+  background-color: #26343c !important;
+}
+
+body.body--dark .text-blue-9,
+body.body--dark .text-indigo-9,
+body.body--dark .text-green-9,
+body.body--dark .text-orange-9,
+body.body--dark .text-amber-9,
+body.body--dark .text-grey-7 {
+  color: #b8c7d1 !important;
+}
+
+body.body--dark .q-separator,
+body.body--dark .q-table thead,
+body.body--dark .q-table tbody tr {
+  border-color: #34434c !important;
+  background: #1d2930;
+}
+
+body.body--dark input,
+body.body--dark textarea,
+body.body--dark select {
+  color: #edf2f7;
 }
 :root {
   --priority-critical-bg: #f1f3f5;

@@ -171,6 +171,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import ResourceDetailDialog from '../components/ResourceDetailDialog.vue';
 import ResourceUtilizationChart from '../components/ResourceUtilizationChart.vue';
 import ActiveTasksChart from '../components/ActiveTasksChart.vue';
@@ -178,9 +179,11 @@ import WorkloadScatterChart from '../components/WorkloadScatterChart.vue';
 import { useAuthStore } from '../stores/authStore'
 
 const authStore = useAuthStore()
+const router = useRouter()
 
 const logout = () => {
   authStore.logout()
+  void router.replace('/auth/login')
 }
 
 const employees = ref<any[]>([]);

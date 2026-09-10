@@ -195,7 +195,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from '../stores/authStore';
@@ -220,12 +220,26 @@ const filterMonth = ref('This Month');
 const exporting = ref(false);
 
 onMounted(() => {
-  analyticsStore.loadAll();
+  analyticsStore.loadAll('this_month');
+});
+
+watch(filterMonth, (period) => {
+  const periodKey = {
+    'This Month': 'this_month',
+    'Last Month': 'last_month',
+    'This Quarter': 'this_quarter',
+    'This Year': 'this_year',
+    'All Time': 'all_time',
+  }[period];
+
+  if (periodKey) {
+    void analyticsStore.loadAll(periodKey);
+  }
 });
 
 const logout = () => {
   authStore.logout();
-  router.push('/auth/login');
+  router.replace('/auth/login');
 };
 
 const exportReport = () => {

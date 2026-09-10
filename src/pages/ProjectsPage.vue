@@ -339,7 +339,7 @@ const atRiskProjectCount = computed(() => projectStore.atRiskProjects.length);
 
 const logout = () => {
   authStore.logout();
-  router.push('/auth/login');
+  router.replace('/auth/login');
 };
 
 // Dialogs

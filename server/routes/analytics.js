@@ -1,6 +1,22 @@
 import { Router } from 'express';
 const router = Router();
 
+function getPeriodFilter(column, period) {
+  switch (period) {
+    case 'last_month':
+      return ` AND ${column} >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01') AND ${column} < DATE_FORMAT(CURDATE(), '%Y-%m-01')`;
+    case 'this_quarter':
+      return ` AND ${column} >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)`;
+    case 'this_year':
+      return ` AND ${column} >= DATE_FORMAT(CURDATE(), '%Y-01-01')`;
+    case 'all_time':
+      return '';
+    case 'this_month':
+    default:
+      return ` AND ${column} >= DATE_FORMAT(CURDATE(), '%Y-%m-01')`;
+  }
+}
+
 export default function analyticsRoutes(pool) {
   // GET /api/pm/analytics/overview
   router.get('/overview', async (req, res) => {
@@ -8,6 +24,9 @@ export default function analyticsRoutes(pool) {
       // Authentication removed for testing - use org_id = 1
       const orgId = 1;
       const pmId = 1;
+      const period = typeof req.query.period === 'string' ? req.query.period : 'this_month';
+      const projectPeriodFilter = getPeriodFilter('p.created_at', period);
+      const taskPeriodFilter = getPeriodFilter('t.created_at', period);
 
       const [projectStats] = await pool.execute(
         `
@@ -16,7 +35,7 @@ export default function analyticsRoutes(pool) {
           SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) AS active_projects,
           SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_projects,
           ROUND(AVG(progress), 1) AS avg_progress
-        FROM project WHERE org_id = ? AND created_by = ?
+        FROM project p WHERE p.org_id = ? AND p.created_by = ?${projectPeriodFilter}
       `,
         [orgId, pmId],
       );
@@ -29,7 +48,7 @@ export default function analyticsRoutes(pool) {
           SUM(CASE WHEN t.status NOT IN ('completed') AND t.deadline < CURDATE() THEN 1 ELSE 0 END) AS overdue_tasks,
           ROUND(AVG(t.progress), 1) AS avg_task_progress
         FROM task t JOIN project p ON p.id = t.project_id
-        WHERE p.org_id = ? AND p.created_by = ?
+        WHERE p.org_id = ? AND p.created_by = ?${taskPeriodFilter}
       `,
         [orgId, pmId],
       );
@@ -86,6 +105,9 @@ export default function analyticsRoutes(pool) {
       // Authentication removed for testing
       const orgId = 1;
       const pmId = 1;
+      const period = typeof req.query.period === 'string' ? req.query.period : 'this_month';
+      const projectPeriodFilter = getPeriodFilter('p.created_at', period);
+      const taskPeriodFilter = getPeriodFilter('t.created_at', period);
 
       const [projects] = await pool.execute(
         `
@@ -101,8 +123,8 @@ export default function analyticsRoutes(pool) {
           SUM(CASE WHEN t.status IN ('in-progress', 'not-started') THEN 1 ELSE 0 END) AS pending_tasks,
           SUM(CASE WHEN t.deadline < CURDATE() AND t.status != 'completed' THEN 1 ELSE 0 END) AS overdue_tasks
         FROM project p
-        LEFT JOIN task t ON t.project_id = p.id
-        WHERE p.org_id = ? AND p.created_by = ?
+        LEFT JOIN task t ON t.project_id = p.id${taskPeriodFilter}
+        WHERE p.org_id = ? AND p.created_by = ?${projectPeriodFilter}
         GROUP BY p.id
         ORDER BY p.end_date ASC
       `,

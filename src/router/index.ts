@@ -34,9 +34,32 @@ export default defineRouter((/* { store, ssrContext } */) => {
     history: createHistory(import.meta.env.QUASAR_VUE_ROUTER_BASE),
   });
 
-  // Navigation guards - DISABLED for testing without authentication
-  Router.beforeEach(() => {
-    // Allow all routes without authentication check
+  Router.beforeEach((to) => {
+    const savedUser = sessionStorage.getItem('tasky_user');
+    const savedToken = sessionStorage.getItem('tasky_token');
+    const isAuthenticated = Boolean(savedUser && savedToken);
+    const isProtectedRoute = to.matched.some((record) => record.meta.requiresAuth);
+    const isAuthRoute = to.path.startsWith('/auth');
+
+    if (isProtectedRoute && !isAuthenticated) {
+      return { path: '/auth/login', replace: true };
+    }
+
+    if (isAuthRoute && isAuthenticated) {
+      let role: string | undefined;
+      try {
+        role = JSON.parse(savedUser || '{}').role;
+      } catch {
+        sessionStorage.removeItem('tasky_user');
+        sessionStorage.removeItem('tasky_token');
+      }
+
+      return {
+        path: role === 'employee' ? '/employee/task-manager' : '/dashboard',
+        replace: true,
+      };
+    }
+
     return true;
   });
   return Router;

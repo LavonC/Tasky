@@ -419,7 +419,7 @@ const clearFilters = () => {
 
 const logout = () => {
   authStore.logout();
-  router.push('/auth/login');
+  router.replace('/auth/login');
 };
 
 // Dialogs

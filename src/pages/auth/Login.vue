@@ -312,9 +312,9 @@ try {
 
       // Route based on role from database - all in same project
       if (result.user.role === 'pm') {
-        void router.push('/dashboard');
+        void router.replace('/dashboard');
       } else {
-        void router.push('/employee/task-manager');
+        void router.replace('/employee/task-manager');
       }
     } else {
       // Increment failed attempts

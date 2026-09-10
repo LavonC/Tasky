@@ -1,190 +1,188 @@
 <template>
-  <q-layout view="lHh Lpr lFf" class="bg-grey-1">
+  <q-layout view="lHh Lpr lFf" class="page-background">
+    <!-- ================= SIDEBAR ================= -->
     <q-drawer
       v-model="leftDrawerOpen"
       show-if-above
-      :width="260"
-      class="text-white q-pa-md flex column"
-      style="background-color: #1a1a27; border-radius: 0 32px 32px 0"
+      :width="261"
+      :mini="sidebarCollapsed"
+      class="text-black column pm-sidebar"
+      style="background-color: #ffffff !important; border-radius: 0 32px 32px 0; border-right: 1px solid #e6e5e5"
+      content-style="background-color: #ffffff !important"
     >
-      <!-- Logo -->
-      <div class="row items-center q-mb-xl q-pl-sm q-pt-md">
-        <q-icon name="o_task_alt" size="32px" class="q-mr-sm" />
-        <div class="text-h5 text-weight-bold">Tasky</div>
-      </div>
+      <!-- Background decorative shapes -->
+      <div class="sidebar-shape shape-top"></div>
+      <div class="sidebar-shape shape-bottom"></div>
+      <div class="sidebar-shape shape-bottom-small"></div>
 
-      <div
-        class="q-mb-md q-pa-sm rounded-borders"
-        style="background-color: rgba(255, 255, 255, 0.05); border-radius: 12px"
-      >
-        <div class="row items-center">
-          <q-avatar size="40px">
-            <img :src="authStore.user?.avatar || 'https://i.pravatar.cc/150?img=1'" />
+      <div class="relative-position sidebar-content" style="z-index: 2">
+        <!-- LOGO -->
+        <div
+          class="row items-center q-pt-md q-mb-xl"
+          :class="sidebarCollapsed ? 'justify-center' : 'q-pl-sm'"
+        >
+          <q-avatar size="42px" class="bg-lime-5 text-dark">
+            <q-icon name="o_task_alt" size="25px" />
           </q-avatar>
-          <div class="q-ml-sm">
-            <div class="text-subtitle2 text-weight-bold">
-              {{ authStore.user?.firstName }} {{ authStore.user?.surname }}
-            </div>
-            <div class="text-caption text-grey-6">
-              {{ authStore.user?.role === 'pm' ? 'Project Manager' : 'Employee' }}
-            </div>
+
+          <div
+            v-if="!sidebarCollapsed"
+            class="text-h5 text-weight-bold q-ml-sm"
+            style="letter-spacing: -0.5px"
+          >
+            Tasky
           </div>
         </div>
-      </div>
 
-      <!-- Navigation -->
-      <q-list class="q-gutter-y-sm" padding>
+        <!-- USER PROFILE -->
         <q-item
           clickable
           v-ripple
-          exact
           to="/dashboard"
-          active-class="bg-lime-13 text-black"
-          class="nav-item rounded-borders"
-          style="border-radius: 12px; font-weight: 500"
+          class="q-pa-sm q-mb-lg rounded-borders profile-item"
+          :class="sidebarCollapsed ? 'justify-center' : ''"
         >
           <q-item-section avatar>
-            <q-icon name="grid_view" />
+            <q-avatar size="40px">
+              <img :src="authStore.user?.avatar || 'https://i.pravatar.cc/150?img=1'" />
+            </q-avatar>
           </q-item-section>
-          <q-item-section>Dashboard</q-item-section>
+
+          <q-item-section v-if="!sidebarCollapsed">
+            <q-item-label class="text-body2 text-weight-medium text-black">
+              {{ authStore.user?.firstName }}
+              {{ authStore.user?.surname }}
+            </q-item-label>
+
+            <q-item-label caption class="text-blue-grey-4">
+              {{ authStore.user?.role === 'pm' ? 'Project Manager' : 'Employee' }}
+            </q-item-label>
+          </q-item-section>
+
+          <q-item-section v-if="!sidebarCollapsed" side>
+            <q-icon name="chevron_right" size="18px" color="lime-5" />
+          </q-item-section>
         </q-item>
 
-        <q-item
-          clickable
-          v-ripple
-          to="/dashboard/projects"
-          active-class="bg-lime-13 text-black"
-          class="nav-item rounded-borders"
-          style="border-radius: 12px; font-weight: 500"
-        >
-          <q-item-section avatar>
-            <q-icon name="o_folder" />
-          </q-item-section>
-          <q-item-section>Projects</q-item-section>
-        </q-item>
+        <!-- ================= NAVIGATION ================= -->
+        <q-list class="q-gutter-y-xs">
+          <q-item
+            v-for="link in navigationLinks"
+            :key="link.label"
+            clickable
+            v-ripple
+            :to="link.link"
+            :active="link.link === $route.path"
+            active-class="nav-active"
+            class="nav-item q-py-sm text-black"
+            :class="sidebarCollapsed ? 'justify-center' : ''"
+          >
+            <q-item-section avatar>
+              <q-icon :name="link.icon" size="21px" />
+            </q-item-section>
 
-        <q-item
-          clickable
-          v-ripple
-          to="/dashboard/tasks"
-          active-class="bg-lime-13 text-black"
-          class="nav-item rounded-borders"
-          style="border-radius: 12px; font-weight: 500"
-        >
-          <q-item-section avatar>
-            <q-icon name="o_check_circle" />
-          </q-item-section>
-          <q-item-section>Tasks</q-item-section>
-        </q-item>
-
-        <q-item
-          clickable
-          v-ripple
-          to="/dashboard/resources"
-          active-class="bg-lime-13 text-black"
-          class="nav-item rounded-borders"
-          style="border-radius: 12px; font-weight: 500"
-        >
-          <q-item-section avatar>
-            <q-icon name="o_people" />
-          </q-item-section>
-          <q-item-section>Resources</q-item-section>
-        </q-item>
-
-        <q-item
-          clickable
-          v-ripple
-          to="/dashboard/analytics"
-          active-class="bg-lime-13 text-black"
-          class="nav-item rounded-borders"
-          style="border-radius: 12px; font-weight: 500"
-        >
-          <q-item-section avatar>
-            <q-icon name="o_bar_chart" />
-          </q-item-section>
-          <q-item-section>Analytics</q-item-section>
-        </q-item>
-
-        <q-item
-          clickable
-          v-ripple
-          to="/dashboard/calendar"
-          active-class="bg-lime-13 text-black"
-          class="nav-item rounded-borders"
-          style="border-radius: 12px; font-weight: 500"
-        >
-          <q-item-section avatar>
-            <q-icon name="timeline" />
-          </q-item-section>
-          <q-item-section>Timeline</q-item-section>
-        </q-item>
-
-
-
-        <q-item
-          clickable
-          v-ripple
-          to="/dashboard/organisation"
-          active-class="bg-lime-13 text-black"
-          class="nav-item rounded-borders"
-          style="border-radius: 12px; font-weight: 500"
-        >
-          <q-item-section avatar>
-            <q-icon name="o_domain" />
-          </q-item-section>
-          <q-item-section>Organisation</q-item-section>
-        </q-item>
-
-
-      </q-list>
+            <q-item-section v-if="!sidebarCollapsed" class="text-body2 text-weight-medium">
+              {{ link.label }}
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </div>
 
       <q-space />
 
-      <!-- Bottom Navigation -->
-      <q-list class="q-gutter-y-sm" padding>
-        <q-item
-          clickable
-          v-ripple
-          to="/dashboard/notifications"
-          active-class="bg-lime-13 text-black"
-          class="nav-item rounded-borders"
-        >
-          <q-item-section avatar>
-            <q-icon name="o_notifications" />
-          </q-item-section>
-          <q-item-section>Notifications</q-item-section>
-          <q-item-section side>
-            <q-badge v-if="unreadNotifications" color="lime-13" text-color="black" :label="unreadNotifications" rounded />
-          </q-item-section>
-        </q-item>
+      <!-- ================= BOTTOM ================= -->
+      <div class="relative-position" style="z-index: 2">
+        <q-list class="q-gutter-y-xs">
+          <!-- Notifications -->
+          <q-item
+            clickable
+            v-ripple
+            to="/dashboard/notifications"
+            :active="$route.path === '/dashboard/notifications'"
+            active-class="nav-active"
+            class="nav-item q-py-sm text-blue-black"
+            :class="sidebarCollapsed ? 'justify-center' : ''"
+          >
+            <q-item-section avatar>
+              <q-icon name="o_notifications" size="21px" />
+            </q-item-section>
 
-        <q-item clickable v-ripple @click="handleLogout" class="nav-item rounded-borders">
-          <q-item-section avatar>
-            <q-icon name="o_logout" />
-          </q-item-section>
-          <q-item-section>Logout</q-item-section>
-        </q-item>
-      </q-list>
+            <q-item-section v-if="!sidebarCollapsed" class="text-body2 text-weight-medium">
+              Notifications
+            </q-item-section>
+
+            <q-item-section v-if="!sidebarCollapsed" side>
+              <q-badge
+                v-if="unreadNotifications"
+                color="lime-5"
+                text-color="dark"
+                :label="unreadNotifications"
+                rounded
+              />
+            </q-item-section>
+          </q-item>
+
+          <!-- Logout -->
+          <q-item
+            clickable
+            v-ripple
+            @click="handleLogout"
+            class="nav-item q-py-sm text-blue-black"
+            :class="sidebarCollapsed ? 'justify-center' : ''"
+          >
+            <q-item-section avatar>
+              <q-icon name="o_logout" size="21px" />
+            </q-item-section>
+
+            <q-item-section v-if="!sidebarCollapsed" class="text-body2 text-weight-medium">
+              Logout
+            </q-item-section>
+          </q-item>
+
+          <!-- Collapse -->
+          <q-item
+            clickable
+            v-ripple
+            class="bg-lime-5 collapse-btn nav-item q-py-sm text-blue-black"
+            :class="sidebarCollapsed ? 'justify-center' : ''"
+            @click="sidebarCollapsed = !sidebarCollapsed"
+          >
+            <q-item-section avatar>
+              <q-icon
+                :name="sidebarCollapsed ? 'chevron_right' : 'chevron_left'"
+                size="21px"
+              />
+            </q-item-section>
+
+            <q-item-section v-if="!sidebarCollapsed" class="text-body2 text-weight-medium">
+              Collapse
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </div>
     </q-drawer>
 
-    <q-page-container class="bg-grey-1">
+    <!-- ================= PAGE ================= -->
+    <q-page-container class="bg-transparent">
       <router-view />
     </q-page-container>
   </q-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import { useNotificationStore } from '@/stores/notificationStore';
-import { useAuthStore } from '../stores/authStore'
+import { useAuthStore } from '@/stores/authStore';
 
-const authStore = useAuthStore()
-
+const authStore = useAuthStore();
 const router = useRouter();
 const $q = useQuasar();
+
 const leftDrawerOpen = ref(true);
+const sidebarCollapsed = ref(false);
+
 const notificationStore = useNotificationStore();
 const unreadNotifications = computed(() => notificationStore.unreadCount);
 
@@ -193,30 +191,169 @@ onMounted(() => {
   void notificationStore.fetchNotifications();
 });
 
+const navigationLinks = [
+  {
+    label: 'Dashboard',
+    icon: 'grid_view',
+    link: '/dashboard',
+  },
+  {
+    label: 'Projects',
+    icon: 'o_folder',
+    link: '/dashboard/projects',
+  },
+  {
+    label: 'Tasks',
+    icon: 'o_check_circle',
+    link: '/dashboard/tasks',
+  },
+  {
+    label: 'Resources',
+    icon: 'o_people',
+    link: '/dashboard/resources',
+  },
+  {
+    label: 'Analytics',
+    icon: 'o_bar_chart',
+    link: '/dashboard/analytics',
+  },
+  {
+    label: 'Timeline',
+    icon: 'timeline',
+    link: '/dashboard/calendar',
+  },
+  {
+    label: 'Organisation',
+    icon: 'o_domain',
+    link: '/dashboard/organisation',
+  },
+];
+
 function handleLogout() {
-  // Clear authentication data from localStorage
   sessionStorage.removeItem('tasky_user');
   sessionStorage.removeItem('tasky_token');
   sessionStorage.removeItem('pm_auth_token');
   sessionStorage.removeItem('pm_user_data');
 
-  // Redirect to login page in same project
-  router.push('/auth/login');
+  authStore.logout();
+
+  $q.notify({
+    type: 'positive',
+    message: 'Logged out successfully',
+    position: 'top',
+    timeout: 2000,
+  });
+
+  void router.replace('/auth/login');
 }
-
-
 </script>
 
 <style scoped>
+/* ================= FLOATING SIDEBAR ================= */
+
+.pm-sidebar {
+  margin: 16px !important;
+  height: calc(100vh - 32px) !important;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  background: transparent !important;
+}
+
+.pm-sidebar :deep(.q-drawer__content) {
+  background: #ffffff !important;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  padding: 16px !important;
+}
+
+/* ================= DECORATIVE SHAPES ================= */
+
+.sidebar-shape {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  border: 1px solid transparent;
+
+  background:
+    linear-gradient(rgba(76, 175, 80, 0.01), rgba(76, 175, 80, 0.01)) padding-box,
+    linear-gradient(
+        135deg,
+        rgba(76, 175, 80, 0.35),
+        rgba(255, 255, 255, 0.04),
+        rgba(76, 175, 80, 0.22)
+      )
+      border-box;
+}
+
+.shape-top {
+  width: 235px;
+  height: 190px;
+  top: -105px;
+  right: 0;
+  border-radius: 48% 52% 60% 40% / 42% 45% 55% 58%;
+  transform: rotate(-18deg);
+}
+
+.shape-bottom {
+  width: 280px;
+  height: 150px;
+  bottom: -85px;
+  left: -115px;
+  border-radius: 55% 45% 50% 50% / 60% 45% 55% 40%;
+  transform: rotate(-12deg);
+}
+
+.shape-bottom-small {
+  width: 200px;
+  height: 115px;
+  bottom: -62px;
+  left: 35px;
+  border-radius: 60% 40% 45% 55% / 55% 50% 50% 45%;
+}
+
+/* ================= PROFILE ================= */
+
+.profile-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ================= NAVIGATION ================= */
+
 .nav-item {
-  color: #bdbdbd;
+  min-height: 46px;
+  transition: 0.2s ease;
+  border-radius: 8px;
 }
-.q-item.q-router-link--active,
-.q-item--active {
-  background-color: #d8f760;
-  color: #000 !important;
+
+.nav-active {
+  background: #E1FF6B !important;
+  color: #000000 !important;
+  border-radius: 8px;
+
+  margin-left: 8px;
+  margin-right: 8px;
+  width: calc(100% - 16px);
 }
-.bg-lime-13 {
-  background-color: #d8f760 !important;
+
+.nav-active .q-icon {
+  color: #000000 !important;
+}
+
+.nav-item:not(.nav-active):hover {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+/* ================= COLLAPSE ================= */
+
+.collapse-btn {
+  margin-top: 4px;
+  overflow: hidden !important;
+}
+
+/* ================= PAGE ================= */
+
+.page-background {
+  background: #ffffff;
 }
 </style>

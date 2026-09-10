@@ -135,7 +135,7 @@ function saveProfile() {
 
 function logout() {
   authStore.logout();
-  router.push('/auth/login');
+  router.replace('/auth/login');
 }
 </script>
 

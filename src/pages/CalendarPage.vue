@@ -164,7 +164,7 @@ onMounted(() => {
 
 const logout = () => {
   authStore.logout();
-  router.push('/auth/login');
+  router.replace('/auth/login');
 };
 const openTask = (task: any) => {
   if (task?.id) router.push(`/dashboard/tasks?open=${task.id}`);

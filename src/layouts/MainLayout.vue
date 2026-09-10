@@ -399,7 +399,7 @@ function handleLogout() {
   });
 
   // Redirect to login page
-  void router.push('/auth/login');
+  void router.replace('/auth/login');
 }
 </script>
 
