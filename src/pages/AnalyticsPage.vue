@@ -185,6 +185,7 @@
 
       <!-- Right Column -->
       <div class="col-4 column">
+      <TaskCompletionTrend />
         <TaskStatusDistribution />
         <TaskPriorityDistribution />
         <UpcomingDeadlineRisks />
@@ -207,6 +208,7 @@ import TaskStatusDistribution from '../components/TaskStatusDistribution.vue';
 import TaskPriorityDistribution from '../components/TaskPriorityDistribution.vue';
 import UpcomingDeadlineRisks from '../components/UpcomingDeadlineRisks.vue';
 import PerformanceMeter from '../components/PerformanceMeter.vue';
+import TaskCompletionTrend from '../components/TaskCompletionTrend.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();

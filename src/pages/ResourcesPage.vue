@@ -146,6 +146,20 @@
       </div>
     </div>
 
+    <div class="row q-col-gutter-lg q-mt-sm">
+      <div class="col-4 column">
+  <ResourceUtilizationChart
+    :resources="filteredEmployees"
+  />
+</div>
+<div class="col-4 column">
+ <ActiveTasksChart :resources="filteredEmployees" /> 
+ </div>
+ <div class="col-4 column">
+ <WorkloadScatterChart :resources="filteredEmployees" /> 
+ </div>
+ </div>
+
     <!-- Resource Detail Dialog -->
     <ResourceDetailDialog
       v-model="showResourceDialog"
@@ -158,6 +172,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import ResourceDetailDialog from '../components/ResourceDetailDialog.vue';
+import ResourceUtilizationChart from '../components/ResourceUtilizationChart.vue';
+import ActiveTasksChart from '../components/ActiveTasksChart.vue';
+import WorkloadScatterChart from '../components/WorkloadScatterChart.vue';
 import { useAuthStore } from '../stores/authStore'
 
 const authStore = useAuthStore()
