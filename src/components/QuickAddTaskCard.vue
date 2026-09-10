@@ -1,19 +1,21 @@
 <template>
   <q-card flat bordered class="quick-add-card q-pa-lg q-mb-lg">
     <div class="row items-center">
-        <q-avatar size="48px" class="quick-add-icon">
+      <q-avatar size="48px" class="quick-add-icon">
         <q-icon name="add_task" size="25px" />
       </q-avatar>
       <div class="q-ml-md">
         <div class="quick-add-title">Self-Assign Task</div>
-        <div class="quick-add-subtitle">Create and assign a new task to yourself to track your work.</div>
+        <div class="quick-add-subtitle">
+          Create and assign a new task to yourself to track your work.
+        </div>
       </div>
       <q-space />
       <q-btn
         unelevated
         no-caps
-        color="primary"
-        text-color="white"
+        color="white"
+        text-color="black"
         icon="person_add"
         label="Self-Assign Task"
         class="q-px-lg"
@@ -30,8 +32,8 @@ defineEmits(['create']);
 <style scoped>
 .quick-add-card {
   border-radius: 12px;
-  background: #fff;
-  color: #263238;
+  background: rgb(32, 67, 182);
+  color: #faffd9;
   border-color: #e5eaf0;
   box-shadow: 0 7px 20px rgba(32, 54, 83, 0.05);
 }

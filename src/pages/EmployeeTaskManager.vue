@@ -5,12 +5,6 @@
     <!-- ========================================================= -->
 
     <div class="row items-center justify-between q-mb-lg">
-      <div>
-        <h1 class="page-title">Task Manager</h1>
-
-        <p class="page-subtitle">Organize your work, manage subtasks and track your progress.</p>
-      </div>
-
       <div class="row items-center q-gutter-sm">
         <!-- Points Badge -->
         <div class="points-badge">
@@ -29,7 +23,6 @@
         >
           <q-tooltip> View employee insights </q-tooltip>
         </q-btn>
-
       </div>
     </div>
 
@@ -45,7 +38,6 @@
           :description="stat.description"
           :icon="stat.icon"
           :color="stat.color"
-          :background="stat.background"
           :trend="stat.trend"
           :positive="stat.positive"
         />
@@ -449,13 +441,7 @@
       <q-card class="create-dialog-card">
         <!-- DIALOG HEADER — matched to Project Manager -->
         <q-card-section class="create-dialog-header row items-center q-pb-md">
-          <q-avatar
-            color="white"
-            text-color="indigo"
-            icon="add_task"
-            size="42px"
-            class="q-mr-md"
-          />
+          <q-avatar color="white" text-color="indigo" icon="add_task" size="42px" class="q-mr-md" />
 
           <div>
             <div class="text-h6 text-weight-bold">Create New Task</div>
@@ -467,14 +453,7 @@
 
           <q-space />
 
-          <q-btn
-            icon="close"
-            flat
-            round
-            dense
-            color="white"
-            @click="showAddDialog = false"
-          />
+          <q-btn icon="close" flat round dense color="white" @click="showAddDialog = false" />
         </q-card-section>
 
         <q-card-section class="q-pa-lg">
@@ -559,9 +538,7 @@
                 <div>
                   <div class="text-subtitle1 text-weight-bold">Subtasks</div>
 
-                  <div class="text-caption text-grey-6">
-                    Break the task into smaller steps.
-                  </div>
+                  <div class="text-caption text-grey-6">Break the task into smaller steps.</div>
                 </div>
 
                 <q-btn
@@ -577,9 +554,7 @@
               <div v-if="newTask.subtasks.length === 0" class="empty-subtasks">
                 <q-icon name="playlist_add" size="30px" color="grey-5" />
 
-                <div class="text-caption text-grey-6 q-mt-xs">
-                  No subtasks added yet
-                </div>
+                <div class="text-caption text-grey-6 q-mt-xs">No subtasks added yet</div>
               </div>
 
               <div
@@ -659,7 +634,11 @@
         <q-separator />
 
         <q-card-section>
-          <div v-for="subtask in editSubtasks" :key="subtask.id" class="edit-subtask-row row q-mt-sm">
+          <div
+            v-for="subtask in editSubtasks"
+            :key="subtask.id"
+            class="edit-subtask-row row q-mt-sm"
+          >
             <q-input v-model="subtask.title" outlined dense class="col" />
 
             <q-input
@@ -773,176 +752,187 @@
 
         <q-tab-panels v-model="manageTab" animated class="col scroll bg-grey-1">
           <q-tab-panel name="details" class="q-pa-lg">
-          <!-- PROGRESS -->
+            <!-- PROGRESS -->
 
-          <div class="manage-progress-card q-pa-md">
-            <div class="row items-center justify-between">
-              <div>
-                <div class="text-caption text-grey-6">Overall Progress</div>
+            <div class="manage-progress-card q-pa-md">
+              <div class="row items-center justify-between">
+                <div>
+                  <div class="text-caption text-grey-6">Overall Progress</div>
 
-                <div class="text-h4 text-weight-bold q-mt-xs">
-                  {{ taskProgress(selectedTask) }}%
+                  <div class="text-h4 text-weight-bold q-mt-xs">
+                    {{ taskProgress(selectedTask) }}%
+                  </div>
                 </div>
+
+                <q-circular-progress
+                  :value="taskProgress(selectedTask)"
+                  size="72px"
+                  :thickness="0.16"
+                  color="primary"
+                  track-color="grey-3"
+                  show-value
+                >
+                  {{ taskProgress(selectedTask) }}%
+                </q-circular-progress>
               </div>
 
-              <q-circular-progress
-                :value="taskProgress(selectedTask)"
-                size="72px"
-                :thickness="0.16"
+              <q-linear-progress
+                :value="taskProgress(selectedTask) / 100"
                 color="primary"
                 track-color="grey-3"
-                show-value
-              >
-                {{ taskProgress(selectedTask) }}%
-              </q-circular-progress>
-            </div>
-
-            <q-linear-progress
-              :value="taskProgress(selectedTask) / 100"
-              color="primary"
-              track-color="grey-3"
-              rounded
-              size="9px"
-              class="q-mt-md"
-            />
-          </div>
-
-          <!-- SUBTASKS -->
-
-          <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Subtasks</div>
-
-          <div v-if="selectedTask.subtasks.length === 0" class="empty-subtasks">
-            <q-icon name="playlist_add" size="32px" color="grey-5" />
-
-            <div class="text-body2 text-grey-6 q-mt-sm">No subtasks added.</div>
-
-            <q-btn
-              flat
-              no-caps
-              color="primary"
-              label="Add Subtasks"
-              class="q-mt-sm"
-              @click="openEditFromManage"
-            />
-          </div>
-
-          <div v-for="subtask in selectedTask.subtasks" :key="subtask.id" class="manage-subtask">
-            <div class="row items-start no-wrap">
-              <q-checkbox
-                v-model="subtask.completed"
-                color="primary"
-                :disable="subtask.originally_completed"
-                @update:model-value="updateSubtaskCompletion(selectedTask, subtask)"
+                rounded
+                size="9px"
+                class="q-mt-md"
               />
+            </div>
 
-              <div class="col q-ml-sm">
-                <div
-                  class="manage-subtask-title"
-                  :class="{
-                    'completed-subtask': subtask.completed,
-                  }"
-                >
-                  {{ subtask.title }}
-                  <span v-if="subtask.estimated_hours" class="text-caption text-grey-6 q-ml-sm">
-                    ({{ subtask.estimated_hours }} hr)
-                  </span>
-                </div>
+            <!-- SUBTASKS -->
 
-                <q-select
-                  v-model="subtask.status"
-                  :options="subtaskStatusOptions"
-                  dense
-                  outlined
-                  class="q-mt-sm"
-                  style="max-width: 180px"
+            <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Subtasks</div>
+
+            <div v-if="selectedTask.subtasks.length === 0" class="empty-subtasks">
+              <q-icon name="playlist_add" size="32px" color="grey-5" />
+
+              <div class="text-body2 text-grey-6 q-mt-sm">No subtasks added.</div>
+
+              <q-btn
+                flat
+                no-caps
+                color="primary"
+                label="Add Subtasks"
+                class="q-mt-sm"
+                @click="openEditFromManage"
+              />
+            </div>
+
+            <div v-for="subtask in selectedTask.subtasks" :key="subtask.id" class="manage-subtask">
+              <div class="row items-start no-wrap">
+                <q-checkbox
+                  v-model="subtask.completed"
+                  color="primary"
                   :disable="subtask.originally_completed"
-                  @update:model-value="updateSubtaskStatus(selectedTask, subtask)"
+                  @update:model-value="updateSubtaskCompletion(selectedTask, subtask)"
                 />
+
+                <div class="col q-ml-sm">
+                  <div
+                    class="manage-subtask-title"
+                    :class="{
+                      'completed-subtask': subtask.completed,
+                    }"
+                  >
+                    {{ subtask.title }}
+                    <span v-if="subtask.estimated_hours" class="text-caption text-grey-6 q-ml-sm">
+                      ({{ subtask.estimated_hours }} hr)
+                    </span>
+                  </div>
+
+                  <q-select
+                    v-model="subtask.status"
+                    :options="subtaskStatusOptions"
+                    dense
+                    outlined
+                    class="q-mt-sm"
+                    style="max-width: 180px"
+                    :disable="subtask.originally_completed"
+                    @update:model-value="updateSubtaskStatus(selectedTask, subtask)"
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- STATUS -->
+            <!-- STATUS -->
 
-          <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Task Status</div>
+            <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Task Status</div>
 
-          <q-select
-            v-model="selectedTask.status"
-            :options="taskStatusOptions"
-            outlined
-            label="Current status"
-            @update:model-value="handleTaskStatusChange(selectedTask)"
-          />
-
-          <!-- TODAY'S NOTE -->
-
-          <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Today's Update</div>
-
-          <q-input
-            v-model="selectedTask.todayNote"
-            outlined
-            type="textarea"
-            autogrow
-            placeholder="What did you work on today?"
-          />
-
-          <!-- COMMENTS -->
-
-          <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Task Comment</div>
-
-          <div class="row q-gutter-sm">
-            <q-input
-              v-model="newComment"
+            <q-select
+              v-model="selectedTask.status"
+              :options="taskStatusOptions"
               outlined
-              dense
-              class="col"
-              placeholder="Add a comment to the timeline..."
+              label="Current status"
+              @update:model-value="handleTaskStatusChange(selectedTask)"
             />
-            <q-btn
-              color="primary"
-              icon="send"
-              dense
-              flat
-              @click="submitComment"
+
+            <!-- TODAY'S NOTE -->
+
+            <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Today's Update</div>
+
+            <q-input
+              v-model="selectedTask.todayNote"
+              outlined
+              type="textarea"
+              autogrow
+              placeholder="What did you work on today?"
             />
-          </div>
 
-          <!-- DEADLINE -->
+            <!-- COMMENTS -->
 
-          <div
-            class="deadline-box q-mt-lg"
-            :class="{
-              'deadline-overdue': isOverdue(selectedTask),
-            }"
-          >
-            <q-icon name="event" size="20px" />
+            <div class="text-subtitle1 text-weight-bold q-mt-xl q-mb-md">Task Comment</div>
 
-            <div class="q-ml-sm">
-              <div class="text-caption">Deadline</div>
+            <div class="row q-gutter-sm">
+              <q-input
+                v-model="newComment"
+                outlined
+                dense
+                class="col"
+                placeholder="Add a comment to the timeline..."
+              />
+              <q-btn color="primary" icon="send" dense flat @click="submitComment" />
+            </div>
 
-              <div class="text-body2 text-weight-bold">
-                {{ formatDate(selectedTask.deadline) }}
+            <!-- DEADLINE -->
+
+            <div
+              class="deadline-box q-mt-lg"
+              :class="{
+                'deadline-overdue': isOverdue(selectedTask),
+              }"
+            >
+              <q-icon name="event" size="20px" />
+
+              <div class="q-ml-sm">
+                <div class="text-caption">Deadline</div>
+
+                <div class="text-body2 text-weight-bold">
+                  {{ formatDate(selectedTask.deadline) }}
+                </div>
               </div>
             </div>
-          </div>
           </q-tab-panel>
 
           <q-tab-panel name="timeline" class="q-pa-lg">
             <q-card flat bordered class="bg-white q-pa-md">
               <div class="text-subtitle1 text-weight-bold q-mb-md">Progress Timeline</div>
-              <div class="text-body2 text-grey-7">Track updates and comments for this task here.</div>
-              <div class="q-mt-lg text-caption text-grey-6">Current status: {{ selectedTask?.status }}</div>
-              <div class="q-mt-sm text-caption text-grey-6">Last recorded progress: {{ selectedTask ? taskProgress(selectedTask) : 0 }}%</div>
+              <div class="text-body2 text-grey-7">
+                Track updates and comments for this task here.
+              </div>
+              <div class="q-mt-lg text-caption text-grey-6">
+                Current status: {{ selectedTask?.status }}
+              </div>
+              <div class="q-mt-sm text-caption text-grey-6">
+                Last recorded progress: {{ selectedTask ? taskProgress(selectedTask) : 0 }}%
+              </div>
             </q-card>
           </q-tab-panel>
 
           <q-tab-panel name="impact" class="q-pa-lg">
             <q-card flat bordered class="bg-white q-pa-md">
               <div class="text-subtitle1 text-weight-bold q-mb-md">Simulate Impact</div>
-              <div class="text-body2 text-grey-7">Review the task's current progress, deadline and remaining work before making an update.</div>
-              <q-linear-progress :value="selectedTask ? taskProgress(selectedTask) / 100 : 0" color="primary" track-color="grey-3" rounded size="8px" class="q-mt-lg" />
+              <div class="text-body2 text-grey-7">
+                Review the task's current progress, deadline and remaining work before making an
+                update.
+              </div>
+              <q-linear-progress
+                :value="selectedTask ? taskProgress(selectedTask) / 100 : 0"
+                color="primary"
+                track-color="grey-3"
+                rounded
+                size="8px"
+                class="q-mt-lg"
+              />
               <div class="row justify-between text-caption text-grey-6 q-mt-sm">
-                <span>Progress</span><span>{{ selectedTask ? taskProgress(selectedTask) : 0 }}%</span>
+                <span>Progress</span
+                ><span>{{ selectedTask ? taskProgress(selectedTask) : 0 }}%</span>
               </div>
             </q-card>
           </q-tab-panel>
@@ -1044,13 +1034,26 @@
         <q-separator />
         <q-card-section>
           <div class="text-caption q-mb-md">
-            Interrupting a task indicates a blocker, bug, or priority shift. Your PM will be notified and this task will be rescheduled.
+            Interrupting a task indicates a blocker, bug, or priority shift. Your PM will be
+            notified and this task will be rescheduled.
           </div>
-          <q-input v-model="interruptReason" type="textarea" outlined label="Reason for interruption *" />
+          <q-input
+            v-model="interruptReason"
+            type="textarea"
+            outlined
+            label="Reason for interruption *"
+          />
         </q-card-section>
         <q-card-actions align="right" class="q-pa-md">
           <q-btn flat no-caps label="Cancel" @click="showInterruptDialog = false" />
-          <q-btn unelevated no-caps color="negative" label="Submit Interrupt" @click="submitInterrupt" :disable="!interruptReason" />
+          <q-btn
+            unelevated
+            no-caps
+            color="negative"
+            label="Submit Interrupt"
+            @click="submitInterrupt"
+            :disable="!interruptReason"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -1200,14 +1203,17 @@ const submitComment = async () => {
   if (!selectedTask.value || !newComment.value.trim()) return;
 
   try {
-    const response = await fetch(`http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/comment`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${authStore.token}`,
+    const response = await fetch(
+      `http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/comment`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authStore.token}`,
+        },
+        body: JSON.stringify({ content: newComment.value.trim() }),
       },
-      body: JSON.stringify({ content: newComment.value.trim() }),
-    });
+    );
 
     const result = await response.json();
     if (result.success) {
@@ -1233,8 +1239,6 @@ const submitComment = async () => {
     });
   }
 };
-
-
 
 // Review dialog state
 const showReviewDialog = ref(false);
@@ -1320,7 +1324,7 @@ const submitForReview = async () => {
 };
 
 const fetchTasks = async () => {
-    if (!authStore.user?.id) {
+  if (!authStore.user?.id) {
     console.error('No user ID found for fetching tasks');
     return;
   }
@@ -1349,12 +1353,14 @@ const fetchTasks = async () => {
                 }))
               : [];
 
-            const isSelf = 
-              Boolean(task.is_self_assigned) || 
-              task.is_self_assigned === 1 || 
+            const isSelf =
+              Boolean(task.is_self_assigned) ||
+              task.is_self_assigned === 1 ||
               task.is_self_assigned === '1' ||
-              (authStore.user?.id != null && String(task.created_by) === String(authStore.user.id)) ||
-              (authStore.user?.id != null && String(task.assignment_assigned_by) === String(authStore.user.id));
+              (authStore.user?.id != null &&
+                String(task.created_by) === String(authStore.user.id)) ||
+              (authStore.user?.id != null &&
+                String(task.assignment_assigned_by) === String(authStore.user.id));
 
             return {
               id: task.id,
@@ -1372,12 +1378,14 @@ const fetchTasks = async () => {
             };
           } catch (error) {
             console.error('Error fetching subtasks for task:', task.id, error);
-            const isSelf = 
-              Boolean(task.is_self_assigned) || 
-              task.is_self_assigned === 1 || 
+            const isSelf =
+              Boolean(task.is_self_assigned) ||
+              task.is_self_assigned === 1 ||
               task.is_self_assigned === '1' ||
-              (authStore.user?.id != null && String(task.created_by) === String(authStore.user.id)) ||
-              (authStore.user?.id != null && String(task.assignment_assigned_by) === String(authStore.user.id));
+              (authStore.user?.id != null &&
+                String(task.created_by) === String(authStore.user.id)) ||
+              (authStore.user?.id != null &&
+                String(task.assignment_assigned_by) === String(authStore.user.id));
 
             return {
               id: task.id,
@@ -1429,11 +1437,11 @@ const fetchProjects = async () => {
   }
 };
 
-const createProjectOptions = computed(() => 
+const createProjectOptions = computed(() =>
   projects.value.map((p: any) => ({
     label: p.name,
     value: p.id,
-  }))
+  })),
 );
 
 // Watch for tab changes and reset status filter when switching to completed tab
@@ -1528,14 +1536,19 @@ const insights = computed(() => {
 });
 
 // Update task progress/status to backend
-const updateTaskProgress = async (taskId: number, progress: number, status: string, todayNote?: string) => {
+const updateTaskProgress = async (
+  taskId: number,
+  progress: number,
+  status: string,
+  todayNote?: string,
+) => {
   try {
     console.log('Updating task:', taskId, 'progress:', progress, 'status:', status);
     const response = await fetch(`http://localhost:3001/api/employee/tasks/${taskId}`, {
       method: 'PUT',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${authStore.token}` 
+        Authorization: `Bearer ${authStore.token}`,
       },
       body: JSON.stringify({ progress, status, todayNote, user_id: authStore.user?.id }),
     });
@@ -1589,7 +1602,7 @@ const newTask = ref({
 });
 
 const taskOptions = computed(() => {
-  return tasks.value.map(t => ({ label: t.name, value: t.id }));
+  return tasks.value.map((t) => ({ label: t.name, value: t.id }));
 });
 
 // ============================================================
@@ -1653,7 +1666,7 @@ const activeTabLabel = computed(() => {
 const filteredTasks = computed(() => {
   // For completed tab, show all completed tasks regardless of other filters
   if (activeTab.value === 'completed') {
-    return tasks.value.filter(task => task.status === 'completed' || task.progress === 100);
+    return tasks.value.filter((task) => task.status === 'completed' || task.progress === 100);
   }
 
   const query = search.value.toLowerCase();
@@ -1706,8 +1719,6 @@ const stats = computed(() => [
 
     color: '#7c3aed',
 
-    background: '#f3e8ff',
-
     trend: 'All tasks',
 
     positive: true,
@@ -1723,8 +1734,6 @@ const stats = computed(() => [
     icon: 'pending_actions',
 
     color: '#3b82f6',
-
-    background: 'var(--color-blue-light)',
 
     trend: 'Active',
 
@@ -1742,8 +1751,6 @@ const stats = computed(() => [
 
     color: '#22c55e',
 
-    background: '#ecfdf3',
-
     trend: 'Good progress',
 
     positive: true,
@@ -1759,8 +1766,6 @@ const stats = computed(() => [
     icon: 'warning',
 
     color: '#ef4444',
-
-    background: '#fef2f2',
 
     trend: 'Review',
 
@@ -1966,7 +1971,7 @@ function openAddTask() {
     deadline: '',
 
     subtasks: [],
-    
+
     depends_on_ids: [],
   };
 
@@ -2032,9 +2037,8 @@ async function createTask() {
     const taskId = result.taskId || result.task?.id;
 
     // Create subtasks
-    const subtasks = newTask.value.subtasks
-      .filter((subtask) => subtask.title.trim());
-      
+    const subtasks = newTask.value.subtasks.filter((subtask) => subtask.title.trim());
+
     for (const subtask of subtasks) {
       await fetch(`http://localhost:3001/api/employee/tasks/${taskId}/subtasks`, {
         method: 'POST',
@@ -2042,9 +2046,9 @@ async function createTask() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authStore.token}`,
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           title: subtask.title.trim(),
-          estimated_hours: subtask.estimated_hours || 0
+          estimated_hours: subtask.estimated_hours || 0,
         }),
       });
     }
@@ -2090,7 +2094,7 @@ function addEditSubtask() {
     completed: false,
 
     status: 'not-started',
-    
+
     estimated_hours: 0,
   });
 }
@@ -2106,10 +2110,10 @@ async function saveEditedSubtasks() {
 
   try {
     const originalSubtasks = selectedTask.value.subtasks;
-    const newSubtaskIds = editSubtasks.value.map(s => s.id);
+    const newSubtaskIds = editSubtasks.value.map((s) => s.id);
 
     // Delete subtasks that were removed
-    const subtasksToDelete = originalSubtasks.filter(s => !newSubtaskIds.includes(s.id));
+    const subtasksToDelete = originalSubtasks.filter((s) => !newSubtaskIds.includes(s.id));
     for (const subtask of subtasksToDelete) {
       await fetch(`http://localhost:3001/api/employee/subtasks/${subtask.id}`, {
         method: 'DELETE',
@@ -2119,7 +2123,7 @@ async function saveEditedSubtasks() {
     for (const subtask of editSubtasks.value) {
       if (!subtask.title.trim()) continue;
 
-      if (originalSubtasks.find(s => s.id === subtask.id)) {
+      if (originalSubtasks.find((s) => s.id === subtask.id)) {
         // Update existing subtask
         await fetch(`http://localhost:3001/api/employee/subtasks/${subtask.id}`, {
           method: 'PUT',
@@ -2133,14 +2137,17 @@ async function saveEditedSubtasks() {
         });
       } else {
         // Create new subtask
-        const response = await fetch(`http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/subtasks`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            title: subtask.title.trim(),
-            estimated_hours: subtask.estimated_hours || 0
-          }),
-        });
+        const response = await fetch(
+          `http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/subtasks`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: subtask.title.trim(),
+              estimated_hours: subtask.estimated_hours || 0,
+            }),
+          },
+        );
         const data = await response.json();
         if (!response.ok || !data.success) {
           throw new Error(data.error || 'Failed to add subtask');
@@ -2150,7 +2157,7 @@ async function saveEditedSubtasks() {
 
     // Refresh tasks to get updated subtasks
     await fetchTasks();
-    const updatedTask = tasks.value.find(t => t.id === selectedTask.value!.id);
+    const updatedTask = tasks.value.find((t) => t.id === selectedTask.value!.id);
     if (updatedTask) {
       selectedTask.value = updatedTask;
       recalculateTask(selectedTask.value);
@@ -2203,7 +2210,7 @@ async function saveTaskUpdate() {
 
   // Save to database
   try {
-    const promises = selectedTask.value.subtasks.map(subtask => 
+    const promises = selectedTask.value.subtasks.map((subtask) =>
       fetch(`http://localhost:3001/api/employee/subtasks/${subtask.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -2213,7 +2220,7 @@ async function saveTaskUpdate() {
           completed: subtask.completed,
           user_id: authStore.user?.id,
         }),
-      })
+      }),
     );
     await Promise.all(promises);
   } catch (error) {
@@ -2222,12 +2229,17 @@ async function saveTaskUpdate() {
 
   recalculateTask(selectedTask.value);
   const progress = taskProgress(selectedTask.value);
-  await updateTaskProgress(selectedTask.value.id, progress, selectedTask.value.status, selectedTask.value.todayNote);
+  await updateTaskProgress(
+    selectedTask.value.id,
+    progress,
+    selectedTask.value.status,
+    selectedTask.value.todayNote,
+  );
 
   // Refresh tasks to get latest state including originally_completed
   await fetchTasks();
   if (selectedTask.value) {
-    const updatedTask = tasks.value.find(t => t.id === selectedTask.value!.id);
+    const updatedTask = tasks.value.find((t) => t.id === selectedTask.value!.id);
     if (updatedTask) selectedTask.value = updatedTask;
   }
 
@@ -2289,7 +2301,6 @@ function clearFilters() {
 
   statusFilter.value = 'All Statuses';
 }
-
 
 // ============================================================
 // PRIORITY STYLE
@@ -2477,30 +2488,6 @@ async function submitInterrupt() {
 .stat-trend {
   font-size: 11px;
   font-weight: 600;
-}
-
-.quick-add-card {
-  border-radius: var(--radius-lg);
-
-  background: linear-gradient(110deg, #6c63ff, #eeecff);
-}
-
-.quick-add-icon {
-  background: rgba(159, 226, 63, 0.15);
-
-  color: var(--color-secondary);
-}
-
-.quick-add-title {
-  color: white;
-  font-size: 17px;
-  font-weight: 700;
-}
-
-.quick-add-subtitle {
-  color: #b8bac8;
-  font-size: 13px;
-  margin-top: 4px;
 }
 
 .my-tasks-card {

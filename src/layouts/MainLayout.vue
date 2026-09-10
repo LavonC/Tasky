@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="lHh Lpr lFf" style="background: #ffffff">
+  <q-layout view="lHh Lpr lFf" class="page-background">
     <!-- ================= SIDEBAR ================= -->
     <q-drawer
       v-model="leftDrawerOpen"
@@ -144,7 +144,7 @@
           <q-item
             clickable
             v-ripple
-            class="collapse-btn nav-item q-py-sm text-blue-grey-4"
+            class="bg-lime-5 collapse-btn nav-item q-py-sm text-blue-grey-4"
             :class="sidebarCollapsed ? 'justify-center' : ''"
             @click="sidebarCollapsed = !sidebarCollapsed"
           >
@@ -161,7 +161,7 @@
     </q-drawer>
 
     <!-- ================= HEADER ================= -->
-    <q-header class="employee-header bg-grey-1 text-dark">
+    <q-header class="employee-header text-dark">
       <UserHeader
         :icon="currentPage.icon"
         :title="currentPage.label"
@@ -171,7 +171,7 @@
     </q-header>
 
     <!-- ================= PAGE ================= -->
-    <q-page-container class="page-background">
+    <q-page-container class="bg-transparent">
       <router-view />
     </q-page-container>
   </q-layout>
@@ -291,13 +291,14 @@
 
 .collapse-btn {
   margin-top: 4px;
+  overflow: hidden !important;
 }
 
 /* ================= HEADER ================= */
 
 .employee-header {
-  box-shadow: 0 1px 8px rgba(32, 54, 83, 0.08);
   padding-top: 20px;
+  background: #ffffff;
 }
 
 /* ================= PAGE ================= */
@@ -340,7 +341,7 @@ const navigationLinks = computed(() => {
       label: 'Task Manager',
       icon: 'assignment',
       link: '/employee/task-manager',
-      subtitle: 'Manage your assigned tasks and work updates.',
+      subtitle: 'Organize your work, manage subtasks and track your progress.',
     },
     {
       label: 'Planner',
@@ -402,3 +403,6 @@ function handleLogout() {
   void router.push('/auth/login');
 }
 </script>
+
+/* background: linear-gradient( 135deg, rgba(99, 165, 183, 1), rgba(178, 234, 250, 1), rgba(188,
+206, 211, 1) ) border-box; } *//

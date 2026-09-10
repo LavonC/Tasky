@@ -1,5 +1,5 @@
 <template>
-  <q-toolbar class="page-header q-px-lg">
+  <q-toolbar class="page-header">
     <!-- Current page -->
     <div class="row items-center">
       <q-avatar size="48px" class="page-icon">
@@ -68,7 +68,7 @@ defineProps<Props>();
 }
 /* Lime icon box */
 .page-icon {
-  background: #caff33;
+  background: #efff61;
   color: #1d2939;
 }
 
