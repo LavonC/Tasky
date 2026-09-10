@@ -19,11 +19,14 @@ export const useAnalyticsStore = defineStore('analytics', {
       return { 'Content-Type': 'application/json' };
     },
 
-    async fetchOverview() {
+    async fetchOverview(period = 'this_month') {
       try {
-        const response = await fetch('http://localhost:3001/api/pm/analytics/overview', {
+        const response = await fetch(
+          `http://localhost:3001/api/pm/analytics/overview?period=${encodeURIComponent(period)}`,
+          {
           headers: this.getHeaders(),
-        });
+          },
+        );
         const data = await response.json();
         if (data.success) this.overview = data.overview;
       } catch (err: any) {
@@ -31,11 +34,14 @@ export const useAnalyticsStore = defineStore('analytics', {
       } 
     },
 
-    async fetchProjectProgress() {
+    async fetchProjectProgress(period = 'this_month') {
       try {
-        const response = await fetch('http://localhost:3001/api/pm/analytics/project-progress', {
-          headers: this.getHeaders(),
-        });
+        const response = await fetch(
+          `http://localhost:3001/api/pm/analytics/project-progress?period=${encodeURIComponent(period)}`,
+          {
+            headers: this.getHeaders(),
+          },
+        );
         const data = await response.json();
         if (data.success) this.projectProgress = data.projects;
       } catch (err: any) {
@@ -123,11 +129,11 @@ export const useAnalyticsStore = defineStore('analytics', {
       }
     },
 
-    async loadAll() {
+    async loadAll(period = 'this_month') {
       this.loading = true;
       await Promise.all([
-        this.fetchOverview(),
-        this.fetchProjectProgress(),
+        this.fetchOverview(period),
+        this.fetchProjectProgress(period),
         this.fetchTaskDistribution(),
         this.fetchResourceWorkload(),
         this.fetchDeadlineRisks(),
