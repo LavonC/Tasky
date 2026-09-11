@@ -565,7 +565,7 @@
                     flat
                     no-caps
                     dense
-                    color="primary"
+                    color="blue-10"
                     icon="add"
                     label="Add Subtask"
                     @click="addNewTaskSubtask"
@@ -646,7 +646,7 @@
               <q-btn
                 unelevated
                 no-caps
-                color="primary"
+                color="blue-10"
                 icon="add"
                 label="Create Task"
                 type="submit"
@@ -1127,7 +1127,7 @@
           <q-btn
             unelevated
             no-caps
-            color="primary"
+            color="blue-10"
             icon="save"
             label="Save Update"
             class="mid-width"

@@ -1,9 +1,6 @@
 <template>
   <div class="calendar-toolbar row items-center justify-between q-px-md">
     <div>
-      <div class="calendar-kicker">
-        {{ kicker }}
-      </div>
       <div class="calendar-month">{{ monthName }} {{ currentYear }}</div>
     </div>
     <div class="row items-center q-gutter-xs">
@@ -16,7 +13,6 @@
 
 <script setup lang="ts">
 interface Props {
-  kicker: string;
   monthName: string;
   currentYear: number;
 }
@@ -40,7 +36,7 @@ defineEmits(['previous', 'today', 'next']);
 }
 
 .calendar-month {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   color: #333;
 }

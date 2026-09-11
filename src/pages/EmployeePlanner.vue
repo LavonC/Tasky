@@ -4,26 +4,14 @@
          HEADER
     ========================================================= -->
 
-    <div class="row items-center justify-between q-mb-md">
-      <div>
-        <div class="text-h5 text-weight-bold">Employee Planner</div>
-        <div class="text-caption text-grey-6">
-          Plan your work and keep your daily updates on track.
-        </div>
-      </div>
-      <StreakCard :streak="streak" />
-    </div>
-
-
     <!-- =========================================================
          CALENDAR VIEW
     ========================================================= -->
 
-    <div class="calendar-container">
+    <div class="calendar-container q-mt-xl">
       <q-card flat bordered class="calendar-card">
         <!-- HEADER -->
         <CalendarToolbar
-          kicker="WORK CALENDAR"
           :month-name="monthName"
           :current-year="currentYear"
           @previous="previousMonth"
@@ -32,38 +20,45 @@
         />
 
         <!-- MONTH STATS -->
-        <div class="compact-stats q-px-md q-py-sm">
-          <div class="compact-stat">
-            <div class="stat-icon worked-stat">
-              <q-icon name="check" size="15px" />
-            </div>
-            <div>
-              <div class="stat-value">
-                {{ monthlyWorkedDays }}
+        <div class="compact-stats row items-center justify-between q-px-md q-py-sm">
+          <div class="row items-center q-gutter-lg">
+            <div class="compact-stat">
+              <div class="stat-icon worked-stat">
+                <q-icon name="check" size="15px" />
               </div>
-              <div class="stat-label">Worked</div>
-            </div>
-          </div>
-          <div class="compact-stat">
-            <div class="stat-icon activity-stat">
-              <q-icon name="task_alt" size="15px" />
-            </div>
-            <div>
-              <div class="stat-value">
-                {{ monthlyTaskCount }}
+              <div>
+                <div class="stat-value">
+                  {{ monthlyWorkedDays }}
+                </div>
+                <div class="stat-label">Worked</div>
               </div>
-              <div class="stat-label">Tasks</div>
+            </div>
+
+            <div class="compact-stat">
+              <div class="stat-icon activity-stat">
+                <q-icon name="task_alt" size="15px" />
+              </div>
+              <div>
+                <div class="stat-value">
+                  {{ monthlyTaskCount }}
+                </div>
+                <div class="stat-label">Tasks</div>
+              </div>
+            </div>
+
+            <div class="compact-stat">
+              <div class="stat-icon hours-stat">
+                <q-icon name="schedule" size="15px" />
+              </div>
+              <div>
+                <div class="stat-value">{{ monthlyHours }}h</div>
+                <div class="stat-label">Logged</div>
+              </div>
             </div>
           </div>
-          <div class="compact-stat">
-            <div class="stat-icon hours-stat">
-              <q-icon name="schedule" size="15px" />
-            </div>
-            <div>
-              <div class="stat-value">{{ monthlyHours }}h</div>
-              <div class="stat-label">Logged</div>
-            </div>
-          </div>
+
+          <!-- STREAK ON RIGHT -->
+          <StreakCard :streak="streak" />
         </div>
 
         <!-- WEEK DAYS -->
@@ -166,7 +161,6 @@
                     {{ selectedDateFormatted }}
                   </div>
                 </div>
-
               </div>
 
               <!-- STATUS OPTIONS -->
@@ -189,10 +183,16 @@
                 </div>
               </div>
 
-              <div v-if="selectedDayCompliance?.status === 'submitted'" class="text-positive text-weight-bold flex items-center justify-center q-gutter-x-sm q-mt-md">
+              <div
+                v-if="selectedDayCompliance?.status === 'submitted'"
+                class="text-positive text-weight-bold flex items-center justify-center q-gutter-x-sm q-mt-md"
+              >
                 <q-icon name="check_circle" size="sm" /> <span>Submitted for Review</span>
               </div>
-              <div v-else-if="selectedDayCompliance?.status === 'reviewed'" class="text-primary text-weight-bold flex items-center justify-center q-mt-md">
+              <div
+                v-else-if="selectedDayCompliance?.status === 'reviewed'"
+                class="text-primary text-weight-bold flex items-center justify-center q-mt-md"
+              >
                 <div class="flex items-center q-gutter-x-sm">
                   <q-icon name="verified" size="sm" /> <span>Reviewed by PM</span>
                 </div>
@@ -247,7 +247,10 @@
               <div v-if="selectedDayActivity.length" class="compact-activity-list q-mt-sm">
                 <div v-for="log in selectedDayActivity" :key="log.id" class="compact-activity-row">
                   <div class="activity-task-icon">
-                    <q-icon :name="log.taskTitle === 'Manual Entry' ? 'edit_note' : 'task_alt'" size="15px" />
+                    <q-icon
+                      :name="log.taskTitle === 'Manual Entry' ? 'edit_note' : 'task_alt'"
+                      size="15px"
+                    />
                   </div>
 
                   <div class="col">
@@ -292,14 +295,12 @@
                 />
               </div>
 
-                <!-- Submit to PM moved to Save Day Status above -->
-              </div>
+              <!-- Submit to PM moved to Save Day Status above -->
+            </div>
           </q-card>
         </div>
       </div>
     </div>
-
-
 
     <!-- =========================================================
          CREATE WORK LOG DIALOG
@@ -457,7 +458,6 @@ const today = new Date();
 
 const todayString = formatDate(today);
 
-
 /* ============================================================
    CALENDAR MONTH
 ============================================================ */
@@ -542,7 +542,7 @@ const fetchTasks = async () => {
 
   try {
     const response = await fetch(`http://localhost:3001/api/tasks/employee/${authStore.user?.id}`, {
-      headers: { Authorization: `Bearer ${authStore.token}` }
+      headers: { Authorization: `Bearer ${authStore.token}` },
     });
     const result = await response.json();
 
@@ -550,9 +550,12 @@ const fetchTasks = async () => {
       // Fetch subtasks for each task
       const tasksWithSubtasks = await Promise.all(
         result.tasks.map(async (task: any) => {
-          const subtaskResponse = await fetch(`http://localhost:3001/api/employee/tasks/${task.id}/subtasks`, {
-            headers: { Authorization: `Bearer ${authStore.token}` }
-          });
+          const subtaskResponse = await fetch(
+            `http://localhost:3001/api/employee/tasks/${task.id}/subtasks`,
+            {
+              headers: { Authorization: `Bearer ${authStore.token}` },
+            },
+          );
           const subtaskResult = await subtaskResponse.json();
           const subtasks = subtaskResult.success ? subtaskResult.subtasks : [];
 
@@ -566,7 +569,7 @@ const fetchTasks = async () => {
             note: task.description || '',
             subtasks: subtasks,
           };
-        })
+        }),
       );
 
       tasks.value = tasksWithSubtasks;
@@ -613,9 +616,10 @@ const fetchWorkLogs = async () => {
 
   try {
     const response = await fetch(
-      `http://localhost:3001/api/employee/work-logs/${authStore.user?.id}`, {
-        headers: { Authorization: `Bearer ${authStore.token}` }
-      }
+      `http://localhost:3001/api/employee/work-logs/${authStore.user?.id}`,
+      {
+        headers: { Authorization: `Bearer ${authStore.token}` },
+      },
     );
     const result = await response.json();
 
@@ -624,17 +628,23 @@ const fetchWorkLogs = async () => {
       const logsByDate: Record<string, WorkLog[]> = {};
       result.logs.forEach((log: any) => {
         let date = log.log_date;
-          if (date) {
-            const d = new Date(date);
-            date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-          }
-        
+        if (date) {
+          const d = new Date(date);
+          date =
+            d.getFullYear() +
+            '-' +
+            String(d.getMonth() + 1).padStart(2, '0') +
+            '-' +
+            String(d.getDate()).padStart(2, '0');
+        }
+
         if (!logsByDate[date]) {
           logsByDate[date] = [];
         }
         logsByDate[date]!.push({
           id: log.id,
-          taskTitle: log.task_title || (log.task_id == 0 || !log.task_id ? 'Manual Entry' : 'Unknown Task'),
+          taskTitle:
+            log.task_title || (log.task_id == 0 || !log.task_id ? 'Manual Entry' : 'Unknown Task'),
           project: log.project_name || log.project || '',
           progress: parseFloat(log.task_progress ?? log.progress) || 0,
           hours: parseFloat(log.hours_spent) || 0,
@@ -658,8 +668,6 @@ onMounted(() => {
   fetchTasks();
   fetchWorkLogs();
 });
-
-
 
 /* ============================================================
    CREATE LOG DIALOG
@@ -820,9 +828,12 @@ const selectedDayCompliance = ref<any>(null);
 async function fetchDayCompliance(date: string) {
   if (!authStore.user?.id) return;
   try {
-    const response = await fetch(`http://localhost:3001/api/daily-logs/${authStore.user?.id}/${date}`, {
-      headers: { Authorization: `Bearer ${authStore.token}` }
-    });
+    const response = await fetch(
+      `http://localhost:3001/api/daily-logs/${authStore.user?.id}/${date}`,
+      {
+        headers: { Authorization: `Bearer ${authStore.token}` },
+      },
+    );
     const result = await response.json();
     if (result.success) {
       selectedDayCompliance.value = result.compliance;
@@ -832,23 +843,31 @@ async function fetchDayCompliance(date: string) {
   }
 }
 
-watch(selectedDate, (newDate) => {
-  fetchDayCompliance(newDate);
-}, { immediate: true });
+watch(
+  selectedDate,
+  (newDate) => {
+    fetchDayCompliance(newDate);
+  },
+  { immediate: true },
+);
 
 async function submitDayToPM() {
   if (!authStore.user?.id) return;
   // First save the local day status selection (worked, leave, holiday, weekend)
   dayStatuses.value[selectedDate.value] = selectedDayStatus.value;
-  
+
   try {
     const response = await fetch('http://localhost:3001/api/daily-logs/submit', {
       method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authStore.token}`
-        },
-      body: JSON.stringify({ user_id: authStore.user?.id, log_date: selectedDate.value, day_status: selectedDayStatus.value })
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
+      },
+      body: JSON.stringify({
+        user_id: authStore.user?.id,
+        log_date: selectedDate.value,
+        day_status: selectedDayStatus.value,
+      }),
     });
     const result = await response.json();
     if (result.success) {
@@ -874,7 +893,6 @@ const selectedDateFormatted = computed(() => {
     year: 'numeric',
   });
 });
-
 
 /* ============================================================
    MONTHLY STATS
@@ -928,8 +946,6 @@ watch(
     immediate: true,
   },
 );
-
-
 
 /* ============================================================
    FORMAT DATE
@@ -1056,19 +1072,17 @@ function totalHours(logs: WorkLog[]): string {
 
   return total.toFixed(1);
 }
-
-
-
-
-
 </script>
 
 <style scoped>
 .planner-page {
   min-height: 100vh;
-  background: #f7f8fc;
+  background: #ffffff;
 }
 
+.calendar-container {
+  background: #ffffff;
+}
 .planner-header {
   max-width: 1440px;
   margin-inline: auto;
