@@ -67,26 +67,15 @@ export default defineConfig((/* ctx */) => {
       },
       // viteVuePluginOptions: {},
 
-      vitePlugins: [
-        [
-          'vite-plugin-checker',
-          {
-            vueTsc: true,
-            eslint: {
-              lintCommand: 'eslint -c ./eslint.config.js "./src*/**/*.{ts,js,mjs,cjs,vue}"',
-              useFlatConfig: true,
-            },
-          },
-          { server: false },
-        ],
-      ],
+      vitePlugins: [],
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#devserver
     devServer: {
+      port: 9000,
       // vueDevtools: true,
       // https: true,
-      open: true, // opens browser window automatically
+      open: false, // opens browser window automatically
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#framework

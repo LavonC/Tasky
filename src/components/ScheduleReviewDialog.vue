@@ -58,9 +58,13 @@ async function confirmEvent() {
   if (!props.event) return;
   try {
     const authStore = useAuthStore();
-    await fetch(`http://localhost:3001/api/pm/schedule/queue/${props.event.id}/confirm`, {
+    const headers: Record<string, string> = {};
+    if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+      headers['Authorization'] = `Bearer ${authStore.token}`;
+    }
+    await fetch(`http://localhost:3007/api/pm/schedule/queue/${props.event.id}/confirm`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${authStore.token}` }
+      headers,
     });
     $q.notify({ type: 'positive', message: 'Schedule changes confirmed' });
     emit('confirmed');
@@ -75,9 +79,13 @@ async function rejectEvent() {
   if (!props.event) return;
   try {
     const authStore = useAuthStore();
-    await fetch(`http://localhost:3001/api/pm/schedule/queue/${props.event.id}/reject`, {
+    const headers: Record<string, string> = {};
+    if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+      headers['Authorization'] = `Bearer ${authStore.token}`;
+    }
+    await fetch(`http://localhost:3007/api/pm/schedule/queue/${props.event.id}/reject`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${authStore.token}` }
+      headers,
     });
     $q.notify({ type: 'info', message: 'Schedule changes rejected' });
     emit('rejected');

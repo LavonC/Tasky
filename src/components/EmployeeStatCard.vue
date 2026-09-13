@@ -1,5 +1,10 @@
 <template>
-  <q-card flat class="stat-card q-pa-md shadow-1">
+  <q-card
+    flat
+    class="stat-card q-pa-md shadow-1"
+    :class="{ 'cursor-pointer': clickable }"
+    @click="clickable ? $emit('click') : null"
+  >
     <div class="row justify-between items-center q-mb-xs">
       <div class="text-grey-7 text-caption text-weight-medium">
         {{ label }}
@@ -41,9 +46,11 @@ interface Props {
   color: string;
   trend: string;
   positive: boolean;
+  clickable?: boolean;
 }
 
 defineProps<Props>();
+defineEmits(['click']);
 </script>
 
 <style scoped>

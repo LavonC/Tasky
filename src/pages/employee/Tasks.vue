@@ -7,6 +7,13 @@
         <div class="text-grey-7 text-caption">Manage your assigned tasks</div>
       </div>
       <div class="row items-center q-gutter-sm">
+        <q-btn
+          color="primary"
+          label="Automate Schedule"
+          icon="auto_fix_high"
+          @click="automateSchedule"
+          :loading="automating"
+        />
         <q-input
           v-model="searchQuery"
           outlined
@@ -246,12 +253,76 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- Task Clash Detected Dialog -->
+    <q-dialog v-model="showClashDialog" persistent>
+      <q-card style="min-width: 600px; max-width: 750px" class="rounded-borders">
+        <q-card-section class="row items-center bg-red-1 text-negative q-pb-md">
+          <q-avatar icon="warning" color="negative" text-color="white" size="40px" class="q-mr-md" />
+          <div>
+            <div class="text-h6 text-weight-bold">Task Clash Detected</div>
+            <div class="text-caption text-grey-8">
+              Multiple tasks share the exact same deadline date. Click Automate to resolve conflicts according to priority with at least 3-day gaps.
+            </div>
+          </div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+
+        <q-card-section class="q-pt-md" style="max-height: 400px; overflow-y: auto">
+          <div v-for="(conflict, idx) in detectedConflicts" :key="idx" class="q-mb-md">
+            <div class="text-subtitle2 text-weight-bold text-grey-9 q-mb-xs row items-center">
+              <q-icon name="event" class="q-mr-xs" color="primary" />
+              Deadline: {{ formatDate(conflict.deadline) }}
+              <q-badge color="negative" class="q-ml-sm">{{ conflict.count }} conflicting tasks</q-badge>
+            </div>
+            <q-list bordered separator class="rounded-borders bg-grey-1">
+              <q-item v-for="task in conflict.tasks" :key="task.id" class="q-py-sm">
+                <q-item-section avatar>
+                  <q-badge
+                    :color="getPriorityColor(task.priority)"
+                    :label="task.priority"
+                    class="text-capitalize text-weight-bold q-px-sm q-py-xs"
+                  />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-weight-bold">{{ task.title }}</q-item-label>
+                  <q-item-label caption class="text-grey-7">
+                    Project: {{ task.project_name || getProjectName(task.project_id) }}
+                  </q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <div class="text-caption text-weight-medium text-grey-8">
+                    {{ formatDate(task.deadline) }}
+                  </div>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-actions align="right" class="q-pa-md bg-grey-1">
+          <q-btn flat label="Cancel" color="grey-7" v-close-popup />
+          <q-btn
+            unelevated
+            color="primary"
+            icon="auto_fix_high"
+            label="Automate"
+            @click="resolveClashes"
+            :loading="automating"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '../../stores/authStore';
+import { Notify } from 'quasar';
 
 defineOptions({
   name: 'EmployeeTasks',
@@ -267,6 +338,11 @@ const projectFilter = ref('');
 const myTasks = ref<any[]>([]);
 const projects = ref<any[]>([]);
 const employees = ref<any[]>([]);
+
+// Deadline conflict handling
+const showClashDialog = ref(false);
+const detectedConflicts = ref<any[]>([]);
+const automating = ref(false);
 
 const showUpdateDialog = ref(false);
 const showSubmitReviewDialog = ref(false);
@@ -366,6 +442,7 @@ const filteredTasks = computed(() => {
 
 onMounted(async () => {
   await fetchFromDatabase();
+  await detectDeadlineClashes();
 });
 
 async function fetchFromDatabase() {
@@ -374,20 +451,20 @@ async function fetchFromDatabase() {
   loading.value = true;
   try {
     const tasksResponse = await fetch(
-      `http://localhost:3001/api/tasks/employee/${authStore.user.id}`,
+      `http://localhost:3007/api/tasks/employee/${authStore.user.id}`,
     );
     const tasksData = await tasksResponse.json();
     if (tasksData.success) {
       myTasks.value = tasksData.tasks;
     }
 
-    const projectsResponse = await fetch('http://localhost:3001/api/pm/projects');
+    const projectsResponse = await fetch('http://localhost:3007/api/pm/projects');
     const projectsData = await projectsResponse.json();
     if (projectsData.success) {
       projects.value = projectsData.projects;
     }
 
-    const employeesResponse = await fetch('http://localhost:3001/api/users');
+    const employeesResponse = await fetch('http://localhost:3007/api/users');
     const employeesData = await employeesResponse.json();
     if (employeesData.success) {
       employees.value = employeesData.users;
@@ -463,14 +540,18 @@ async function updateTaskProgress() {
       finalProgress = 100;
     }
 
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+      headers['Authorization'] = `Bearer ${authStore.token}`;
+    }
+
     const response = await fetch(
-      `http://localhost:3001/api/employee/tasks/${selectedTask.value.id}`,
+      `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}`,
       {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authStore.token}`,
-        },
+        headers,
         body: JSON.stringify({
           progress: finalProgress,
           status: statusUpdate.value,
@@ -504,30 +585,175 @@ async function submitForReview() {
 
   submitting.value = true;
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+      headers['Authorization'] = `Bearer ${authStore.token}`;
+    }
+
+    console.log('=== SUBMIT REVIEW START ===');
+    console.log('Task ID:', selectedTask.value.id);
+    console.log('Task owner ID:', authStore.user?.id);
+    console.log('Reviewer ID:', selectedReviewer.value);
+    console.log('Completion comment:', completionComment.value);
+    
+    const requestBody = {
+      completion_comment: completionComment.value,
+      reviewer_id: selectedReviewer.value || null,
+      task_owner_id: authStore.user?.id,
+    };
+    console.log('Request body:', requestBody);
+    
     const response = await fetch(
-      `http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/submit-review`,
+      `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}/submit-review`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(requestBody),
+      },
+    );
+
+    console.log('Submit review response status:', response.status);
+    const data = await response.json();
+    console.log('Submit review response data:', data);
+    
+    if (data.success) {
+      console.log('=== SUBMIT REVIEW SUCCESS ===');
+      showSubmitReviewDialog.value = false;
+      completionComment.value = '';
+      await fetchFromDatabase();
+      Notify.create({
+        type: 'positive',
+        message: 'Task submitted for review successfully',
+      });
+    } else {
+      console.error('Submit review failed:', data);
+      Notify.create({
+        type: 'negative',
+        message: `Failed to submit: ${data.error || 'Unknown error'}`,
+      });
+    }
+  } catch (error) {
+    console.error('Error submitting for review:', error);
+    Notify.create({
+      type: 'negative',
+      message: 'Error submitting for review',
+    });
+  } finally {
+    submitting.value = false;
+    console.log('=== SUBMIT REVIEW END ===');
+  }
+}
+
+// ============================================================
+// DEADLINE CONFLICT HANDLING
+// ============================================================
+
+async function detectDeadlineClashes() {
+  if (!authStore.user?.id) return;
+  
+  try {
+    const response = await fetch(
+      `http://localhost:3007/api/employee/${authStore.user.id}/deadline-clashes`
+    );
+    const data = await response.json();
+    if (data.success && data.conflicts.length > 0) {
+      detectedConflicts.value = data.conflicts;
+      showClashDialog.value = true;
+    }
+  } catch (error) {
+    console.error('Error detecting clashes:', error);
+  }
+}
+
+async function automateSchedule() {
+  if (!authStore.user?.id) return;
+  
+  automating.value = true;
+  try {
+    const response = await fetch(
+      `http://localhost:3007/api/employee/${authStore.user.id}/automate-schedule`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${authStore.token}`,
         },
-        body: JSON.stringify({
-          completion_comment: completionComment.value,
-          reviewer_id: selectedReviewer.value,
-        }),
-      },
+        body: JSON.stringify({ mode: 'full' }),
+      }
     );
-
     const data = await response.json();
     if (data.success) {
-      showSubmitReviewDialog.value = false;
+      showClashDialog.value = false;
       await fetchFromDatabase();
+      Notify.create({
+        type: 'positive',
+        message: data.updatedTasks && data.updatedTasks.length > 0
+          ? `Schedule automated! ${data.updatedTasks.length} tasks organized with 3-day gaps.`
+          : 'Schedule is already optimized with no conflicts.',
+        position: 'top',
+      });
+    } else {
+      Notify.create({
+        type: 'negative',
+        message: data.error || 'Failed to automate schedule',
+        position: 'top',
+      });
     }
   } catch (error) {
-    console.error('Error submitting for review:', error);
+    console.error('Error automating schedule:', error);
+    Notify.create({
+      type: 'negative',
+      message: 'Network error automating schedule',
+      position: 'top',
+    });
   } finally {
-    submitting.value = false;
+    automating.value = false;
+  }
+}
+
+async function resolveClashes() {
+  if (!authStore.user?.id) return;
+
+  automating.value = true;
+  try {
+    const response = await fetch(
+      `http://localhost:3007/api/employee/${authStore.user.id}/automate-schedule`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ mode: 'clashes' }),
+      }
+    );
+    const data = await response.json();
+    if (data.success) {
+      showClashDialog.value = false;
+      await fetchFromDatabase();
+      Notify.create({
+        type: 'positive',
+        message: data.updatedTasks && data.updatedTasks.length > 0
+          ? `Conflicts resolved! ${data.updatedTasks.length} tasks rescheduled with 3-day gaps.`
+          : 'All deadline conflicts resolved.',
+        position: 'top',
+      });
+    } else {
+      Notify.create({
+        type: 'negative',
+        message: data.error || 'Failed to resolve conflicts',
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    console.error('Error resolving clashes:', error);
+    Notify.create({
+      type: 'negative',
+      message: 'Network error resolving conflicts',
+      position: 'top',
+    });
+  } finally {
+    automating.value = false;
   }
 }
 </script>

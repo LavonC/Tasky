@@ -263,7 +263,7 @@ const handleRegister = async () => {
   loading.value = true;
 
   try {
-    const response = await fetch('http://localhost:3001/api/auth/register/pm', {
+    const response = await fetch('http://localhost:3007/api/auth/register/pm', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

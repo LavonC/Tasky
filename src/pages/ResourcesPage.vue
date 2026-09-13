@@ -254,7 +254,7 @@ const fetchEmployees = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const response = await fetch('http://localhost:3001/api/pm/resources', {
+    const response = await fetch('http://localhost:3007/api/pm/resources', {
       headers: {
         'Content-Type': 'application/json',
       },

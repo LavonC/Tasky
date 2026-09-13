@@ -30,7 +30,7 @@ export const useDashboardStore = defineStore('dashboard', {
     async fetchDashboardStats() {
       this.loading = true;
       try {
-        const response = await fetch('http://localhost:3001/api/pm/dashboard/stats', {
+        const response = await fetch('http://localhost:3007/api/pm/dashboard/stats', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -49,7 +49,7 @@ export const useDashboardStore = defineStore('dashboard', {
     async fetchAttentionItems() {
       this.loading = true;
       try {
-        const response = await fetch('http://localhost:3001/api/pm/dashboard/attention', {
+        const response = await fetch('http://localhost:3007/api/pm/dashboard/attention', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -68,7 +68,7 @@ export const useDashboardStore = defineStore('dashboard', {
     async fetchDailyProgress() {
       this.loading = true;
       try {
-        const response = await fetch('http://localhost:3001/api/pm/dashboard/daily-progress', {
+        const response = await fetch('http://localhost:3007/api/pm/dashboard/daily-progress', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -87,7 +87,7 @@ export const useDashboardStore = defineStore('dashboard', {
     async fetchUsers() {
       this.loading = true;
       try {
-        const response = await fetch('http://localhost:3001/api/users', {
+        const response = await fetch('http://localhost:3007/api/users', {
           headers: this.getHeaders(),
         });
         const data = await response.json();

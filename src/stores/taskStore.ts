@@ -128,7 +128,7 @@ export const useTaskStore = defineStore('taskStore', {
     async fetchEmployees() {
       try {
         // Authentication removed for testing
-        const response = await fetch('http://localhost:3001/api/users', {
+        const response = await fetch('http://localhost:3007/api/users', {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -145,7 +145,7 @@ export const useTaskStore = defineStore('taskStore', {
     async fetchProjects() {
       try {
         // Authentication removed for testing
-        const response = await fetch('http://localhost:3001/api/pm/projects', {
+        const response = await fetch('http://localhost:3007/api/pm/projects', {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -166,7 +166,7 @@ export const useTaskStore = defineStore('taskStore', {
 
       try {
         // Fetch employee data including max_hours_per_week - authentication removed
-        const empResponse = await fetch(`http://localhost:3001/api/users/${userId}`, {
+        const empResponse = await fetch(`http://localhost:3007/api/users/${userId}`, {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -177,7 +177,7 @@ export const useTaskStore = defineStore('taskStore', {
         }
 
         // Fetch tasks - authentication removed
-        const response = await fetch(`http://localhost:3001/api/tasks/employee/${userId}`, {
+        const response = await fetch(`http://localhost:3007/api/tasks/employee/${userId}`, {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -188,7 +188,7 @@ export const useTaskStore = defineStore('taskStore', {
         }
 
         // Fetch work logs - authentication removed
-        const logsResponse = await fetch(`http://localhost:3001/api/employee/work-logs/${userId}`, {
+        const logsResponse = await fetch(`http://localhost:3007/api/employee/work-logs/${userId}`, {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -238,7 +238,7 @@ export const useTaskStore = defineStore('taskStore', {
     async addTask(taskData: any) {
       try {
         const authStore = useAuthStore();
-        const response = await fetch('http://localhost:3001/api/employee/tasks', {
+        const response = await fetch('http://localhost:3007/api/employee/tasks', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -264,7 +264,7 @@ export const useTaskStore = defineStore('taskStore', {
     async updateTask(taskId: number, updates: any) {
       try {
         const authStore = useAuthStore();
-        const response = await fetch(`http://localhost:3001/api/employee/tasks/${taskId}`, {
+        const response = await fetch(`http://localhost:3007/api/employee/tasks/${taskId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -290,7 +290,7 @@ export const useTaskStore = defineStore('taskStore', {
     async addWorkLog(logData: any) {
       try {
         const authStore = useAuthStore();
-        const response = await fetch('http://localhost:3001/api/employee/work-log', {
+        const response = await fetch('http://localhost:3007/api/employee/work-log', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -316,7 +316,7 @@ export const useTaskStore = defineStore('taskStore', {
     async addTaskComment(taskId: number | string, content: string) {
       try {
         const authStore = useAuthStore();
-        const response = await fetch(`http://localhost:3001/api/employee/tasks/${taskId}/comment`, {
+        const response = await fetch(`http://localhost:3007/api/employee/tasks/${taskId}/comment`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -338,14 +338,17 @@ export const useTaskStore = defineStore('taskStore', {
     async submitTaskForReview(taskId: number, completionComment: string, reviewerId: number) {
       try {
         const authStore = useAuthStore();
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+          headers['Authorization'] = `Bearer ${authStore.token}`;
+        }
         const response = await fetch(
-          `http://localhost:3001/api/employee/tasks/${taskId}/submit-review`,
+          `http://localhost:3007/api/employee/tasks/${taskId}/submit-review`,
           {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${authStore.token}`,
-            },
+            headers,
             body: JSON.stringify({
               completion_comment: completionComment,
               reviewer_id: reviewerId,
@@ -371,14 +374,17 @@ export const useTaskStore = defineStore('taskStore', {
     async approveTaskReview(taskId: number, reviewComment: string) {
       try {
         const authStore = useAuthStore();
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+          headers['Authorization'] = `Bearer ${authStore.token}`;
+        }
         const response = await fetch(
-          `http://localhost:3001/api/employee/reviews/${taskId}/complete`,
+          `http://localhost:3007/api/employee/reviews/${taskId}/complete`,
           {
             method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${authStore.token}`,
-            },
+            headers,
             body: JSON.stringify({ review_comment: reviewComment }),
           },
         );
@@ -401,14 +407,17 @@ export const useTaskStore = defineStore('taskStore', {
     async requestTaskChanges(taskId: number, reviewComment: string) {
       try {
         const authStore = useAuthStore();
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+          headers['Authorization'] = `Bearer ${authStore.token}`;
+        }
         const response = await fetch(
-          `http://localhost:3001/api/employee/tasks/${taskId}/request-changes`,
+          `http://localhost:3007/api/employee/tasks/${taskId}/request-changes`,
           {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${authStore.token}`,
-            },
+            headers,
             body: JSON.stringify({ review_comment: reviewComment }),
           },
         );
@@ -431,7 +440,7 @@ export const useTaskStore = defineStore('taskStore', {
     async fetchPendingReviews(userId: number) {
       try {
         const response = await fetch(
-          `http://localhost:3001/api/employee/reviews/pending?user_id=${userId}`,
+          `http://localhost:3007/api/employee/reviews/pending?user_id=${userId}`,
         );
         const data = await response.json();
         if (data.success) {
@@ -447,7 +456,7 @@ export const useTaskStore = defineStore('taskStore', {
     async fetchReviewHistory(userId: number) {
       try {
         const response = await fetch(
-          `http://localhost:3001/api/employee/reviews/history?user_id=${userId}`,
+          `http://localhost:3007/api/employee/reviews/history?user_id=${userId}`,
         );
         const data = await response.json();
         if (data.success) {

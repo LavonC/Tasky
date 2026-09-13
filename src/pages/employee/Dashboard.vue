@@ -66,13 +66,32 @@
         />
       </div>
       <div class="col-3">
-        <StatCard
-          title="My Points"
-          :value="stats.points.toString()"
-          color="purple"
-          icon="o_star"
-          caption="Points earned"
-        />
+        <q-card flat class="rounded-borders q-pa-md shadow-1" style="border: 1px solid #edf0f5; border-radius: 14px; min-height: 112px;">
+          <div class="row justify-between items-center q-mb-xs">
+            <div class="text-grey-7 text-caption text-weight-medium">
+              Overdue
+            </div>
+            <q-avatar size="24px" :color="overdueTasks.length > 0 ? 'red-1' : 'grey-1'" :text-color="overdueTasks.length > 0 ? 'red' : 'grey'" icon="event" />
+          </div>
+          <div :class="`text-h4 text-weight-bold ${overdueTasks.length > 0 ? 'text-red' : 'text-grey-7'}`" style="line-height: 1">
+            {{ overdueTasks.length }}
+          </div>
+          <div
+            class="row items-center text-grey-6"
+            style="font-size: 11px; margin-top: 6px"
+          >
+            {{ overdueTasks.length > 0 ? 'Need attention' : 'No overdue tasks' }}
+          </div>
+          <div class="q-mt-sm">
+            <q-btn
+              size="sm"
+              color="primary"
+              label="View"
+              @click="openOverdueDialog"
+              dense
+            />
+          </div>
+        </q-card>
       </div>
     </div>
 
@@ -108,7 +127,18 @@
                     <q-icon name="task" size="24px" class="q-mr-sm" />
                     <div class="text-h6 text-weight-bold">My Tasks</div>
                   </div>
-                  <q-spinner-dots v-if="loading" size="24px" />
+                  <div class="row items-center q-gutter-sm">
+                    <q-btn
+                      color="primary"
+                      label="Automate"
+                      icon="auto_fix_high"
+                      size="sm"
+                      @click="automateFullSchedule"
+                      :loading="automating"
+                      :disable="myTasks.length === 0"
+                    />
+                    <q-spinner-dots v-if="loading" size="24px" />
+                  </div>
                 </div>
                 <div class="text-caption">Your assigned tasks across all projects</div>
               </q-card-section>
@@ -193,7 +223,19 @@
                           icon="edit"
                           color="blue"
                           size="sm"
-                          @click="openUpdateDialog(task)"
+                          label="Edit"
+                          @click.stop="openUpdateDialog(task)"
+                        />
+                        <q-btn
+                          v-if="isOverdue(task.deadline) && task.status !== 'completed'"
+                          flat
+                          round
+                          dense
+                          icon="event"
+                          color="orange"
+                          size="sm"
+                          label="Set Deadline"
+                          @click.stop="openSetDeadlineDialog(task)"
                         />
                         <q-btn
                           v-if="
@@ -207,6 +249,8 @@
                           icon="rate_review"
                           color="purple"
                           size="sm"
+                          label="Review"
+                          @click.stop="openSubmitReviewDialog(task)"
                         />
                       </div>
                     </q-item-section>
@@ -559,12 +603,152 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- Deadline Clash Dialog -->
+    <q-dialog v-model="showClashDialog">
+      <q-card style="min-width: 600px">
+        <q-card-section>
+          <div class="text-h6 text-negative">
+            <q-icon name="warning" class="q-mr-sm" />
+            Task Clash Detected
+          </div>
+        </q-card-section>
+        <q-card-section>
+          <div v-if="detectedConflicts.length > 0">
+            <div v-for="(conflict, index) in detectedConflicts" :key="index" class="q-mb-md">
+              <div class="text-subtitle2 q-mb-sm">
+                {{ conflict.deadline }} ({{ conflict.count }} tasks)
+              </div>
+              <q-list bordered separator>
+                <q-item v-for="task in conflict.tasks" :key="task.id">
+                  <q-item-section avatar>
+                    <q-badge :color="getPriorityColor(task.priority)" :label="task.priority" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{ task.title }}</q-item-label>
+                    <q-item-label caption>{{ task.project_name }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn color="primary" label="Automate" @click="resolveClashes" :loading="automating" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Set Deadline Dialog -->
+    <q-dialog v-model="showSetDeadlineDialog">
+      <q-card style="min-width: 400px">
+        <q-card-section>
+          <div class="text-h6">Set New Deadline</div>
+        </q-card-section>
+        <q-card-section>
+          <div v-if="selectedTask">
+            <div class="q-mb-md">
+              <div class="text-subtitle2">{{ selectedTask.title }}</div>
+              <div class="text-caption text-grey-7">
+                Current deadline: {{ formatDate(selectedTask.deadline) }}
+              </div>
+            </div>
+            <q-input
+              v-model="newDeadline"
+              type="date"
+              label="New Deadline"
+              outlined
+              :min="new Date().toISOString().split('T')[0]"
+            />
+          </div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn color="primary" label="Set Deadline" @click="setDeadline" :loading="updating" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Overdue Tasks Dialog -->
+    <q-dialog v-model="showOverdueDialog">
+      <q-card style="min-width: 600px; max-height: 80vh">
+        <q-card-section>
+          <div class="text-h6 text-negative">
+            <q-icon name="warning" class="q-mr-sm" />
+            Overdue Tasks ({{ overdueTasks.length }})
+          </div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <q-list separator>
+            <q-item
+              v-for="task in overdueTasks"
+              :key="task.id"
+              clickable
+              @click="openOverdueTaskDialog(task)"
+              class="q-py-md"
+            >
+              <q-item-section avatar>
+                <q-badge :color="getPriorityColor(task.priority)" :label="task.priority" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label class="text-weight-bold">{{ task.title }}</q-item-label>
+                <q-item-label caption>{{ getProjectName(task.project_id) }}</q-item-label>
+                <q-item-label caption class="text-red">{{ formatDate(task.deadline) }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-icon name="chevron_right" color="grey-5" />
+              </q-item-section>
+            </q-item>
+          </q-list>
+          <div v-if="overdueTasks.length === 0" class="text-center q-pa-xl text-grey-6">
+            <q-icon name="check_circle" size="48px" class="q-mb-sm" color="green" />
+            <div class="text-h6">No overdue tasks</div>
+            <div>All your tasks are on schedule!</div>
+          </div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Close" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Overdue Task Dialog -->
+    <q-dialog v-model="showOverdueTaskDialog">
+      <q-card style="min-width: 500px">
+        <q-card-section>
+          <div class="text-h6">Overdue Task Actions</div>
+        </q-card-section>
+        <q-card-section>
+          <div v-if="selectedOverdueTask">
+            <div class="q-mb-md">
+              <div class="text-subtitle2">{{ selectedOverdueTask.title }}</div>
+              <div class="text-caption text-grey-7">
+                {{ getProjectName(selectedOverdueTask.project_id) }}
+              </div>
+              <div class="text-caption text-red q-mt-sm">
+                Overdue: {{ formatDate(selectedOverdueTask.deadline) }}
+              </div>
+              <div class="text-caption text-grey-7 q-mt-xs">
+                Priority: {{ selectedOverdueTask.priority }}
+              </div>
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn color="orange" label="Set Deadline" @click="openSetDeadlineDialog(selectedOverdueTask)" />
+          <q-btn color="primary" label="Automate" @click="automateOverdueTask" :loading="automating" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useQuasar } from 'quasar';
 import { useAuthStore } from '../../stores/authStore';
 import StatCard from '../../components/StatCard.vue';
 
@@ -573,6 +757,7 @@ defineOptions({
 });
 
 const router = useRouter();
+const $q = useQuasar();
 const authStore = useAuthStore();
 
 const activeTab = ref('tasks');
@@ -592,6 +777,7 @@ const stats = ref({
 const showUpdateDialog = ref(false);
 const showSubmitReviewDialog = ref(false);
 const showReviewDialog = ref(false);
+const showSetDeadlineDialog = ref(false);
 const selectedTask = ref<any>(null);
 const selectedReview = ref<any>(null);
 const progressUpdate = ref(0);
@@ -600,9 +786,29 @@ const hoursSpent = ref(0);
 const completionComment = ref('');
 const reviewComment = ref('');
 const selectedReviewer = ref<number | null>(null);
+const newDeadline = ref('');
 const updating = ref(false);
 const submitting = ref(false);
 const reviewing = ref(false);
+
+// Deadline conflict handling
+const showClashDialog = ref(false);
+const detectedConflicts = ref<any[]>([]);
+const automating = ref(false);
+
+// Overdue tasks handling
+const showOverdueDialog = ref(false);
+const showOverdueTaskDialog = ref(false);
+const selectedOverdueTask = ref<any>(null);
+
+const overdueTasks = computed(() => {
+  const overdue = myTasks.value.filter((task: any) => task.status !== 'completed' && isOverdue(task.deadline));
+  console.log('=== OVERDUE TASKS COMPUTED ===');
+  console.log('Total tasks:', myTasks.value.length);
+  console.log('Overdue count:', overdue.length);
+  console.log('Overdue tasks:', overdue);
+  return overdue;
+});
 
 const statusOptions = ['not-started', 'in-progress', 'completed', 'blocked'];
 
@@ -663,16 +869,18 @@ async function fetchFromDatabase() {
   try {
     // Fetch tasks directly from database
     const tasksResponse = await fetch(
-      `http://localhost:3001/api/tasks/employee/${authStore.user.id}`,
+      `http://localhost:3007/api/tasks/employee/${authStore.user.id}`,
     );
     const tasksData = await tasksResponse.json();
     if (tasksData.success) {
       myTasks.value = tasksData.tasks;
       console.log('✅ Tasks loaded:', myTasks.value.length);
+      // Detect deadline clashes after tasks are loaded
+      await detectDeadlineClashes();
     }
 
     // Fetch projects directly from database
-    const projectsResponse = await fetch('http://localhost:3001/api/pm/projects');
+    const projectsResponse = await fetch('http://localhost:3007/api/pm/projects');
     const projectsData = await projectsResponse.json();
     if (projectsData.success) {
       projects.value = projectsData.projects;
@@ -680,7 +888,7 @@ async function fetchFromDatabase() {
     }
 
     // Fetch employees directly from database
-    const employeesResponse = await fetch('http://localhost:3001/api/users');
+    const employeesResponse = await fetch('http://localhost:3007/api/users');
     const employeesData = await employeesResponse.json();
     console.log('Employees API response:', employeesData);
     if (employeesData.success) {
@@ -693,7 +901,7 @@ async function fetchFromDatabase() {
 
     // Fetch pending reviews
     const pendingResponse = await fetch(
-      `http://localhost:3001/api/employee/reviews/pending?user_id=${authStore.user.id}`,
+      `http://localhost:3007/api/employee/reviews/pending?user_id=${authStore.user.id}`,
     );
     const pendingData = await pendingResponse.json();
     if (pendingData.success) {
@@ -702,7 +910,7 @@ async function fetchFromDatabase() {
 
     // Fetch review history
     const historyResponse = await fetch(
-      `http://localhost:3001/api/employee/reviews/history?user_id=${authStore.user.id}`,
+      `http://localhost:3007/api/employee/reviews/history?user_id=${authStore.user.id}`,
     );
     const historyData = await historyResponse.json();
     if (historyData.success) {
@@ -778,6 +986,104 @@ function openUpdateDialog(task: any) {
   showUpdateDialog.value = true;
 }
 
+function openSetDeadlineDialog(task: any) {
+  console.log('openSetDeadlineDialog called with task:', task);
+  selectedTask.value = task;
+  newDeadline.value = task.deadline ? task.deadline.split('T')[0] : '';
+  showSetDeadlineDialog.value = true;
+  console.log('Dialog should now show:', showSetDeadlineDialog.value);
+}
+
+async function setDeadline() {
+  if (!selectedTask.value || !newDeadline.value) return;
+
+  updating.value = true;
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+      headers['Authorization'] = `Bearer ${authStore.token}`;
+    }
+
+    const response = await fetch(
+      `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}`,
+      {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          deadline: newDeadline.value,
+        }),
+      },
+    );
+
+    const data = await response.json();
+    if (data.success) {
+      showSetDeadlineDialog.value = false;
+      showOverdueTaskDialog.value = false;
+      await fetchFromDatabase();
+      // Check for clashes after setting deadline
+      await detectDeadlineClashes();
+    }
+  } catch (error) {
+    console.error('Error setting deadline:', error);
+  } finally {
+    updating.value = false;
+  }
+}
+
+function openOverdueDialog() {
+  console.log('=== OPEN OVERDUE DIALOG ===');
+  console.log('Overdue tasks count:', overdueTasks.value.length);
+  console.log('Overdue tasks:', overdueTasks.value);
+  showOverdueDialog.value = true;
+  console.log('Dialog state after setting:', showOverdueDialog.value);
+}
+
+function openOverdueTaskDialog(task: any) {
+  selectedOverdueTask.value = task;
+  showOverdueTaskDialog.value = true;
+}
+
+async function automateOverdueTask() {
+  if (!selectedOverdueTask.value) return;
+
+  automating.value = true;
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+      headers['Authorization'] = `Bearer ${authStore.token}`;
+    }
+
+    const response = await fetch(
+      `http://localhost:3007/api/employee/${authStore.user?.id}/automate-schedule`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ mode: 'clashes' }),
+      },
+    );
+
+    const data = await response.json();
+    if (data.success) {
+      showOverdueTaskDialog.value = false;
+      showOverdueDialog.value = false;
+      await fetchFromDatabase();
+      $q.notify({
+        type: 'positive',
+        message: `Rescheduled ${data.updatedTasks.length} tasks`,
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    console.error('Error automating schedule:', error);
+  } finally {
+    automating.value = false;
+  }
+}
+
 async function updateTaskProgress() {
   if (!selectedTask.value) return;
 
@@ -788,14 +1094,18 @@ async function updateTaskProgress() {
       finalProgress = 100;
     }
 
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+      headers['Authorization'] = `Bearer ${authStore.token}`;
+    }
+
     const response = await fetch(
-      `http://localhost:3001/api/employee/tasks/${selectedTask.value.id}`,
+      `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}`,
       {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authStore.token}`,
-        },
+        headers,
         body: JSON.stringify({
           progress: finalProgress,
           status: statusUpdate.value,
@@ -842,17 +1152,22 @@ async function submitForReview() {
 
   submitting.value = true;
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+      headers['Authorization'] = `Bearer ${authStore.token}`;
+    }
+
     const response = await fetch(
-      `http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/submit-review`,
+      `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}/submit-review`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authStore.token}`,
-        },
+        headers,
         body: JSON.stringify({
           completion_comment: completionComment.value,
           reviewer_id: selectedReviewer.value,
+          task_owner_id: authStore.user?.id,
         }),
       },
     );
@@ -884,14 +1199,18 @@ async function approveReview() {
 
   reviewing.value = true;
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+      headers['Authorization'] = `Bearer ${authStore.token}`;
+    }
+
     const response = await fetch(
-      `http://localhost:3001/api/employee/tasks/${selectedReview.value.task_id}/approve-review`,
+      `http://localhost:3007/api/employee/tasks/${selectedReview.value.task_id}/approve-review`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authStore.token}`,
-        },
+        headers,
         body: JSON.stringify({ review_comment: reviewComment.value }),
       },
     );
@@ -913,14 +1232,18 @@ async function requestChanges() {
 
   reviewing.value = true;
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+      headers['Authorization'] = `Bearer ${authStore.token}`;
+    }
+
     const response = await fetch(
-      `http://localhost:3001/api/employee/tasks/${selectedReview.value.task_id}/request-changes`,
+      `http://localhost:3007/api/employee/tasks/${selectedReview.value.task_id}/request-changes`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authStore.token}`,
-        },
+        headers,
         body: JSON.stringify({ review_comment: reviewComment.value }),
       },
     );
@@ -935,6 +1258,61 @@ async function requestChanges() {
   } finally {
     reviewing.value = false;
   }
+}
+
+// ============================================================
+// DEADLINE CONFLICT HANDLING
+// ============================================================
+
+async function detectDeadlineClashes() {
+  if (!authStore.user?.id) return;
+
+  try {
+    const response = await fetch(
+      `http://localhost:3007/api/employee/${authStore.user.id}/deadline-clashes`
+    );
+    const data = await response.json();
+    if (data.success && data.conflicts.length > 0) {
+      detectedConflicts.value = data.conflicts;
+      showClashDialog.value = true;
+    }
+  } catch (error) {
+    console.error('Error detecting clashes:', error);
+  }
+}
+
+async function automateFullSchedule() {
+  if (!authStore.user?.id) return;
+
+  automating.value = true;
+  try {
+    const response = await fetch(
+      `http://localhost:3007/api/employee/${authStore.user.id}/automate-schedule`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ mode: 'full' }),
+      }
+    );
+    const data = await response.json();
+    if (data.success) {
+      await fetchFromDatabase();
+      // Show notification
+      alert(`Schedule automated! ${data.updatedTasks.length} tasks rescheduled.`);
+    }
+  } catch (error) {
+    console.error('Error automating schedule:', error);
+    alert('Failed to automate schedule');
+  } finally {
+    automating.value = false;
+  }
+}
+
+async function resolveClashes() {
+  await automateFullSchedule();
+  showClashDialog.value = false;
 }
 
 function logout() {

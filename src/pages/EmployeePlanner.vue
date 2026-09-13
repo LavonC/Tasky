@@ -541,7 +541,7 @@ const fetchTasks = async () => {
   }
 
   try {
-    const response = await fetch(`http://localhost:3001/api/tasks/employee/${authStore.user?.id}`, {
+    const response = await fetch(`http://localhost:3007/api/tasks/employee/${authStore.user?.id}`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
     const result = await response.json();
@@ -551,7 +551,7 @@ const fetchTasks = async () => {
       const tasksWithSubtasks = await Promise.all(
         result.tasks.map(async (task: any) => {
           const subtaskResponse = await fetch(
-            `http://localhost:3001/api/employee/tasks/${task.id}/subtasks`,
+            `http://localhost:3007/api/employee/tasks/${task.id}/subtasks`,
             {
               headers: { Authorization: `Bearer ${authStore.token}` },
             },
@@ -616,7 +616,7 @@ const fetchWorkLogs = async () => {
 
   try {
     const response = await fetch(
-      `http://localhost:3001/api/employee/work-logs/${authStore.user?.id}`,
+      `http://localhost:3007/api/employee/work-logs/${authStore.user?.id}`,
       {
         headers: { Authorization: `Bearer ${authStore.token}` },
       },
@@ -692,7 +692,7 @@ async function submitWorkLog() {
 
   isSubmittingLog.value = true;
   try {
-    const response = await fetch('http://localhost:3001/api/employee/work-log', {
+    const response = await fetch('http://localhost:3007/api/employee/work-log', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -829,7 +829,7 @@ async function fetchDayCompliance(date: string) {
   if (!authStore.user?.id) return;
   try {
     const response = await fetch(
-      `http://localhost:3001/api/daily-logs/${authStore.user?.id}/${date}`,
+      `http://localhost:3007/api/daily-logs/${authStore.user?.id}/${date}`,
       {
         headers: { Authorization: `Bearer ${authStore.token}` },
       },
@@ -857,7 +857,7 @@ async function submitDayToPM() {
   dayStatuses.value[selectedDate.value] = selectedDayStatus.value;
 
   try {
-    const response = await fetch('http://localhost:3001/api/daily-logs/submit', {
+    const response = await fetch('http://localhost:3007/api/daily-logs/submit', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

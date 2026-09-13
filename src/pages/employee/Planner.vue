@@ -315,20 +315,20 @@ async function fetchFromDatabase() {
   loading.value = true;
   try {
     const tasksResponse = await fetch(
-      `http://localhost:3001/api/tasks/employee/${authStore.user.id}`,
+      `http://localhost:3007/api/tasks/employee/${authStore.user.id}`,
     );
     const tasksData = await tasksResponse.json();
     if (tasksData.success) {
       myTasks.value = tasksData.tasks;
     }
 
-    const projectsResponse = await fetch('http://localhost:3001/api/pm/projects');
+    const projectsResponse = await fetch('http://localhost:3007/api/pm/projects');
     const projectsData = await projectsResponse.json();
     if (projectsData.success) {
       projects.value = projectsData.projects;
     }
 
-    const employeesResponse = await fetch('http://localhost:3001/api/users');
+    const employeesResponse = await fetch('http://localhost:3007/api/users');
     const employeesData = await employeesResponse.json();
     if (employeesData.success) {
       employees.value = employeesData.users;
@@ -414,7 +414,7 @@ async function updateTaskProgress() {
     }
 
     const response = await fetch(
-      `http://localhost:3001/api/employee/tasks/${selectedTask.value.id}`,
+      `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}`,
       {
         method: 'PUT',
         headers: {
@@ -455,7 +455,7 @@ async function submitForReview() {
   submitting.value = true;
   try {
     const response = await fetch(
-      `http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/submit-review`,
+      `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}/submit-review`,
       {
         method: 'POST',
         headers: {

@@ -22,7 +22,7 @@ export const useNotificationStore = defineStore('notification', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await fetch('http://localhost:3001/api/pm/notifications', {
+        const response = await fetch('http://localhost:3007/api/pm/notifications', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -38,7 +38,7 @@ export const useNotificationStore = defineStore('notification', {
 
     async markAsRead(id: string) {
       try {
-        const response = await fetch(`http://localhost:3001/api/pm/notifications/${id}/read`, {
+        const response = await fetch(`http://localhost:3007/api/pm/notifications/${id}/read`, {
           method: 'PUT',
           headers: this.getHeaders(),
         });
@@ -53,7 +53,7 @@ export const useNotificationStore = defineStore('notification', {
 
     async markAllAsRead() {
       try {
-        const response = await fetch('http://localhost:3001/api/pm/notifications/read-all', {
+        const response = await fetch('http://localhost:3007/api/pm/notifications/read-all', {
           method: 'PUT',
           headers: this.getHeaders(),
         });
@@ -67,7 +67,7 @@ export const useNotificationStore = defineStore('notification', {
 
     async deleteNotification(id: string) {
       try {
-        const response = await fetch(`http://localhost:3001/api/pm/notifications/${id}`, {
+        const response = await fetch(`http://localhost:3007/api/pm/notifications/${id}`, {
           method: 'DELETE',
           headers: this.getHeaders(),
         });

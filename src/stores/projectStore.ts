@@ -26,7 +26,7 @@ export const useProjectStore = defineStore('project', {
       this.loading = true;
       try {
         const queryParams = new URLSearchParams(filters as any).toString();
-        const response = await fetch(`http://localhost:3001/api/pm/projects?${queryParams}`, {
+        const response = await fetch(`http://localhost:3007/api/pm/projects?${queryParams}`, {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -45,7 +45,7 @@ export const useProjectStore = defineStore('project', {
     async fetchProjectById(id: string) {
       this.loading = true;
       try {
-        const response = await fetch(`http://localhost:3001/api/pm/projects/${id}`, {
+        const response = await fetch(`http://localhost:3007/api/pm/projects/${id}`, {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -63,7 +63,7 @@ export const useProjectStore = defineStore('project', {
 
     async fetchProjectTimeline(id: string) {
       try {
-        const response = await fetch(`http://localhost:3001/api/pm/projects/${id}/timeline`, {
+        const response = await fetch(`http://localhost:3007/api/pm/projects/${id}/timeline`, {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -77,7 +77,7 @@ export const useProjectStore = defineStore('project', {
 
     async createProject(projectData: any) {
       try {
-        const response = await fetch('http://localhost:3001/api/pm/projects', {
+        const response = await fetch('http://localhost:3007/api/pm/projects', {
           method: 'POST',
           headers: this.getHeaders(),
           body: JSON.stringify(projectData),
@@ -95,7 +95,7 @@ export const useProjectStore = defineStore('project', {
 
     async updateProject(id: string, updates: any) {
       try {
-        const response = await fetch(`http://localhost:3001/api/pm/projects/${id}`, {
+        const response = await fetch(`http://localhost:3007/api/pm/projects/${id}`, {
           method: 'PUT',
           headers: this.getHeaders(),
           body: JSON.stringify(updates),
@@ -119,7 +119,7 @@ export const useProjectStore = defineStore('project', {
 
     async deleteProject(id: string) {
       try {
-        const response = await fetch(`http://localhost:3001/api/pm/projects/${id}`, {
+        const response = await fetch(`http://localhost:3007/api/pm/projects/${id}`, {
           method: 'DELETE',
           headers: this.getHeaders(),
         });

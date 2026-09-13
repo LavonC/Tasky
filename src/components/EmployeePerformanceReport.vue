@@ -325,7 +325,7 @@ async function loadPerformanceData() {
   loading.value = true;
   try {
     const response = await fetch(
-      `http://localhost:3001/api/pm/employee-performance/${props.employee.id}`,
+      `http://localhost:3007/api/pm/employee-performance/${props.employee.id}`,
     );
     const data = await response.json();
     if (data.success) {
@@ -334,7 +334,7 @@ async function loadPerformanceData() {
       renderCharts();
     }
 
-    const logsResponse = await fetch(`http://localhost:3001/api/pm/employee-performance/${props.employee.id}/work-logs`);
+    const logsResponse = await fetch(`http://localhost:3007/api/pm/employee-performance/${props.employee.id}/work-logs`);
     const logsData = await logsResponse.json();
     if (logsData.success) {
       employeeSubmissions.value = logsData.submissions || [];

@@ -307,7 +307,7 @@ const handleRegister = async () => {
     const mappedRole = professionalRoleMapping[form.professionalRole] || form.professionalRole;
     console.log('Sending professional role:', mappedRole);
 
-    const response = await fetch('http://localhost:3001/api/auth/register/employee', {
+    const response = await fetch('http://localhost:3007/api/auth/register/employee', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

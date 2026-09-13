@@ -548,7 +548,7 @@ const goToProject = (projectId: number) => {
 const fetchUnassignedTasks = async () => {
   try {
     // Authentication removed for testing
-    const response = await fetch('http://localhost:3001/api/pm/tasks/unassigned', {
+    const response = await fetch('http://localhost:3007/api/pm/tasks/unassigned', {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -585,7 +585,7 @@ const assignTask = async () => {
   assigningTask.value = true;
   try {
     // Authentication removed for testing
-    const response = await fetch('http://localhost:3001/api/pm/tasks/assign', {
+    const response = await fetch('http://localhost:3007/api/pm/tasks/assign', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -645,7 +645,7 @@ const openReassignDialog = async (task: any) => {
 const fetchEligibleEmployees = async () => {
   try {
     // Authentication removed for testing
-    const response = await fetch('http://localhost:3001/api/pm/resources', {
+    const response = await fetch('http://localhost:3007/api/pm/resources', {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -705,7 +705,7 @@ const executeReassignment = async () => {
     };
 
     // Direct database update for reassignment
-    const response = await fetch('http://localhost:3001/api/pm/tasks/reassign', {
+    const response = await fetch('http://localhost:3007/api/pm/tasks/reassign', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

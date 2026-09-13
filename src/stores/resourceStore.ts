@@ -36,9 +36,9 @@ export const useResourceStore = defineStore('resource', {
       try {
         const query = search ? `?search=${encodeURIComponent(search)}` : '';
         const headers = this.getHeaders();
-        console.log('Fetching resources from:', `http://localhost:3001/api/pm/resources${query}`);
+        console.log('Fetching resources from:', `http://localhost:3007/api/pm/resources${query}`);
         console.log('Headers:', headers);
-        const response = await fetch(`http://localhost:3001/api/pm/resources${query}`, {
+        const response = await fetch(`http://localhost:3007/api/pm/resources${query}`, {
           headers: headers,
         });
         const data = await response.json();
@@ -62,7 +62,7 @@ export const useResourceStore = defineStore('resource', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await fetch('http://localhost:3001/api/pm/resources/stats', {
+        const response = await fetch('http://localhost:3007/api/pm/resources/stats', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -87,7 +87,7 @@ export const useResourceStore = defineStore('resource', {
       this.error = null;
       try {
         console.log('Fetching resource by ID:', id);
-        const response = await fetch(`http://localhost:3001/api/pm/resources/${id}`, {
+        const response = await fetch(`http://localhost:3007/api/pm/resources/${id}`, {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -110,8 +110,8 @@ export const useResourceStore = defineStore('resource', {
       this.loading = true;
       this.error = null;
       try {
-        console.log('Fetching conflicts from:', 'http://localhost:3001/api/pm/resources/conflicts');
-        const response = await fetch('http://localhost:3001/api/pm/resources/conflicts', {
+        console.log('Fetching conflicts from:', 'http://localhost:3007/api/pm/resources/conflicts');
+        const response = await fetch('http://localhost:3007/api/pm/resources/conflicts', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -134,8 +134,8 @@ export const useResourceStore = defineStore('resource', {
       this.loading = true;
       this.error = null;
       try {
-        console.log('Fetching availability from:', 'http://localhost:3001/api/pm/resources/availability');
-        const response = await fetch('http://localhost:3001/api/pm/resources/availability', {
+        console.log('Fetching availability from:', 'http://localhost:3007/api/pm/resources/availability');
+        const response = await fetch('http://localhost:3007/api/pm/resources/availability', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -161,7 +161,7 @@ export const useResourceStore = defineStore('resource', {
     async rebalanceWorkloads() {
       this.loading = true;
       try {
-        const response = await fetch('http://localhost:3001/api/pm/resources/rebalance', {
+        const response = await fetch('http://localhost:3007/api/pm/resources/rebalance', {
           method: 'POST',
           headers: this.getHeaders(),
         });

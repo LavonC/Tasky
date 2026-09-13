@@ -398,7 +398,7 @@ async function fetchTasks() {
 
   try {
     const response = await fetch(
-      `http://localhost:3001/api/tasks/employee/${authStore.user.id}`,
+      `http://localhost:3007/api/tasks/employee/${authStore.user.id}`,
     );
     const data = await response.json();
     if (data.success) {
@@ -411,7 +411,7 @@ async function fetchTasks() {
 
 async function fetchProjects() {
   try {
-    const response = await fetch('http://localhost:3001/api/pm/projects');
+    const response = await fetch('http://localhost:3007/api/pm/projects');
     const data = await response.json();
     if (data.success) {
       projects.value = data.projects;
@@ -423,7 +423,7 @@ async function fetchProjects() {
 
 async function fetchEmployees() {
   try {
-    const response = await fetch('http://localhost:3001/api/users');
+    const response = await fetch('http://localhost:3007/api/users');
     const data = await response.json();
     if (data.success) {
       employees.value = data.users;
@@ -437,8 +437,12 @@ async function fetchTaskReviews() {
   if (!authStore.user?.id) return;
 
   try {
-    const connection = await fetch('http://localhost:3001/api/employee/reviews/history?user_id=' + authStore.user.id, {
-      headers: { Authorization: `Bearer ${authStore.token}` }
+    const headers: Record<string, string> = {};
+    if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+      headers['Authorization'] = `Bearer ${authStore.token}`;
+    }
+    const connection = await fetch('http://localhost:3007/api/employee/reviews/history?user_id=' + authStore.user.id, {
+      headers,
     });
     const data = await connection.json();
     if (data.success) {
@@ -453,8 +457,12 @@ async function fetchAssignedReviews() {
   if (!authStore.user?.id) return;
 
   try {
-    const response = await fetch('http://localhost:3001/api/employee/reviews/pending?user_id=' + authStore.user.id, {
-      headers: { Authorization: `Bearer ${authStore.token}` }
+    const headers: Record<string, string> = {};
+    if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+      headers['Authorization'] = `Bearer ${authStore.token}`;
+    }
+    const response = await fetch('http://localhost:3007/api/employee/reviews/pending?user_id=' + authStore.user.id, {
+      headers,
     });
     const data = await response.json();
     if (data.success) {
@@ -469,9 +477,13 @@ async function fetchReviewHistory() {
   if (!authStore.user?.id) return;
 
   try {
+    const headers: Record<string, string> = {};
+    if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+      headers['Authorization'] = `Bearer ${authStore.token}`;
+    }
     const response = await fetch(
-      `http://localhost:3001/api/employee/reviews/history?user_id=${authStore.user.id}`,
-      { headers: { Authorization: `Bearer ${authStore.token}` } }
+      `http://localhost:3007/api/employee/reviews/history?user_id=${authStore.user.id}`,
+      { headers }
     );
     const data = await response.json();
     if (data.success) {
@@ -484,7 +496,7 @@ async function fetchReviewHistory() {
 
 async function fetchLeaderboard() {
   try {
-    const response = await fetch('http://localhost:3001/api/users');
+    const response = await fetch('http://localhost:3007/api/users');
     const data = await response.json();
     if (data.success) {
       // Filter to only show employees (not PMs) and sort by points descending

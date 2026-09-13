@@ -286,12 +286,23 @@
           <q-card-section>
             <div class="row items-center justify-between">
               <div class="text-h6 text-weight-bold">My Tasks Across Projects</div>
-              <q-btn
-                color="primary"
-                icon="add"
-                label="Self-Assign Task"
-                @click="showCreateTaskDialog = true"
-              />
+              <div class="row items-center q-gutter-sm">
+                <q-btn
+                  color="secondary"
+                  icon="auto_fix_high"
+                  label="Automate"
+                  @click="automateFullSchedule"
+                  :loading="automating"
+                >
+                  <q-tooltip>Reorganize all tasks by priority with 3-day gaps</q-tooltip>
+                </q-btn>
+                <q-btn
+                  color="primary"
+                  icon="add"
+                  label="Self-Assign Task"
+                  @click="showCreateTaskDialog = true"
+                />
+              </div>
             </div>
           </q-card-section>
           <q-card-section>
@@ -815,11 +826,75 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- Task Clash Detected Dialog -->
+    <q-dialog v-model="showClashDialog" persistent>
+      <q-card style="min-width: 600px; max-width: 750px" class="rounded-borders">
+        <q-card-section class="row items-center bg-red-1 text-negative q-pb-md">
+          <q-avatar icon="warning" color="negative" text-color="white" size="40px" class="q-mr-md" />
+          <div>
+            <div class="text-h6 text-weight-bold">Task Clash Detected</div>
+            <div class="text-caption text-grey-8">
+              Multiple tasks share the exact same deadline date. Click Automate to resolve conflicts according to priority with at least 3-day gaps.
+            </div>
+          </div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+
+        <q-card-section class="q-pt-md" style="max-height: 400px; overflow-y: auto">
+          <div v-for="(conflict, idx) in detectedConflicts" :key="idx" class="q-mb-md">
+            <div class="text-subtitle2 text-weight-bold text-grey-9 q-mb-xs row items-center">
+              <q-icon name="event" class="q-mr-xs" color="primary" />
+              Deadline: {{ formatDate(conflict.deadline) }}
+              <q-badge color="negative" class="q-ml-sm">{{ conflict.count }} conflicting tasks</q-badge>
+            </div>
+            <q-list bordered separator class="rounded-borders bg-grey-1">
+              <q-item v-for="task in conflict.tasks" :key="task.id" class="q-py-sm">
+                <q-item-section avatar>
+                  <q-badge
+                    :color="getPriorityColor(task.priority)"
+                    :label="task.priority"
+                    class="text-capitalize text-weight-bold q-px-sm q-py-xs"
+                  />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-weight-bold">{{ task.title }}</q-item-label>
+                  <q-item-label caption class="text-grey-7">
+                    Project: {{ task.project_name || getProjectById(task.project_id)?.name || 'Project' }}
+                  </q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <div class="text-caption text-weight-medium text-grey-8">
+                    {{ formatDate(task.deadline) }}
+                  </div>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-actions align="right" class="q-pa-md bg-grey-1">
+          <q-btn flat label="Cancel" color="grey-7" v-close-popup />
+          <q-btn
+            unelevated
+            color="primary"
+            icon="auto_fix_high"
+            label="Automate"
+            @click="resolveClashes"
+            :loading="automating"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { Notify } from 'quasar';
 import { useTaskStore } from '../stores/taskStore';
 import { useAuthStore } from '../stores/authStore';
 
@@ -922,10 +997,119 @@ const userPoints = ref(100); // Default value to ensure card is visible
 const showPointsNotification = ref(false);
 const pointsNotificationMessage = ref('');
 
+// Deadline conflict handling
+const showClashDialog = ref(false);
+const detectedConflicts = ref<any[]>([]);
+const automating = ref(false);
+
+async function detectDeadlineClashes() {
+  const empId = currentEmployee.value?.id || authStore.user?.id;
+  if (!empId) return;
+
+  try {
+    const response = await fetch(`http://localhost:3007/api/employee/${empId}/deadline-clashes`);
+    const data = await response.json();
+    if (data.success && data.conflicts && data.conflicts.length > 0) {
+      detectedConflicts.value = data.conflicts;
+      showClashDialog.value = true;
+    } else {
+      detectedConflicts.value = [];
+      showClashDialog.value = false;
+    }
+  } catch (error) {
+    console.error('Error detecting deadline clashes:', error);
+  }
+}
+
+async function resolveClashes() {
+  const empId = currentEmployee.value?.id || authStore.user?.id;
+  if (!empId) return;
+
+  automating.value = true;
+  try {
+    const response = await fetch(`http://localhost:3007/api/employee/${empId}/automate-schedule`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'clashes' }),
+    });
+    const data = await response.json();
+    if (data.success) {
+      showClashDialog.value = false;
+      await fetchFromDatabase();
+      await taskStore.fetchEmployeeTasks();
+      Notify.create({
+        type: 'positive',
+        message: data.updatedTasks && data.updatedTasks.length > 0
+          ? `Conflicts resolved! ${data.updatedTasks.length} tasks rescheduled with 3-day gaps.`
+          : 'All deadline conflicts resolved.',
+        position: 'top',
+      });
+    } else {
+      Notify.create({
+        type: 'negative',
+        message: data.error || 'Failed to resolve conflicts',
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    console.error('Error resolving clashes:', error);
+    Notify.create({
+      type: 'negative',
+      message: 'Network error resolving conflicts',
+      position: 'top',
+    });
+  } finally {
+    automating.value = false;
+  }
+}
+
+async function automateFullSchedule() {
+  const empId = currentEmployee.value?.id || authStore.user?.id;
+  if (!empId) return;
+
+  automating.value = true;
+  try {
+    const response = await fetch(`http://localhost:3007/api/employee/${empId}/automate-schedule`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'full' }),
+    });
+    const data = await response.json();
+    if (data.success) {
+      await fetchFromDatabase();
+      await taskStore.fetchEmployeeTasks();
+      showClashDialog.value = false;
+      Notify.create({
+        type: 'positive',
+        message: data.updatedTasks && data.updatedTasks.length > 0
+          ? `Schedule automated! ${data.updatedTasks.length} tasks reorganized by priority with 3-day gaps.`
+          : 'Schedule is already optimal. No changes needed.',
+        position: 'top',
+      });
+    } else {
+      Notify.create({
+        type: 'negative',
+        message: data.error || 'Failed to automate schedule',
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    console.error('Error automating schedule:', error);
+    Notify.create({
+      type: 'negative',
+      message: 'Network error automating schedule',
+      position: 'top',
+    });
+  } finally {
+    automating.value = false;
+  }
+}
+
 onMounted(async () => {
   await fetchFromDatabase();
   loadPendingReviews();
   loadReviewHistory();
+  await detectDeadlineClashes();
 });
 
 async function fetchFromDatabase() {
@@ -934,7 +1118,7 @@ async function fetchFromDatabase() {
   try {
     // Fetch tasks directly from database - authentication removed
     const tasksResponse = await fetch(
-      `http://localhost:3001/api/tasks/employee/${currentEmployee.value.id}`,
+      `http://localhost:3007/api/tasks/employee/${currentEmployee.value.id}`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -947,7 +1131,7 @@ async function fetchFromDatabase() {
     }
 
     // Fetch projects directly from database - authentication removed
-    const projectsResponse = await fetch('http://localhost:3001/api/pm/projects', {
+    const projectsResponse = await fetch('http://localhost:3007/api/pm/projects', {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -958,7 +1142,7 @@ async function fetchFromDatabase() {
     }
 
     // Fetch employees directly from database - authentication removed
-    const employeesResponse = await fetch('http://localhost:3001/api/users', {
+    const employeesResponse = await fetch('http://localhost:3007/api/users', {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -970,7 +1154,7 @@ async function fetchFromDatabase() {
 
     // Fetch work logs directly from database - authentication removed
     const logsResponse = await fetch(
-      `http://localhost:3001/api/employee/work-logs/${currentEmployee.value.id}`,
+      `http://localhost:3007/api/employee/work-logs/${currentEmployee.value.id}`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -983,7 +1167,7 @@ async function fetchFromDatabase() {
     }
 
     // Fetch user points - authentication removed
-    const userResponse = await fetch(`http://localhost:3001/api/users/${currentEmployee.value.id}`, {
+    const userResponse = await fetch(`http://localhost:3007/api/users/${currentEmployee.value.id}`, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -1070,7 +1254,7 @@ async function updateTaskProgress() {
 
     // Authentication removed for testing - pass user_id
     const response = await fetch(
-      `http://localhost:3001/api/employee/tasks/${selectedTask.value.id}`,
+      `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}`,
       {
         method: 'PUT',
         headers: {
@@ -1108,7 +1292,7 @@ function formatDate(date: string) {
 
 async function createSelfAssignedTask() {
   try {
-    const response = await fetch('http://localhost:3001/api/employee/tasks', {
+    const response = await fetch('http://localhost:3007/api/employee/tasks', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1219,7 +1403,7 @@ async function submitForReview() {
   try {
     // Authentication removed for testing
     const response = await fetch(
-      `http://localhost:3001/api/employee/tasks/${selectedReviewTask.value.id}/submit-review`,
+      `http://localhost:3007/api/employee/tasks/${selectedReviewTask.value.id}/submit-review`,
       {
         method: 'POST',
         headers: {
@@ -1258,7 +1442,7 @@ async function approveReview() {
   try {
     // Authentication removed for testing
     const response = await fetch(
-      `http://localhost:3001/api/employee/reviews/${selectedReviewTask.value.id}/complete`,
+      `http://localhost:3007/api/employee/reviews/${selectedReviewTask.value.id}/complete`,
       {
         method: 'PUT',
         headers: {
@@ -1295,7 +1479,7 @@ async function requestChanges() {
   try {
     // Authentication removed for testing
     const response = await fetch(
-      `http://localhost:3001/api/employee/tasks/${selectedReviewTask.value.task_id}/request-changes`,
+      `http://localhost:3007/api/employee/tasks/${selectedReviewTask.value.task_id}/request-changes`,
       {
         method: 'POST',
         headers: {

@@ -21,7 +21,7 @@ export const useOrgStore = defineStore('org', {
     async fetchOrgDetails() {
       this.loading = true;
       try {
-        const response = await fetch('http://localhost:3001/api/pm/org', {
+        const response = await fetch('http://localhost:3007/api/pm/org', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -38,7 +38,7 @@ export const useOrgStore = defineStore('org', {
 
     async fetchMembers() {
       try {
-        const response = await fetch('http://localhost:3001/api/pm/org/members', {
+        const response = await fetch('http://localhost:3007/api/pm/org/members', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -47,7 +47,7 @@ export const useOrgStore = defineStore('org', {
           this.members = data.members;
         } else {
           // Fallback to /api/users
-          const fallbackRes = await fetch('http://localhost:3001/api/users', {
+          const fallbackRes = await fetch('http://localhost:3007/api/users', {
             headers: this.getHeaders(),
           });
           const fallbackData = await fallbackRes.json();
@@ -63,7 +63,7 @@ export const useOrgStore = defineStore('org', {
 
     async fetchInviteCodes() {
       try {
-        const response = await fetch('http://localhost:3001/api/pm/org/invite-codes', {
+        const response = await fetch('http://localhost:3007/api/pm/org/invite-codes', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -75,7 +75,7 @@ export const useOrgStore = defineStore('org', {
 
     async generateInviteCode(maxUses = 50, expiryDays = 30) {
       try {
-        const response = await fetch('http://localhost:3001/api/pm/org/invite-code', {
+        const response = await fetch('http://localhost:3007/api/pm/org/invite-code', {
           method: 'POST',
           headers: this.getHeaders(),
           body: JSON.stringify({ max_uses: maxUses, expiry_days: expiryDays }),
@@ -94,7 +94,7 @@ export const useOrgStore = defineStore('org', {
 
     async deactivateInviteCode(id: string) {
       try {
-        const response = await fetch(`http://localhost:3001/api/pm/org/invite-code/${id}`, {
+        const response = await fetch(`http://localhost:3007/api/pm/org/invite-code/${id}`, {
           method: 'DELETE',
           headers: this.getHeaders(),
         });

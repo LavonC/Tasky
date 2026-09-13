@@ -237,7 +237,7 @@ async function fetchFromDatabase() {
   loading.value = true;
   try {
     const pendingResponse = await fetch(
-      `http://localhost:3001/api/employee/reviews/pending?user_id=${authStore.user.id}`,
+      `http://localhost:3007/api/employee/reviews/pending?user_id=${authStore.user.id}`,
     );
     const pendingData = await pendingResponse.json();
     if (pendingData.success) {
@@ -245,14 +245,14 @@ async function fetchFromDatabase() {
     }
 
     const historyResponse = await fetch(
-      `http://localhost:3001/api/employee/reviews/history?user_id=${authStore.user.id}`,
+      `http://localhost:3007/api/employee/reviews/history?user_id=${authStore.user.id}`,
     );
     const historyData = await historyResponse.json();
     if (historyData.success) {
       reviewHistory.value = historyData.reviews;
     }
 
-    const projectsResponse = await fetch('http://localhost:3001/api/pm/projects');
+    const projectsResponse = await fetch('http://localhost:3007/api/pm/projects');
     const projectsData = await projectsResponse.json();
     if (projectsData.success) {
       projects.value = projectsData.projects;
@@ -288,7 +288,7 @@ async function approveReview() {
   reviewing.value = true;
   try {
     const response = await fetch(
-      `http://localhost:3001/api/employee/tasks/${selectedReview.value.task_id}/approve-review`,
+      `http://localhost:3007/api/employee/tasks/${selectedReview.value.task_id}/approve-review`,
       {
         method: 'POST',
         headers: {
@@ -317,7 +317,7 @@ async function requestChanges() {
   reviewing.value = true;
   try {
     const response = await fetch(
-      `http://localhost:3001/api/employee/tasks/${selectedReview.value.task_id}/request-changes`,
+      `http://localhost:3007/api/employee/tasks/${selectedReview.value.task_id}/request-changes`,
       {
         method: 'POST',
         headers: {

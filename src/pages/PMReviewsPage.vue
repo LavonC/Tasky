@@ -65,7 +65,7 @@ onMounted(async () => {
 
 async function fetchReviewedTasks() {
   try {
-    const response = await fetch('http://localhost:3001/api/pm/reviews/all');
+    const response = await fetch('http://localhost:3007/api/pm/reviews/all');
     const data = await response.json();
     if (data.success) {
       // Show only reviews that are completed (review-done or finalized)

@@ -229,21 +229,21 @@ async function fetchFromDatabase() {
   loading.value = true;
   try {
     const tasksResponse = await fetch(
-      `http://localhost:3001/api/tasks/employee/${authStore.user.id}`,
+      `http://localhost:3007/api/tasks/employee/${authStore.user.id}`,
     );
     const tasksData = await tasksResponse.json();
     if (tasksData.success) {
       myTasks.value = tasksData.tasks;
     }
 
-    const projectsResponse = await fetch('http://localhost:3001/api/pm/projects');
+    const projectsResponse = await fetch('http://localhost:3007/api/pm/projects');
     const projectsData = await projectsResponse.json();
     if (projectsData.success) {
       projects.value = projectsData.projects;
     }
 
     const logsResponse = await fetch(
-      `http://localhost:3001/api/employee/work-logs/${authStore.user.id}`,
+      `http://localhost:3007/api/employee/work-logs/${authStore.user.id}`,
     );
     const logsData = await logsResponse.json();
     if (logsData.success) {
@@ -315,7 +315,7 @@ async function submitWorkLog() {
   if (!newLog.value.taskId || !newLog.value.date || !authStore.user?.id) return;
 
   try {
-    const response = await fetch('http://localhost:3001/api/employee/work-log', {
+    const response = await fetch('http://localhost:3007/api/employee/work-log', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -347,7 +347,7 @@ async function submitWorkLog() {
 
         const newProgress = Math.min((task.progress || 0) + progressIncrement, 100);
 
-        await fetch(`http://localhost:3001/api/employee/tasks/${task.id}`, {
+        await fetch(`http://localhost:3007/api/employee/tasks/${task.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -381,7 +381,7 @@ async function submitWorkLog() {
 async function finalizeDay() {
   if (!authStore.user?.id) return;
   try {
-    const response = await fetch('http://localhost:3001/api/employee/daily-logs/finalize', {
+    const response = await fetch('http://localhost:3007/api/employee/daily-logs/finalize', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

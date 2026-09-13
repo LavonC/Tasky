@@ -265,7 +265,7 @@ async function fetchFromDatabase() {
   loading.value = true;
   try {
     const tasksResponse = await fetch(
-      `http://localhost:3001/api/tasks/employee/${authStore.user.id}`,
+      `http://localhost:3007/api/tasks/employee/${authStore.user.id}`,
     );
     const tasksData = await tasksResponse.json();
     if (tasksData.success) {
@@ -273,7 +273,7 @@ async function fetchFromDatabase() {
     }
 
     const historyResponse = await fetch(
-      `http://localhost:3001/api/employee/reviews/history?user_id=${authStore.user.id}`,
+      `http://localhost:3007/api/employee/reviews/history?user_id=${authStore.user.id}`,
     );
     const historyData = await historyResponse.json();
     if (historyData.success) {

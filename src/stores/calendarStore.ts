@@ -21,13 +21,13 @@ export const useCalendarStore = defineStore('calendar', {
 
         // Fetch in parallel
         const [taskRes, availRes, leaveRes] = await Promise.all([
-          fetch(`http://localhost:3001/api/pm/calendar/tasks${query}${projectFilter}`, {
+          fetch(`http://localhost:3007/api/pm/calendar/tasks${query}${projectFilter}`, {
             headers: this.getHeaders(),
           }),
-          fetch(`http://localhost:3001/api/pm/calendar/availability${query}`, {
+          fetch(`http://localhost:3007/api/pm/calendar/availability${query}`, {
             headers: this.getHeaders(),
           }),
-          fetch(`http://localhost:3001/api/pm/calendar/leave${query}`, {
+          fetch(`http://localhost:3007/api/pm/calendar/leave${query}`, {
             headers: this.getHeaders(),
           }),
         ]);
