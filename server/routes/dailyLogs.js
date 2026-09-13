@@ -32,7 +32,31 @@ router.post('/work-log', async (req, res) => {
   }
 });
 
-// 3. Submit day to PM
+// 3. Save day status (without submitting for review)
+router.post('/save-status', async (req, res) => {
+  try {
+    const { user_id, log_date, day_status } = req.body;
+    console.log('=== SAVE DAY STATUS ===');
+    console.log('User ID:', user_id);
+    console.log('Log Date:', log_date);
+    console.log('Day Status:', day_status);
+
+    await pool.query(
+      `INSERT INTO daily_log_compliance (user_id, log_date, status, day_status)
+       VALUES (?, ?, 'not-required', ?)
+       ON DUPLICATE KEY UPDATE day_status = ?`,
+      [user_id, log_date, day_status || 'worked', day_status || 'worked']
+    );
+
+    console.log('Day status saved successfully');
+    res.json({ success: true, message: 'Day status saved' });
+  } catch (error) {
+    console.error('Error saving day status:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// 4. Submit day to PM
 router.post('/submit', async (req, res) => {
   try {
     const { user_id, log_date, day_status } = req.body;
@@ -111,6 +135,28 @@ router.post('/review', async (req, res) => {
     res.json({ success: true, message: 'Review submitted' });
   } catch (error) {
     console.error('Error submitting review:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// 6. Get employee leave dates
+router.get('/employee/:userId/leave-dates', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const [rows] = await pool.query(
+      `SELECT log_date FROM daily_log_compliance 
+       WHERE user_id = ? AND day_status = 'leave'`,
+      [userId]
+    );
+    
+    const leaveDates = rows.map(row => {
+      const date = new Date(row.log_date);
+      return date.toISOString().split('T')[0];
+    });
+    
+    res.json({ success: true, leaveDates });
+  } catch (error) {
+    console.error('Error fetching leave dates:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });

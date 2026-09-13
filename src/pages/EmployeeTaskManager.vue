@@ -248,7 +248,7 @@
 
               <q-linear-progress
                 :value="taskProgress(props.row) / 100"
-                color="primary"
+                :color="isTaskDeadlineOnLeave(props.row) ? 'red' : 'primary'"
                 track-color="grey-3"
                 rounded
                 size="7px"
@@ -267,6 +267,11 @@
             </div>
 
             <div v-if="isOverdue(props.row)" class="text-caption text-negative">Overdue</div>
+
+            <div v-if="isTaskDeadlineOnLeave(props.row)" class="text-caption text-negative q-mt-xs">
+              <q-icon name="warning" size="12px" />
+              Leave affected — {{ formatDate(props.row.deadline) }}
+            </div>
           </q-td>
         </template>
 
@@ -1676,6 +1681,9 @@ const fetchTasks = async () => {
     const result = await response.json();
 
     if (result.success && result.tasks) {
+      // Fetch leave dates for checking deadline conflicts
+      fetchLeaveDates();
+
       // Fetch subtasks for each task
       const tasksWithSubtasks = await Promise.all(
         result.tasks.map(async (task: any) => {
@@ -1950,6 +1958,47 @@ const detectDeadlineClashes = async () => {
   } catch (error) {
     console.error('Error detecting deadline clashes:', error);
   }
+};
+
+const leaveDates = ref<string[]>([]);
+
+const fetchLeaveDates = async () => {
+  const empId = authStore.user?.id;
+  if (!empId) return;
+
+  try {
+    const response = await fetch(`http://localhost:3007/api/daily-logs/employee/${empId}/leave-dates`);
+    const data = await response.json();
+    if (data.success && data.leaveDates) {
+      leaveDates.value = data.leaveDates;
+      console.log('=== LEAVE DATES FETCHED ===');
+      console.log('Leave dates:', leaveDates.value);
+    }
+  } catch (error) {
+    console.error('Error fetching leave dates:', error);
+  }
+};
+
+// Check if task deadline falls on a leave date
+const isTaskDeadlineOnLeave = (task: any) => {
+  if (!task || !task.deadline) return false;
+
+  // Parse the deadline date and extract YYYY-MM-DD
+  const deadlineDate = new Date(task.deadline);
+  const year = deadlineDate.getFullYear();
+  const month = String(deadlineDate.getMonth() + 1).padStart(2, '0');
+  const day = String(deadlineDate.getDate()).padStart(2, '0');
+  const dateString = `${year}-${month}-${day}`;
+
+  console.log('=== CHECKING TASK DEADLINE ON LEAVE ===');
+  console.log('Task:', task.name);
+  console.log('Deadline:', task.deadline);
+  console.log('Deadline date string:', dateString);
+  console.log('Leave dates:', leaveDates.value);
+  console.log('Is on leave:', leaveDates.value.includes(dateString));
+
+  // Check if this date is in the employee's leave dates
+  return leaveDates.value.includes(dateString);
 };
 
 const resolveClashes = async () => {
@@ -2344,47 +2393,10 @@ const filteredTasks = computed(() => {
     result = result.filter((task) => task.status === 'completed');
   }
 
-  /* SORTING - Non-completed first by priority/deadline, then completed tasks */
-  const priorityOrder: Record<string, number> = {
-    critical: 0,
-    high: 1,
-    medium: 2,
-    low: 3,
-  };
-
-  result.sort((a, b) => {
-    // Non-completed tasks come first
-    const aCompleted = a.status === 'completed';
-    const bCompleted = b.status === 'completed';
-    
-    if (aCompleted !== bCompleted) {
-      return aCompleted ? 1 : -1;
-    }
-
-    // For non-completed tasks, sort by priority then deadline
-    if (!aCompleted && !bCompleted) {
-      const aPriority = priorityOrder[a.priority?.toLowerCase()] ?? 999;
-      const bPriority = priorityOrder[b.priority?.toLowerCase()] ?? 999;
-      
-      if (aPriority !== bPriority) {
-        return aPriority - bPriority;
-      }
-      
-      // Same priority: sort by deadline (earliest first)
-      const aDeadline = new Date(a.deadline || '9999-12-31').getTime();
-      const bDeadline = new Date(b.deadline || '9999-12-31').getTime();
-      return aDeadline - bDeadline;
-    }
-
-    // For completed tasks, sort by completion date (most recent first)
-    if (aCompleted && bCompleted) {
-      const aCompletedAt = new Date(a.completed_at || '1970-01-01').getTime();
-      const bCompletedAt = new Date(b.completed_at || '1970-01-01').getTime();
-      return bCompletedAt - aCompletedAt;
-    }
-
-    return 0;
-  });
+  // "All" tab should only show non-completed tasks (exclude completed and in-review)
+  if (activeTab.value === 'all') {
+    result = result.filter((task) => task.status !== 'completed' && task.status !== 'in-review');
+  }
 
   return result;
 });

@@ -2354,6 +2354,7 @@ app.use('/api/pm/notifications', notificationRoutes(pool));
 app.use('/api/pm/calendar', calendarRoutes(pool));
 app.use('/api/pm/schedule', schedulingRoutes(pool));
 app.use('/api/pm/leaves', leavesRoutes(pool));
+app.use('/api/leaves', leavesRoutes(pool));
 app.use('/api/daily-logs', dailyLogsRoutes);
 
 // Run delay detection every day at 8:00 AM

@@ -121,6 +121,36 @@
                 {{ statusLabel(day.status) }}
               </div>
 
+              <!-- LEAVE IMPACT INDICATOR -->
+
+              <div
+                v-if="isDayAffectedByLeave(day.date)"
+                class="calendar-leave-impact cursor-pointer"
+                @click.stop="openLeaveImpactDialog(day.date)"
+              >
+                <q-icon name="warning" size="11px" color="red" />
+                <span class="text-negative" style="font-size: 10px;">Leave Impact</span>
+                <q-linear-progress
+                  :value="1"
+                  color="red"
+                  size="2px"
+                  class="q-mt-xs"
+                />
+              </div>
+
+              <!-- MISSED WORK INDICATOR -->
+
+              <div v-if="isDayMissedWork(day.date)" class="calendar-missed-work">
+                <q-icon name="warning" size="11px" color="red" />
+                <span class="text-negative" style="font-size: 10px;">Hurry up — Missed work</span>
+                <q-linear-progress
+                  :value="1"
+                  color="red"
+                  size="2px"
+                  class="q-mt-xs"
+                />
+              </div>
+
               <!-- LOG COUNT -->
 
               <div v-if="day.workLogs.length" class="calendar-work-summary">
@@ -173,7 +203,7 @@
                   :class="{
                     'compact-status-active': selectedDayStatus === option.value,
                   }"
-                  @click="selectedDayStatus = option.value as DayStatus"
+                  @click="selectDayStatus(option.value)"
                 >
                   <q-icon :name="option.icon" size="16px" />
 
@@ -256,6 +286,7 @@
                   <div class="col">
                     <div class="compact-task-name">
                       {{ log.taskTitle || 'Manual Entry' }}
+                      <q-icon v-if="isTaskAffectedByLeave(log, selectedDate)" name="warning" color="red" size="14px" class="q-ml-xs" />
                     </div>
 
                     <div v-if="log.project" class="text-caption text-grey-6">
@@ -273,7 +304,7 @@
                     <q-linear-progress
                       :value="log.progress / 100"
                       rounded
-                      color="primary"
+                      :color="isTaskAffectedByLeave(log, selectedDate) ? 'red' : 'primary'"
                       size="4px"
                     />
                   </div>
@@ -347,6 +378,120 @@
 
         <q-card-actions align="center">
           <q-btn flat no-caps color="primary" label="Done" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- =========================================================
+         DEADLINE ON LEAVE DIALOG
+    ========================================================= -->
+
+    <q-dialog v-model="showDeadlineOnLeaveDialog">
+      <q-card style="min-width: 450px">
+        <q-card-section>
+          <div class="text-h6 text-weight-bold text-negative">
+            <q-icon name="warning" class="q-mr-sm" />
+            Task deadline falls on your leave
+          </div>
+        </q-card-section>
+        <q-card-section v-if="selectedAffectedTask">
+          <div class="q-mb-md">
+            <div class="text-subtitle2">{{ selectedAffectedTask.title }}</div>
+            <div class="text-caption text-grey-7">
+              Deadline: {{ formatDate(parseDate(selectedAffectedTask.deadline)) }}
+            </div>
+            <div class="text-caption text-negative q-mt-xs">
+              Leave period: {{ selectedAffectedTask.leave_start }} to {{ selectedAffectedTask.leave_end }}
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn
+            color="primary"
+            label="Set Deadline"
+            @click="openSetDeadlineDialog"
+          />
+          <q-btn
+            color="secondary"
+            label="Automate It"
+            @click="automateDeadline"
+            :loading="automatingDeadline"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- =========================================================
+         LEAVE IMPACT DIALOG
+    ========================================================= -->
+
+    <q-dialog v-model="showLeaveImpactDialog">
+      <q-card style="min-width: 500px; max-width: 600px">
+        <q-card-section>
+          <div class="text-h6 text-weight-bold text-negative">
+            <q-icon name="warning" class="q-mr-sm" />
+            Leave Impact
+          </div>
+          <div class="text-caption text-grey-7 q-mt-sm">
+            Leave date: {{ formatDate(parseDate(selectedLeaveDate)) }}
+          </div>
+        </q-card-section>
+
+        <q-card-section v-if="affectedTasks.length > 0">
+          <div class="text-subtitle2 q-mb-md">Affected task(s)</div>
+          <q-list separator>
+            <q-item v-for="task in affectedTasks" :key="task.id">
+              <q-item-section avatar>
+                <q-icon :name="task.deadline_on_leave ? 'warning' : 'info'" :color="task.deadline_on_leave ? 'red' : 'primary'" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ task.title }}</q-item-label>
+                <q-item-label caption>
+                  Deadline: {{ formatDate(parseDate(task.deadline)) }}
+                </q-item-label>
+                <q-item-label caption>
+                  Progress: {{ task.progress }}% · Status: {{ task.status }}
+                </q-item-label>
+                <q-item-label v-if="task.deadline_on_leave" caption class="text-negative">
+                  ⚠️ Task deadline falls on your leave
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-card-section>
+
+        <q-card-section v-else>
+          <div class="text-caption text-grey-6">No affected tasks found.</div>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Close" v-close-popup />
+          <q-btn
+            v-if="affectedTasks.some(t => t.deadline_on_leave)"
+            color="primary"
+            label="Set Deadline"
+            @click="handleDeadlineOnLeaveTask"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- =========================================================
+         SET DEADLINE DIALOG
+    ========================================================= -->
+
+    <q-dialog v-model="showSetDeadlineDialog">
+      <q-card style="min-width: 400px">
+        <q-card-section>
+          <div class="text-h6">Set New Deadline</div>
+        </q-card-section>
+        <q-card-section>
+          <q-date v-model="newDeadline" mask="YYYY-MM-DD" />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn color="primary" label="Save" @click="saveNewDeadline" :loading="automatingDeadline" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -502,6 +647,25 @@ const workLogs = ref<Record<string, WorkLog[]>>({});
 ============================================================ */
 
 const dayStatuses = ref<Record<string, DayStatus>>({});
+
+/* ============================================================
+   LEAVE DATA
+============================================================ */
+
+const leaves = ref<any[]>([]);
+const affectedTasks = ref<any[]>([]);
+const dayComplianceStatuses = ref<Record<string, any>>({});
+
+/* ============================================================
+   DEADLINE ON LEAVE DIALOG
+============================================================ */
+
+const showDeadlineOnLeaveDialog = ref(false);
+const showLeaveImpactDialog = ref(false);
+const selectedAffectedTask = ref<any>(null);
+const newDeadline = ref('');
+const automatingDeadline = ref(false);
+const selectedLeaveDate = ref('');
 
 /* ============================================================
    TASKS
@@ -663,10 +827,153 @@ const fetchWorkLogs = async () => {
   }
 };
 
+// Fetch leaves from database
+const fetchLeaves = async () => {
+  if (!authStore.user?.id) {
+    leaves.value = [];
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `http://localhost:3007/api/leaves/employee/${authStore.user?.id}`,
+      {
+        headers: { Authorization: `Bearer ${authStore.token}` },
+      },
+    );
+    const result = await response.json();
+
+    if (result.success && result.leaves) {
+      leaves.value = result.leaves;
+    } else {
+      leaves.value = [];
+    }
+  } catch (error) {
+    console.error('Error fetching leaves:', error);
+    leaves.value = [];
+  }
+};
+
+// Fetch day compliance statuses (includes manually marked leave days)
+const fetchDayComplianceStatuses = async () => {
+  if (!authStore.user?.id) {
+    dayComplianceStatuses.value = {};
+    return;
+  }
+
+  try {
+    // Get first and last day of current month
+    const firstDay = new Date(calendarYear.value, calendarMonth.value, 1);
+    const lastDay = new Date(calendarYear.value, calendarMonth.value + 1, 0);
+
+    const response = await fetch(
+      `http://localhost:3007/api/daily-logs/compliance/${authStore.user?.id}?start_date=${formatDate(firstDay)}&end_date=${formatDate(lastDay)}`,
+      {
+        headers: { Authorization: `Bearer ${authStore.token}` },
+      },
+    );
+
+    // Note: This endpoint might not exist yet, so we'll handle gracefully
+    // For now, we'll use the existing fetchDayCompliance for selected date only
+  } catch (error) {
+    console.error('Error fetching day compliance statuses:', error);
+  }
+};
+
+// Fetch leave impact on tasks
+const fetchLeaveImpact = async () => {
+  if (!authStore.user?.id) {
+    affectedTasks.value = [];
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `http://localhost:3007/api/leaves/employee/${authStore.user?.id}/impact`,
+      {
+        headers: { Authorization: `Bearer ${authStore.token}` },
+      },
+    );
+    const result = await response.json();
+
+    if (result.success && result.affected_tasks) {
+      affectedTasks.value = result.affected_tasks;
+
+      // Check for deadline on leave and show dialog
+      for (const task of result.affected_tasks) {
+        if (task.deadline_on_leave) {
+          selectedAffectedTask.value = task;
+          showDeadlineOnLeaveDialog.value = true;
+          break; // Show dialog for first affected task
+        }
+      }
+    } else {
+      affectedTasks.value = [];
+    }
+  } catch (error) {
+    console.error('Error fetching leave impact:', error);
+    affectedTasks.value = [];
+  }
+};
+
+// Fetch day statuses from database
+const fetchDayStatuses = async () => {
+  if (!authStore.user?.id) {
+    dayStatuses.value = {};
+    return;
+  }
+
+  try {
+    // Get first and last day of current month
+    const firstDay = new Date(calendarYear.value, calendarMonth.value, 1);
+    const lastDay = new Date(calendarYear.value, calendarMonth.value + 1, 0);
+
+    const statuses: Record<string, DayStatus> = {};
+
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      const date = new Date(calendarYear.value, calendarMonth.value, day);
+      const dateString = formatDate(date);
+
+      try {
+        const response = await fetch(
+          `http://localhost:3007/api/daily-logs/${authStore.user?.id}/${dateString}`,
+          {
+            headers: { Authorization: `Bearer ${authStore.token}` },
+          },
+        );
+        const result = await response.json();
+        console.log(`Day ${dateString} compliance:`, result);
+        if (result.success && result.compliance) {
+          // Check both day_status and status fields
+          const dayStatus = result.compliance.day_status || result.compliance.status;
+          if (dayStatus) {
+            statuses[dateString] = dayStatus as DayStatus;
+          }
+        }
+      } catch (error) {
+        console.error(`Error fetching day ${dateString}:`, error);
+      }
+    }
+
+    console.log('Final day statuses:', statuses);
+    dayStatuses.value = statuses;
+  } catch (error) {
+    console.error('Error fetching day statuses:', error);
+  }
+};
+
 // Fetch data on mount
 onMounted(() => {
   fetchTasks();
   fetchWorkLogs();
+  fetchLeaves();
+  fetchLeaveImpact();
+  fetchDayStatuses();
+});
+
+// Watch for month changes to refetch day statuses
+watch([calendarMonth, calendarYear], () => {
+  fetchDayStatuses();
 });
 
 /* ============================================================
@@ -741,6 +1048,80 @@ const currentYear = computed(() => {
 });
 
 /* ============================================================
+   LEAVE IMPACT HELPERS
+============================================================ */
+
+function isDayAffectedByLeave(dateString: string): boolean {
+  if (!dateString) return false;
+
+  // First check if manually marked as leave in dayStatuses
+  if (dayStatuses.value[dateString] === 'leave') {
+    return true;
+  }
+
+  // Check if this date falls within any approved leave period
+  for (const leave of leaves.value) {
+    const leaveStart = new Date(leave.start_date);
+    const leaveEnd = new Date(leave.end_date);
+    const checkDate = new Date(dateString);
+
+    if (checkDate >= leaveStart && checkDate <= leaveEnd) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function isDayMissedWork(dateString: string): boolean {
+  if (!dateString) return false;
+
+  const checkDate = new Date(dateString);
+  const today = new Date();
+
+  // Only show missed work for past dates
+  if (checkDate >= today) return false;
+
+  // Check if this date was during leave and has incomplete tasks
+  if (isDayAffectedByLeave(dateString)) {
+    // Check if there are tasks that were scheduled but not completed
+    for (const task of affectedTasks.value) {
+      const taskDeadline = new Date(task.deadline);
+      const assignedDate = new Date(task.assigned_at);
+
+      // If task was scheduled before leave and deadline after leave check date
+      if (assignedDate <= checkDate && taskDeadline > checkDate) {
+        // Check if task is still incomplete
+        if (task.status !== 'completed' && task.progress < 100) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+function isTaskAffectedByLeave(log: any, dateString: string): boolean {
+  if (!log || !dateString) return false;
+
+  // Check if this day is affected by leave
+  if (!isDayAffectedByLeave(dateString)) return false;
+
+  // Check if this task's deadline falls on the leave date
+  // First, find the task in affectedTasks
+  for (const task of affectedTasks.value) {
+    if (task.id === log.task_id || task.title === log.taskTitle) {
+      const taskDeadline = new Date(task.deadline);
+      const checkDate = new Date(dateString);
+      return taskDeadline.toDateString() === checkDate.toDateString();
+    }
+  }
+
+  return false;
+}
+
+/* ============================================================
    CALENDAR DAYS
 ============================================================ */
 
@@ -792,8 +1173,21 @@ const calendarDays = computed<CalendarDay[]>(() => {
 
     const hasWorkLogs = workLogs.value[dateString] && workLogs.value[dateString].length > 0;
 
-    const status: DayStatus =
-      savedStatus ?? (hasWorkLogs ? 'worked' : isWeekend ? 'weekend' : 'no-entry');
+    // Check if this date is on leave from database
+    const isOnLeave = isDayAffectedByLeave(dateString);
+
+    let status: DayStatus;
+    if (savedStatus) {
+      status = savedStatus;
+    } else if (isOnLeave) {
+      status = 'leave';
+    } else if (hasWorkLogs) {
+      status = 'worked';
+    } else if (isWeekend) {
+      status = 'weekend';
+    } else {
+      status = 'no-entry';
+    }
 
     days.push({
       key: dateString,
@@ -853,11 +1247,14 @@ watch(
 
 async function submitDayToPM() {
   if (!authStore.user?.id) return;
-  // First save the local day status selection (worked, leave, holiday, weekend)
-  dayStatuses.value[selectedDate.value] = selectedDayStatus.value;
+
+  console.log('=== SAVE DAY STATUS ===');
+  console.log('User ID:', authStore.user?.id);
+  console.log('Selected Date:', selectedDate.value);
+  console.log('Selected Status:', selectedDayStatus.value);
 
   try {
-    const response = await fetch('http://localhost:3007/api/daily-logs/submit', {
+    const response = await fetch('http://localhost:3007/api/daily-logs/save-status', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -870,12 +1267,42 @@ async function submitDayToPM() {
       }),
     });
     const result = await response.json();
+    console.log('Save status response:', result);
     if (result.success) {
-      await fetchDayCompliance(selectedDate.value);
+      // Update local state immediately
+      dayStatuses.value[selectedDate.value] = selectedDayStatus.value;
+      // Refresh to verify database persistence
+      await fetchDayStatuses();
+
+      // If status is leave, check for deadline conflicts
+      if (selectedDayStatus.value === 'leave') {
+        console.log('=== LEAVE STATUS SAVED ===');
+        console.log('Selected date:', selectedDate.value);
+        await fetchLeaveImpact();
+        console.log('Affected tasks count:', affectedTasks.value.length);
+        console.log('Affected tasks:', affectedTasks.value);
+        // Check if any task deadline falls on this leave date
+        for (const task of affectedTasks.value) {
+          console.log('Checking task:', task.title, 'deadline:', task.deadline);
+          const taskDeadline = new Date(task.deadline);
+          const leaveDate = new Date(selectedDate.value);
+          // Compare dates (ignore time)
+          if (taskDeadline.toDateString() === leaveDate.toDateString()) {
+            console.log('DEADLINE CONFLICT FOUND! Opening dialog...');
+            selectedAffectedTask.value = task;
+            showDeadlineOnLeaveDialog.value = true;
+            break;
+          }
+        }
+        console.log('Dialog should be open:', showDeadlineOnLeaveDialog.value);
+      }
+
       showSavedDialog.value = true;
+    } else {
+      console.error('Save status failed:', result);
     }
   } catch (err) {
-    console.error('Error submitting day:', err);
+    console.error('Error saving day status:', err);
   }
 }
 
@@ -932,20 +1359,25 @@ const selectedDayStatusComputed = computed(() => {
 });
 
 /*
-  Keep template-friendly value.
+  Update selectedDayStatus when date changes (but not when user manually selects)
 */
-
 watch(
-  selectedDayStatusComputed,
-  (value) => {
-    if (value) {
-      selectedDayStatus.value = value;
-    }
-  },
-  {
-    immediate: true,
+  () => selectedDate.value,
+  () => {
+    selectedDayStatus.value = selectedDayStatusComputed.value;
   },
 );
+
+/* ============================================================
+   SELECT DAY STATUS
+============================================================ */
+
+function selectDayStatus(status: DayStatus) {
+  console.log('=== SELECT DAY STATUS ===');
+  console.log('New status:', status);
+  console.log('Previous status:', selectedDayStatus.value);
+  selectedDayStatus.value = status;
+}
 
 /* ============================================================
    FORMAT DATE
@@ -1071,6 +1503,95 @@ function totalHours(logs: WorkLog[]): string {
   const total = logs.reduce((sum, log) => sum + Number(log.hours || 0), 0);
 
   return total.toFixed(1);
+}
+
+/* ============================================================
+   DEADLINE ON LEAVE HANDLERS
+============================================================ */
+
+const showSetDeadlineDialog = ref(false);
+
+function openSetDeadlineDialog() {
+  showDeadlineOnLeaveDialog.value = false;
+  newDeadline.value = selectedAffectedTask.value?.deadline || '';
+  showSetDeadlineDialog.value = true;
+}
+
+async function openLeaveImpactDialog(dateString: string) {
+  selectedLeaveDate.value = dateString;
+  await fetchLeaveImpact();
+  showLeaveImpactDialog.value = true;
+}
+
+function handleDeadlineOnLeaveTask() {
+  showLeaveImpactDialog.value = false;
+  // Find the first task with deadline on leave
+  const taskWithDeadlineOnLeave = affectedTasks.value.find(t => t.deadline_on_leave);
+  if (taskWithDeadlineOnLeave) {
+    selectedAffectedTask.value = taskWithDeadlineOnLeave;
+    showDeadlineOnLeaveDialog.value = true;
+  }
+}
+
+async function saveNewDeadline() {
+  if (!selectedAffectedTask.value || !newDeadline.value) return;
+
+  automatingDeadline.value = true;
+  try {
+    const response = await fetch(
+      `http://localhost:3007/api/employee/tasks/${selectedAffectedTask.value.id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authStore.token}`,
+        },
+        body: JSON.stringify({
+          deadline: newDeadline.value,
+        }),
+      },
+    );
+
+    const data = await response.json();
+    if (data.success) {
+      showSetDeadlineDialog.value = false;
+      await fetchLeaveImpact(); // Refresh affected tasks
+      await fetchTasks(); // Refresh tasks
+    }
+  } catch (error) {
+    console.error('Error saving deadline:', error);
+  } finally {
+    automatingDeadline.value = false;
+  }
+}
+
+async function automateDeadline() {
+  if (!selectedAffectedTask.value) return;
+
+  automatingDeadline.value = true;
+  try {
+    const response = await fetch(
+      `http://localhost:3007/api/leaves/employee/${authStore.user?.id}/tasks/${selectedAffectedTask.value.id}/automate-deadline`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authStore.token}`,
+        },
+      },
+    );
+
+    const data = await response.json();
+    if (data.success) {
+      showDeadlineOnLeaveDialog.value = false;
+      await fetchLeaveImpact(); // Refresh affected tasks
+      await fetchTasks(); // Refresh tasks
+    }
+  } catch (error) {
+    console.error('Error automating deadline:', error);
+  } finally {
+    automatingDeadline.value = false;
+  }
 }
 </script>
 
@@ -1378,6 +1899,38 @@ function totalHours(logs: WorkLog[]): string {
   height: 2px;
   border-radius: 3px;
   background: #7c3aed;
+}
+
+.calendar-leave-impact {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.calendar-missed-work {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .selected-cell {
