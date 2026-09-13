@@ -43,6 +43,8 @@ dist/
 *.sql
 !database/schema.sql
 !database/seed.sql
+!database/leave_impact_test_data.sql
+!database/quick_leave_test.sql
 
 # Editor / IDE
 .vscode/*
