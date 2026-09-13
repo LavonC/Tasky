@@ -7,7 +7,10 @@
         <div class="column"><div class="text-h5 text-weight-bold">Notifications Center</div>
         <div class="text-grey-7 text-caption">Stay updated with your tasks and reviews</div>
       </div></div>
-      <q-btn color="primary" label="Mark All Read" @click="markAllRead" />
+      <div class="row q-gutter-sm">
+        <q-btn color="secondary" label="Check Deadlines" @click="checkDeadlines" :loading="checkingDeadlines" />
+        <q-btn color="primary" label="Mark All Read" @click="markAllRead" />
+      </div>
     </div>
 
     <!-- Notifications List -->
@@ -71,12 +74,23 @@ defineOptions({
 
 const notifications = ref<any[]>([]);
 const notificationStore = useNotificationStore();
+const checkingDeadlines = ref(false);
 
 onMounted(loadNotifications);
 
 async function loadNotifications() {
   await notificationStore.fetchNotifications();
   notifications.value = notificationStore.notifications.map((n: any) => ({ ...n, read: Boolean(n.is_read) }));
+}
+
+async function checkDeadlines() {
+  checkingDeadlines.value = true;
+  try {
+    await notificationStore.checkDeadlines();
+    await loadNotifications();
+  } finally {
+    checkingDeadlines.value = false;
+  }
 }
 
 function getNotificationIcon(type: string) {
@@ -86,6 +100,8 @@ function getNotificationIcon(type: string) {
     review_completed: 'check_circle',
     task_completed: 'task_alt',
     deadline_reminder: 'alarm',
+    deadline_approaching: 'schedule',
+    general: 'notifications',
   };
   return icons[type] || 'notifications';
 }
@@ -97,6 +113,8 @@ function getNotificationColor(type: string) {
     review_completed: 'green',
     task_completed: 'green',
     deadline_reminder: 'orange',
+    deadline_approaching: 'warning',
+    general: 'grey',
   };
   return colors[type] || 'grey';
 }

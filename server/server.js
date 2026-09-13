@@ -1398,6 +1398,115 @@ app.get('/api/pm/employee-performance/:userId/work-logs', async (req, res) => {
   try {
     const { userId } = req.params;
     const connection = await pool.getConnection();
+    
+    try {
+      const [logs] = await connection.execute(
+        `SELECT t.title as task_title, p.name as project_name, d.log_date, d.hours_spent, d.work_completed
+         FROM daily_work_log d
+         JOIN task t ON d.task_id = t.id
+         JOIN project p ON t.project_id = p.id
+         WHERE d.user_id = ?
+         ORDER BY d.log_date DESC
+         LIMIT 30`,
+        [userId]
+      );
+      
+      res.json({ success: true, logs });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error fetching work logs:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// POST /api/notifications/check-deadlines - Check for deadlines approaching and create notifications
+app.post('/api/notifications/check-deadlines', async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    
+    try {
+      // Find tasks with deadlines in the next 2 days (2-3 days from now)
+      const [tasks] = await connection.execute(
+        `SELECT t.id, t.title, t.deadline, ta.user_id, u.email
+         FROM task t
+         JOIN task_assignment ta ON t.id = ta.task_id
+         JOIN user u ON ta.user_id = u.id
+         WHERE ta.is_active = 1
+         AND t.status NOT IN ('completed', 'in-review')
+         AND t.deadline BETWEEN CURDATE() + INTERVAL 2 DAY AND CURDATE() + INTERVAL 3 DAY
+         AND t.deadline NOT IN (
+           SELECT reference_id 
+           FROM notification 
+           WHERE reference_type = 'task' 
+           AND type = 'deadline_approaching'
+           AND created_at >= CURDATE()
+         )`
+      );
+      
+      let notificationsCreated = 0;
+      
+      for (const task of tasks) {
+        const deadlineDate = new Date(task.deadline);
+        const deadlineStr = deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        await connection.execute(
+          `INSERT INTO notification (user_id, type, title, message, reference_type, reference_id, is_read, created_at)
+           VALUES (?, 'deadline_approaching', ?, ?, 'task', ?, 0, NOW())`,
+          [
+            task.user_id,
+            `Deadline Approaching: ${task.title}`,
+            `Your task "${task.title}" is due on ${deadlineStr}. Please ensure you complete it on time.`,
+            task.id
+          ]
+        );
+        
+        notificationsCreated++;
+      }
+      
+      res.json({ 
+        success: true, 
+        message: `Checked deadlines and created ${notificationsCreated} notifications` 
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error checking deadlines:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// POST /api/notifications/create - Create a test notification
+app.post('/api/notifications/create', async (req, res) => {
+  try {
+    const { user_id, type, title, message, reference_type, reference_id } = req.body;
+    const connection = await pool.getConnection();
+    
+    try {
+      await connection.execute(
+        `INSERT INTO notification (user_id, type, title, message, reference_type, reference_id, is_read, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, 0, NOW())`,
+        [user_id, type, title, message, reference_type, reference_id]
+      );
+      
+      res.json({ success: true, message: 'Notification created' });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// GET /api/employee/daily-logs/:userId - Get employee's daily log compliance
+app.get('/api/employee/daily-logs/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const connection = await pool.getConnection();
+    
     try {
       const [submissions] = await connection.execute(
         `SELECT *, DATE_FORMAT(log_date, '%Y-%m-%d') as log_date FROM daily_log_compliance WHERE user_id = ? ORDER BY log_date DESC`,
@@ -2052,6 +2161,86 @@ app.get('/api/employee/reviews/history', async (req, res) => {
   }
 });
 
+// GET /api/employee/notifications - Get notifications for employee
+app.get('/api/employee/notifications', async (req, res) => {
+  try {
+    const userId = req.query.user_id || req.user?.id || 1;
+
+    const [notifications] = await pool.execute(
+      `
+      SELECT * FROM notification
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+      `,
+      [userId]
+    );
+
+    res.json({ success: true, notifications });
+  } catch (error) {
+    console.error('Get employee notifications error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// PUT /api/employee/notifications/:id/read - Mark notification as read
+app.put('/api/employee/notifications/:id/read', async (req, res) => {
+  try {
+    const notifId = req.params.id;
+    const userId = req.body.user_id || req.user?.id || 1;
+
+    await pool.execute(
+      `
+      UPDATE notification SET is_read = 1 WHERE id = ? AND user_id = ?
+      `,
+      [notifId, userId]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Mark notification read error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// PUT /api/employee/notifications/read-all - Mark all notifications as read
+app.put('/api/employee/notifications/read-all', async (req, res) => {
+  try {
+    const userId = req.body.user_id || req.user?.id || 1;
+
+    await pool.execute(
+      `
+      UPDATE notification SET is_read = 1 WHERE user_id = ? AND is_read = 0
+      `,
+      [userId]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Mark all notifications read error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// DELETE /api/employee/notifications/:id - Delete notification
+app.delete('/api/employee/notifications/:id', async (req, res) => {
+  try {
+    const notifId = req.params.id;
+    const userId = req.body.user_id || req.user?.id || 1;
+
+    await pool.execute(
+      `
+      DELETE FROM notification WHERE id = ? AND user_id = ?
+      `,
+      [notifId, userId]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete notification error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
 // ============================================================
 // DEADLINE CONFLICT HANDLING
 // ============================================================
@@ -2366,6 +2555,21 @@ cron.schedule('0 8 * * 1-5', async () => {
     }
   } catch (error) {
     console.error('Cron job error:', error);
+  }
+});
+
+// Check for approaching deadlines every day at 9:00 AM
+cron.schedule('0 9 * * *', async () => {
+  try {
+    console.log('Checking for approaching deadlines...');
+    const response = await fetch('http://localhost:3007/api/notifications/check-deadlines', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await response.json();
+    console.log('Deadline check result:', data);
+  } catch (error) {
+    console.error('Deadline check cron error:', error);
   }
 });
 

@@ -22,7 +22,9 @@ export const useNotificationStore = defineStore('notification', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await fetch('http://localhost:3007/api/pm/notifications', {
+        const auth = useAuthStore();
+        const userId = auth.user?.id;
+        const response = await fetch(`http://localhost:3007/api/employee/notifications?user_id=${userId}`, {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -36,11 +38,31 @@ export const useNotificationStore = defineStore('notification', {
       }
     },
 
+    async checkDeadlines() {
+      try {
+        const response = await fetch('http://localhost:3007/api/notifications/check-deadlines', {
+          method: 'POST',
+          headers: this.getHeaders(),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.error || 'Failed to check deadlines');
+        // Refresh notifications after checking
+        await this.fetchNotifications();
+        return data;
+      } catch (err: any) {
+        console.error('Error checking deadlines:', err);
+        throw err;
+      }
+    },
+
     async markAsRead(id: string) {
       try {
-        const response = await fetch(`http://localhost:3007/api/pm/notifications/${id}/read`, {
+        const auth = useAuthStore();
+        const userId = auth.user?.id;
+        const response = await fetch(`http://localhost:3007/api/employee/notifications/${id}/read`, {
           method: 'PUT',
-          headers: this.getHeaders(),
+          headers: { ...this.getHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId }),
         });
         const data = await response.json();
         if (!response.ok || !data.success) throw new Error(data.error || 'Failed to mark notification as read');
@@ -53,9 +75,12 @@ export const useNotificationStore = defineStore('notification', {
 
     async markAllAsRead() {
       try {
-        const response = await fetch('http://localhost:3007/api/pm/notifications/read-all', {
+        const auth = useAuthStore();
+        const userId = auth.user?.id;
+        const response = await fetch('http://localhost:3007/api/employee/notifications/read-all', {
           method: 'PUT',
-          headers: this.getHeaders(),
+          headers: { ...this.getHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId }),
         });
         const data = await response.json();
         if (!response.ok || !data.success) throw new Error(data.error || 'Failed to mark notifications as read');
@@ -67,9 +92,12 @@ export const useNotificationStore = defineStore('notification', {
 
     async deleteNotification(id: string) {
       try {
-        const response = await fetch(`http://localhost:3007/api/pm/notifications/${id}`, {
+        const auth = useAuthStore();
+        const userId = auth.user?.id;
+        const response = await fetch(`http://localhost:3007/api/employee/notifications/${id}`, {
           method: 'DELETE',
-          headers: this.getHeaders(),
+          headers: { ...this.getHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId }),
         });
         const data = await response.json();
         if (!response.ok || !data.success) throw new Error(data.error || 'Failed to delete notification');
