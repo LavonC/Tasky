@@ -2,32 +2,29 @@
   <div class="trend-card q-mb-md">
     <div class="trend-title">Task Completion Trend</div>
 
-    <div class="trend-subtitle">
-      Tasks completed over the last 7 days
-    </div>
+    <div class="trend-subtitle">Tasks completed over the last 7 days</div>
 
     <div ref="chartContainer" class="chart-container"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue';
+import { ref, onMounted, nextTick, onBeforeUnmount, watch } from 'vue';
 import * as d3 from 'd3';
 
+const props = withDefaults(defineProps<{ data?: Array<{ day?: string; date?: string; completed?: number }> }>(), {
+  data: () => [],
+});
 const chartContainer = ref<HTMLElement>();
-
-const data = [
-  { day: 'Mon', completed: 2 },
-  { day: 'Tue', completed: 4 },
-  { day: 'Wed', completed: 3 },
-  { day: 'Thu', completed: 6 },
-  { day: 'Fri', completed: 5 },
-  { day: 'Sat', completed: 8 },
-  { day: 'Sun', completed: 7 },
-];
 
 function renderChart() {
   if (!chartContainer.value) return;
+
+  const data = props.data.map((item) => ({
+    day: item.day || (item.date ? new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }) : ''),
+    completed: Number(item.completed || 0),
+  }));
+  if (!data.length) return;
 
   chartContainer.value.innerHTML = '';
 
@@ -64,7 +61,7 @@ function renderChart() {
    */
   const y = d3
     .scaleLinear()
-    .domain([0, 15])
+    .domain([0, Math.max(5, d3.max(data, (d) => d.completed) || 0)])
     .range([height - margin.bottom, margin.top]);
 
   /*
@@ -77,7 +74,7 @@ function renderChart() {
     .call(
       d3
         .axisLeft(y)
-        .tickValues([0, 5, 10, 15])
+        .ticks(3)
         .tickSize(-(width - margin.left - margin.right))
         .tickFormat(() => ''),
     )
@@ -96,7 +93,7 @@ function renderChart() {
     .call(
       d3
         .axisLeft(y)
-        .tickValues([0, 5, 10, 15])
+        .ticks(3)
         .tickSize(0),
     )
     .call((g) => {
@@ -233,6 +230,8 @@ onMounted(async () => {
 
   window.addEventListener('resize', renderChart);
 });
+
+watch(() => props.data, renderChart, { deep: true });
 
 /*
  * CLEANUP

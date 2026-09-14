@@ -20,11 +20,11 @@
     </div>
 
     <div
-      v-else-if="analyticsStore.deadlineRisks && analyticsStore.deadlineRisks.length > 0"
+      v-else-if="paginatedRisks.length > 0"
       class="column q-gutter-y-md"
     >
       <div
-        v-for="item in analyticsStore.deadlineRisks"
+        v-for="item in paginatedRisks"
         :key="item.id"
         class="row items-center justify-between no-wrap"
       >
@@ -34,7 +34,7 @@
           @click="router.push(`/dashboard/tasks?open=${item.id}`)"
         >
           <q-avatar
-            v-if="getRiskLevel(item.days_left) === 'high'"
+          v-if="getRiskLevel(item.days_left ?? item.days_until, item.risk_level) === 'high'"
             color="red-1"
             text-color="red"
             icon="warning"
@@ -63,18 +63,28 @@
               class="text-caption text-grey-6 text-truncate"
               style="font-size: 10px; line-height: 1.2; margin-top: 2px"
             >
-              {{ item.project_name }} • {{ formatDaysLeft(item.days_left) }}
+              {{ item.project_name }} • {{ formatDaysLeft(item.days_left ?? item.days_until) }}
             </div>
           </div>
         </div>
         <q-badge
-          :color="getBadgeColor(getRiskLevel(item.days_left))"
-          :text-color="getBadgeTextColor(getRiskLevel(item.days_left))"
-          :label="formatRiskLevel(getRiskLevel(item.days_left))"
+          :color="getBadgeColor(getRiskLevel(item.days_left ?? item.days_until, item.risk_level))"
+          :text-color="getBadgeTextColor(getRiskLevel(item.days_left ?? item.days_until, item.risk_level))"
+          :label="formatRiskLevel(getRiskLevel(item.days_left ?? item.days_until, item.risk_level))"
           class="text-weight-bold rounded-borders q-px-sm"
           style="font-size: 10px; min-width: 50px; display: flex; justify-content: center"
         />
       </div>
+      <q-pagination
+        v-if="totalPages > 1"
+        v-model="currentPage"
+        :max="totalPages"
+        max-pages="5"
+        direction-links
+        boundary-links
+        size="sm"
+        class="self-center q-mt-sm"
+      />
     </div>
 
     <div v-else class="text-center text-grey-6 q-pa-md text-caption">
@@ -84,13 +94,21 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAnalyticsStore } from '../stores/analyticsStore';
 
 const router = useRouter();
 const analyticsStore = useAnalyticsStore();
+const currentPage = ref(1);
+const rowsPerPage = 5;
+const totalPages = computed(() => Math.ceil((analyticsStore.deadlineRisks?.length || 0) / rowsPerPage));
+const paginatedRisks = computed(() => analyticsStore.deadlineRisks.slice((currentPage.value - 1) * rowsPerPage, currentPage.value * rowsPerPage));
+watch(() => analyticsStore.deadlineRisks, () => { currentPage.value = 1; });
 
-const getRiskLevel = (days: number | null) => {
+const getRiskLevel = (days: number | null, suppliedLevel?: string) => {
+  if (suppliedLevel) return suppliedLevel;
+  days = days ?? null;
   if (days === null) return 'low';
   if (days < 0) return 'overdue';
   if (days <= 3) return 'high';
@@ -104,6 +122,7 @@ const formatRiskLevel = (level: string) => {
 };
 
 const formatDaysLeft = (days: number | null) => {
+  days = days ?? null;
   if (days === null) return 'No deadline';
   if (days < 0) return `${Math.abs(days)} days overdue`;
   if (days === 0) return 'Due today';

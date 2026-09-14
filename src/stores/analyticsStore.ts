@@ -5,6 +5,7 @@ export const useAnalyticsStore = defineStore('analytics', {
     overview: null as any,
     projectProgress: [] as any[],
     taskDistribution: null as any,
+    completionTrend: [] as any[],
     resourceWorkload: [] as any[],
     deadlineRisks: [] as any[],
     projectPerformance: [] as any[],
@@ -78,6 +79,18 @@ export const useAnalyticsStore = defineStore('analytics', {
       }
     },
 
+    async fetchCompletionTrend() {
+      try {
+        const response = await fetch('http://localhost:3007/api/pm/analytics/completion-trend', {
+          headers: this.getHeaders(),
+        });
+        const data = await response.json();
+        if (data.success) this.completionTrend = data.trend;
+      } catch (err: any) {
+        this.error = err.message;
+      }
+    },
+
     async fetchResourceWorkload() {
       try {
         const response = await fetch('http://localhost:3007/api/pm/analytics/resource-workload', {
@@ -135,6 +148,7 @@ export const useAnalyticsStore = defineStore('analytics', {
         this.fetchOverview(period),
         this.fetchProjectProgress(period),
         this.fetchTaskDistribution(),
+        this.fetchCompletionTrend(),
         this.fetchResourceWorkload(),
         this.fetchDeadlineRisks(),
         this.fetchProjectPerformance(),
