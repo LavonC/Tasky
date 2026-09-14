@@ -22,8 +22,8 @@ export default function analyticsRoutes(pool) {
   router.get('/overview', async (req, res) => {
     try {
       // Authentication removed for testing - use org_id = 1
-      const orgId = 1;
-      const pmId = 1;
+      const orgId = req.user.org_id;
+      const pmId = req.user.id;
       const period = typeof req.query.period === 'string' ? req.query.period : 'this_month';
       const projectPeriodFilter = getPeriodFilter('p.created_at', period);
       const taskPeriodFilter = getPeriodFilter('t.created_at', period);
@@ -103,8 +103,8 @@ export default function analyticsRoutes(pool) {
   router.get('/project-progress', async (req, res) => {
     try {
       // Authentication removed for testing
-      const orgId = 1;
-      const pmId = 1;
+      const orgId = req.user.org_id;
+      const pmId = req.user.id;
       const period = typeof req.query.period === 'string' ? req.query.period : 'this_month';
       const projectPeriodFilter = getPeriodFilter('p.created_at', period);
       const taskPeriodFilter = getPeriodFilter('t.created_at', period);
@@ -142,8 +142,8 @@ export default function analyticsRoutes(pool) {
   router.get('/task-distribution', async (req, res) => {
     try {
       // Authentication removed for testing
-      const orgId = 1;
-      const pmId = 1;
+      const orgId = req.user.org_id;
+      const pmId = req.user.id;
 
       const [statusDistribution] = await pool.execute(
         `
@@ -191,8 +191,8 @@ export default function analyticsRoutes(pool) {
   // GET /api/pm/analytics/completion-trend
   router.get('/completion-trend', async (req, res) => {
     try {
-      const orgId = 1;
-      const pmId = 1;
+      const orgId = req.user.org_id;
+      const pmId = req.user.id;
       const [trend] = await pool.execute(
         `
         SELECT DATE_FORMAT(d.day, '%Y-%m-%d') AS date,
@@ -224,7 +224,7 @@ export default function analyticsRoutes(pool) {
   router.get('/resource-workload', async (req, res) => {
     try {
       // Authentication removed for testing
-      const orgId = 1;
+      const orgId = req.user.org_id;
 
       // Per-project workload distribution
       const [byProject] = await pool.execute(
@@ -256,8 +256,8 @@ export default function analyticsRoutes(pool) {
   router.get('/deadline-risks', async (req, res) => {
     try {
       // Authentication removed for testing
-      const orgId = 1;
-      const pmId = 1;
+      const orgId = req.user.org_id;
+      const pmId = req.user.id;
 
       const [risks] = await pool.execute(
         `
@@ -292,8 +292,8 @@ export default function analyticsRoutes(pool) {
   router.get('/project-performance', async (req, res) => {
     try {
       // Authentication removed for testing
-      const orgId = 1;
-      const pmId = 1;
+      const orgId = req.user.org_id;
+      const pmId = req.user.id;
 
       const [projects] = await pool.execute(
         `
@@ -324,7 +324,7 @@ export default function analyticsRoutes(pool) {
   router.get('/daily-log-compliance', async (req, res) => {
     try {
       // Authentication removed for testing
-      const orgId = 1;
+      const orgId = req.user.org_id;
 
       const [compliance] = await pool.execute(
         `

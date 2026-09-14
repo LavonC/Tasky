@@ -16,8 +16,11 @@ export const useAnalyticsStore = defineStore('analytics', {
 
   actions: {
     getHeaders() {
-      // Authentication removed for testing
-      return { 'Content-Type': 'application/json' };
+      const token = sessionStorage.getItem('tasky_token');
+      return {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      };
     },
 
     async fetchOverview(period = 'this_month') {

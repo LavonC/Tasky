@@ -6,8 +6,8 @@ export default function calendarRoutes(pool) {
   router.get('/tasks', async (req, res) => {
     try {
       // Authentication removed for testing
-      const orgId = 1;
-      const pmId = 1;
+      const orgId = req.user.org_id;
+      const pmId = req.user.id;
       const { start, end, project_id } = req.query; // optional date range and project filtering
 
       // Fetch all non-completed tasks for projects created by this PM
@@ -81,7 +81,7 @@ export default function calendarRoutes(pool) {
   router.get('/availability', async (req, res) => {
     try {
       // Authentication removed for testing
-      const orgId = 1;
+      const orgId = req.user.org_id;
 
       // Get explicit availability overrides (e.g. weekends, manual off-days)
       const [availability] = await pool.execute(
@@ -118,7 +118,7 @@ export default function calendarRoutes(pool) {
   router.get('/leave', async (req, res) => {
     try {
       // Authentication removed for testing
-      const orgId = 1;
+      const orgId = req.user.org_id;
 
       const [leaves] = await pool.execute(
         `

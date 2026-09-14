@@ -26,8 +26,11 @@ export const useResourceStore = defineStore('resource', {
 
   actions: {
     getHeaders() {
-      // Authentication removed for testing
-      return { 'Content-Type': 'application/json' };
+      const token = sessionStorage.getItem('tasky_token');
+      return {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      };
     },
 
     async fetchResources(search = '') {

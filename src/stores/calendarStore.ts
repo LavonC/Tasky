@@ -9,8 +9,11 @@ export const useCalendarStore = defineStore('calendar', {
 
   actions: {
     getHeaders() {
-      // Authentication removed for testing
-      return { 'Content-Type': 'application/json' };
+      const token = sessionStorage.getItem('tasky_token');
+      return {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      };
     },
 
     async fetchCalendarData(start?: string, end?: string, projectId?: number) {

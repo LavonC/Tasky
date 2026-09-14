@@ -28,25 +28,16 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Auth token middleware (allows token if present, otherwise falls back to mock user)
+// Auth token middleware removed fallback
 app.use((req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-  if (token) {
+  if (token && token !== 'undefined' && token !== 'null') {
     try {
       req.user = jwt.verify(token, process.env.JWT_SECRET || 'tasky_jwt_secret_key_2024');
-      return next();
     } catch (e) {
-      // Invalid or expired token, fall back
+      // Invalid or expired token, req.user remains undefined
     }
-  }
-  if (!req.user) {
-    req.user = {
-      id: 1, // PM user ID who created all projects
-      email: 'pm@tasky.com',
-      role: 'pm',
-      org_id: 1
-    };
   }
   next();
 });
@@ -1082,6 +1073,7 @@ app.delete('/api/employee/daily-tracker/:id', async (req, res) => {
 // Get active employees for reviewer selection. Keep this before /api/users/:id.
 app.get('/api/users/employees', async (req, res) => {
   try {
+    const orgId = req.user?.org_id || 1;
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.execute(
@@ -1089,8 +1081,9 @@ app.get('/api/users/employees', async (req, res) => {
                 r.name AS role_name, r.access_level
          FROM user u
          JOIN role r ON u.role_id = r.id
-         WHERE u.is_active = 1 AND r.access_level = 'employee'
-         ORDER BY u.first_name, u.last_name`
+         WHERE u.org_id = ? AND u.is_active = 1 AND r.access_level = 'employee'
+         ORDER BY u.first_name, u.last_name`,
+        [orgId]
       );
       res.json({ success: true, users: rows });
     } finally {
@@ -1145,16 +1138,19 @@ app.get('/api/users/:id', async (req, res) => {
 // Get all users endpoint (for testing)
 app.get('/api/users', async (req, res) => {
   try {
+    const orgId = req.user?.org_id || 1;
     const connection = await pool.getConnection();
     try {
       let rows;
       try {
         [rows] = await connection.execute(
-          'SELECT u.id, u.employee_code, u.first_name, u.last_name, u.email, u.phone, u.points, r.name as role_name, r.access_level FROM user u JOIN role r ON u.role_id = r.id',
+          'SELECT u.id, u.employee_code, u.first_name, u.last_name, u.email, u.phone, u.points, r.name as role_name, r.access_level FROM user u JOIN role r ON u.role_id = r.id WHERE u.org_id = ?',
+          [orgId]
         );
       } catch (colErr) {
         [rows] = await connection.execute(
-          'SELECT u.id, u.employee_code, u.first_name, u.last_name, u.email, u.phone, r.name as role_name, r.access_level FROM user u JOIN role r ON u.role_id = r.id',
+          'SELECT u.id, u.employee_code, u.first_name, u.last_name, u.email, u.phone, r.name as role_name, r.access_level FROM user u JOIN role r ON u.role_id = r.id WHERE u.org_id = ?',
+          [orgId]
         );
         rows.forEach((r) => {
           r.points = 0;
@@ -1628,12 +1624,8 @@ app.put('/api/employee/tasks/:id', async (req, res) => {
   }
 });
 
-// Employee API Routes (Authentication removed for testing)
-app.use('/api/employee', (req, res, next) => {
-  // Skip authentication for testing
-  req.user = { id: 1, email: 'test@test.com', role: 'employee', org_id: 1 };
-  next();
-});
+// Employee API Routes
+// Note: Global authentication middleware handles security
 
 // GET /api/tasks/employee/:id - Get tasks assigned to employee
 app.get('/api/tasks/employee/:id', async (req, res) => {
@@ -2576,3 +2568,5 @@ cron.schedule('0 9 * * *', async () => {
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
+
+
