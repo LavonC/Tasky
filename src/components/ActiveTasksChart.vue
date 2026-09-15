@@ -4,10 +4,6 @@
       Team Capacity
     </div>
 
-    <div class="text-caption text-grey-7 q-mb-lg">
-      Overall resource workload capacity
-    </div>
-
     <div class="capacity-container">
       <q-circular-progress
         :value="averageUtilization"

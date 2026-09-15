@@ -21,7 +21,7 @@
       row-key="id"
       flat
       dense
-      :pagination="{ rowsPerPage: 3 }"
+      :pagination="{ rowsPerPage: 4 }"
   :rows-per-page-options="[3, 5, 7, 10, 0]"
       :loading="analyticsStore.loading"
     >

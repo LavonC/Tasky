@@ -66,7 +66,7 @@ const props = defineProps<{
 }>();
 
 const currentPage = ref(1);
-const rowsPerPage = 5;
+const rowsPerPage = 2;
 
 const totalPages = computed(() => {
   return Math.ceil(props.resources.length / rowsPerPage);

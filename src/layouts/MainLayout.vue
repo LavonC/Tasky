@@ -4,7 +4,7 @@
     <q-drawer
       v-model="leftDrawerOpen"
       show-if-above
-      :width="280"
+      :width="260"
       :mini="sidebarCollapsed"
       class="text-white column employee-sidebar"
       style="background-color: #01366e !important"
