@@ -880,7 +880,7 @@ async function fetchFromDatabase() {
     }
 
     // Fetch projects directly from database
-    const projectsResponse = await fetch('http://localhost:3007/api/pm/projects', {
+    const projectsResponse = await fetch(`http://localhost:3007/api/employee/${authStore.user?.id}/projects`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
     const projectsData = await projectsResponse.json();

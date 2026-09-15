@@ -146,7 +146,11 @@ export const useTaskStore = defineStore('taskStore', {
     async fetchProjects() {
       try {
         const authStore = useAuthStore();
-        const response = await fetch('http://localhost:3007/api/pm/projects', {
+        const endpoint = authStore.user?.application_role === 'employee' 
+          ? `http://localhost:3007/api/employee/${authStore.user?.id}/projects`
+          : 'http://localhost:3007/api/pm/projects';
+          
+        const response = await fetch(endpoint, {
           headers: {
             'Content-Type': 'application/json',
             ...(authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null' ? { Authorization: `Bearer ${authStore.token}` } : {})

@@ -207,10 +207,10 @@
               </div>
               <q-separator class="q-mb-sm" />
               
-              <!-- Check for logs using the formatted date key -->
-              <div v-if="employeeLogsByDate[getDateKey(sub.log_date)] && employeeLogsByDate[getDateKey(sub.log_date)].length > 0">
+              <!-- Render logs directly attached to submission -->
+              <div v-if="sub.logs && sub.logs.length > 0">
                 <q-list separator dense>
-                  <q-item v-for="log in employeeLogsByDate[getDateKey(sub.log_date)]" :key="log.id" class="q-py-sm column">
+                  <q-item v-for="log in sub.logs" :key="log.id" class="q-py-sm column">
                     <div class="row items-center justify-between full-width">
                       <div class="text-weight-bold text-body2">{{ log.task_title || 'Manual Entry' }}</div>
                       <div class="text-caption text-grey">{{ log.hours_spent }}h</div>
@@ -250,6 +250,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
+import { getAuthHeaders } from '../services/api';
 import * as d3 from 'd3';
 
 const props = defineProps<{
@@ -326,6 +327,7 @@ async function loadPerformanceData() {
   try {
     const response = await fetch(
       `http://localhost:3007/api/pm/employee-performance/${props.employee.id}`,
+      { headers: getAuthHeaders() }
     );
     const data = await response.json();
     if (data.success) {
@@ -334,7 +336,10 @@ async function loadPerformanceData() {
       renderCharts();
     }
 
-    const logsResponse = await fetch(`http://localhost:3007/api/pm/employee-performance/${props.employee.id}/work-logs`);
+    const logsResponse = await fetch(
+      `http://localhost:3007/api/pm/employee-performance/${props.employee.id}/work-logs`,
+      { headers: getAuthHeaders() }
+    );
     const logsData = await logsResponse.json();
     if (logsData.success) {
       employeeSubmissions.value = logsData.submissions || [];
