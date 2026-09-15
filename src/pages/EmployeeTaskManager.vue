@@ -1595,7 +1595,9 @@ const colleagues = ref<{ id: number; name: string }[]>([]);
 // Fetch colleagues for review selection
 const fetchColleagues = async () => {
   try {
-    const response = await fetch('http://localhost:3007/api/users/employees');
+    const response = await fetch('http://localhost:3007/api/users/employees', {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    });
     const result = await response.json();
     if (result.success && result.users) {
       colleagues.value = result.users
@@ -2096,7 +2098,7 @@ const projects = ref<any[]>([]);
 
 const fetchProjects = async () => {
   try {
-    const response = await fetch('http://localhost:3007/api/pm/projects', {
+    const response = await fetch(`http://localhost:3007/api/employee/${authStore.user?.id}/projects`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
     const result = await response.json();
@@ -2135,7 +2137,9 @@ const fetchUserPointsAndRank = async () => {
     }
 
     // Fetch all users to calculate rank
-    const allUsersResponse = await fetch('http://localhost:3007/api/users');
+    const allUsersResponse = await fetch('http://localhost:3007/api/users', {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    });
     const allUsersResult = await allUsersResponse.json();
     if (allUsersResult.success && allUsersResult.users) {
       const sortedUsers = allUsersResult.users.sort(

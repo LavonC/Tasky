@@ -1342,27 +1342,12 @@ const delayedProjects = computed(
 );
 
 const healthyProjects = computed(() => {
-  const total =
-    atRiskProjects.value +
-    delayedProjects.value;
-
-  // If the backend doesn't expose total project count,
-  // use the number of projects we can currently identify.
-  const identifiableProjects =
-    total + delayedProjects.value;
-
-  return Math.max(0, identifiableProjects - total);
+  const total = dashboardStore.stats?.totalProjects ?? 0;
+  return Math.max(0, total - atRiskProjects.value - delayedProjects.value);
 });
 
 const inProgressTasks = computed(() => {
-  const totalUsers = dashboardStore.users?.length ?? 0;
-
-  // Keep this useful even when the backend doesn't expose
-  // a dedicated in-progress statistic.
-  return Math.max(
-    0,
-    totalUsers - overdueTasks.value,
-  );
+  return dashboardStore.stats?.inProgressTasks ?? 0;
 });
 
 const projectHealthMessage = computed(() => {
@@ -1398,10 +1383,7 @@ const reviewMessage = computed(() => {
 });
 
 function projectHealthPercentage(value: number) {
-  const total =
-    healthyProjects.value +
-    atRiskProjects.value +
-    delayedProjects.value;
+  const total = dashboardStore.stats?.totalProjects ?? 0;
 
   if (total === 0) return 0;
 

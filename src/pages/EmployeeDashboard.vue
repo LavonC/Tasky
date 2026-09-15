@@ -1130,8 +1130,8 @@ async function fetchFromDatabase() {
       myTasks.value = tasksData.tasks;
     }
 
-    // Fetch projects using the same JWT as the rest of the employee dashboard.
-    const projectsResponse = await fetch('http://localhost:3007/api/pm/projects', {
+    // Fetch projects for the employee
+    const projectsResponse = await fetch(`http://localhost:3007/api/employee/${currentEmployee.value.id}/projects`, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authStore.token}`,
@@ -1142,10 +1142,11 @@ async function fetchFromDatabase() {
       projectsList.value = projectsData.projects;
     }
 
-    // Fetch employees directly from database - authentication removed
+    // Fetch employees directly from database
     const employeesResponse = await fetch('http://localhost:3007/api/users', {
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
       },
     });
     const employeesData = await employeesResponse.json();

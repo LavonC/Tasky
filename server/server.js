@@ -15,6 +15,7 @@ import calendarRoutes from './routes/calendar.js';
 import schedulingRoutes from './routes/scheduling.js';
 import leavesRoutes from './routes/leaves.js';
 import dailyLogsRoutes from './routes/dailyLogs.js';
+import performanceRoutes from './routes/performance.js';
 import cron from 'node-cron';
 import { handleDelayDetection, checkTaskDependencies } from './services/schedulingEngine.js';
 const app = express();
@@ -740,6 +741,37 @@ app.put('/api/users/:id', async (req, res) => {
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });
+// GET /api/employee/:userId/projects - Get all active projects for employee's organization
+app.get('/api/employee/:userId/projects', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const connection = await pool.getConnection();
+    try {
+      const [userRows] = await connection.execute('SELECT org_id FROM user WHERE id = ?', [userId]);
+      if (userRows.length === 0) {
+        return res.status(404).json({ success: false, error: 'User not found' });
+      }
+      const orgId = userRows[0].org_id;
+
+      // Get all active projects for the employee's organization so they can self-assign tasks
+      const [projects] = await connection.execute(
+        `SELECT p.* 
+         FROM project p 
+         WHERE p.org_id = ? 
+           AND p.status != 'archived'
+         ORDER BY p.name ASC`, 
+        [orgId]
+      );
+      res.json({ success: true, projects });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Get employee projects error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
 // GET /api/employee/tasks/:id/subtasks - Get subtasks for a task
 app.get('/api/employee/tasks/:id/subtasks', async (req, res) => {
   try {
@@ -1101,7 +1133,7 @@ app.delete('/api/employee/daily-tracker/:id', async (req, res) => {
 });
 
 // Get active employees for reviewer selection. Keep this before /api/users/:id.
-app.get('/api/users/employees', async (req, res) => {
+app.get('/api/users/employees', authenticateToken, async (req, res) => {
   try {
     const orgId = req.user?.org_id || 1;
     const connection = await pool.getConnection();
@@ -1166,7 +1198,7 @@ app.get('/api/users/:id', async (req, res) => {
 });
 
 // Get all users endpoint (for testing)
-app.get('/api/users', async (req, res) => {
+app.get('/api/users', authenticateToken, async (req, res) => {
   try {
     const orgId = req.user?.org_id || 1;
     const connection = await pool.getConnection();
@@ -1387,12 +1419,11 @@ app.get('/api/pm/employee-performance/:userId', async (req, res) => {
       );
 
       // 6. Overall Score
-      let overallScore = 40;
+      let overallScore = 0;
       if (totalTasks > 0) {
-        overallScore += (completedTasks / totalTasks) * 40;
-        overallScore += Math.max(0, 20 - (overdueTasks / totalTasks) * 20);
-      } else {
-        overallScore = 75; 
+        const baseScore = (completedTasks / totalTasks) * 100;
+        const penalty = (overdueTasks / totalTasks) * 20;
+        overallScore = Math.max(0, baseScore - penalty);
       }
       overallScore = Math.round(overallScore);
 
@@ -1420,24 +1451,56 @@ app.get('/api/pm/employee-performance/:userId', async (req, res) => {
 });
 
 // GET /api/pm/employee-performance/:userId/work-logs - Get daily logs for a specific employee
-app.get('/api/pm/employee-performance/:userId/work-logs', async (req, res) => {
+app.get('/api/pm/employee-performance/:userId/work-logs', authenticateToken, async (req, res) => {
   try {
     const { userId } = req.params;
     const connection = await pool.getConnection();
     
     try {
-      const [logs] = await connection.execute(
-        `SELECT t.title as task_title, p.name as project_name, d.log_date, d.hours_spent, d.work_completed
-         FROM daily_work_log d
-         JOIN task t ON d.task_id = t.id
-         JOIN project p ON t.project_id = p.id
-         WHERE d.user_id = ?
-         ORDER BY d.log_date DESC
-         LIMIT 30`,
-        [userId]
+      // Get all dates where the user has a work log or a compliance record
+      const [datesList] = await connection.execute(
+        `SELECT DISTINCT date_val FROM (
+           SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date_val FROM daily_log_compliance WHERE user_id = ?
+           UNION
+           SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date_val FROM daily_work_log WHERE user_id = ?
+         ) as combined_dates ORDER BY date_val DESC`,
+        [userId, userId]
       );
+
+      const submissions = [];
+      const logsByDate = {};
       
-      res.json({ success: true, logs });
+      for (const { date_val } of datesList) {
+        const [comp] = await connection.execute(
+          `SELECT *, DATE_FORMAT(log_date, '%Y-%m-%d') as formatted_date FROM daily_log_compliance WHERE user_id = ? AND DATE(log_date) = ?`,
+          [userId, date_val]
+        );
+        
+        const sub = comp.length > 0 ? comp[0] : { 
+          id: `unfinalized-${date_val}`, 
+          user_id: userId, 
+          log_date: date_val, 
+          status: 'not-finalized',
+          day_status: 'worked',
+          formatted_date: date_val
+        };
+        
+        const dateStr = sub.formatted_date || date_val;
+        sub.log_date_str = dateStr;
+        
+        const [logs] = await connection.execute(
+          `SELECT dwl.*, DATE_FORMAT(dwl.log_date, '%Y-%m-%d') as log_date, t.title AS task_title, p.name AS project_name, p.color AS project_color
+           FROM daily_work_log dwl
+           LEFT JOIN task t ON t.id = dwl.task_id
+           LEFT JOIN project p ON p.id = t.project_id
+           WHERE dwl.user_id = ? AND DATE(dwl.log_date) = ?`,
+          [userId, dateStr]
+        );
+        sub.logs = logs;
+        submissions.push(sub);
+      }
+
+      res.json({ success: true, submissions });
     } finally {
       connection.release();
     }
@@ -1591,6 +1654,9 @@ app.put('/api/employee/tasks/:id', async (req, res) => {
         if (taskStatus === 'pending') taskStatus = 'not-started';
         updates.push('status = ?');
         params.push(taskStatus);
+        if (taskStatus === 'completed') {
+          updates.push('completed_at = NOW()');
+        }
       }
       if (actual_effort !== undefined) {
         updates.push('actual_effort = ?');
@@ -1804,9 +1870,9 @@ app.post('/api/employee/daily-logs/finalize', async (req, res) => {
     try {
       await connection.execute(
         `INSERT INTO daily_log_compliance (user_id, log_date, status, submitted_at) 
-         VALUES (?, CURDATE(), 'logged', NOW())
+         VALUES (?, CURDATE(), 'submitted', NOW())
          ON DUPLICATE KEY UPDATE 
-           status = 'logged', 
+           status = 'submitted', 
            submitted_at = NOW()`,
         [userId]
       );
@@ -1862,7 +1928,7 @@ app.post('/api/employee/tasks', async (req, res) => {
 // (Duplicate PUT /api/employee/tasks/:id removed — handled above at line 1311)
 
 // POST /api/employee/tasks/:id/comment - Add comment to task
-app.post('/api/employee/tasks/:id/comment', async (req, res) => {
+app.post('/api/employee/tasks/:id/comment', authenticateToken, async (req, res) => {
   try {
     const taskId = req.params.id;
     const userId = req.user.id;
@@ -2572,6 +2638,7 @@ app.use('/api/pm/schedule', schedulingRoutes(pool));
 app.use('/api/pm/leaves', leavesRoutes(pool));
 app.use('/api/leaves', leavesRoutes(pool));
 app.use('/api/daily-logs', dailyLogsRoutes);
+app.use('/api/pm/employee-performance', performanceRoutes(pool));
 
 // Run delay detection every day at 8:00 AM
 cron.schedule('0 8 * * 1-5', async () => {
