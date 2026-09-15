@@ -6,14 +6,7 @@
           <div class="text-h6 text-weight-bold">Project Summary</div>
         </div>
 
-        <q-btn
-          flat
-          no-caps
-          label="View detailed report"
-          icon-right="arrow_forward"
-          class="summary-link"
-          @click="$emit('view-report')"
-        />
+
       </div>
 
       <div class="text-body1 text-grey-8 summary-text">

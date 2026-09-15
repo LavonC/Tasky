@@ -282,7 +282,7 @@ const fetchDailyTasks = async () => {
         id: entry.id,
         title: entry.title || 'Untitled',
         description: entry.description || '',
-        date: entry.date ? entry.date.split('T')[0] : new Date().toISOString().split('T')[0],
+        date: entry.date ? new Date(new Date(entry.date).getTime() - (new Date(entry.date).getTimezoneOffset() * 60000)).toISOString().split('T')[0] : new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
         progress: parseFloat(entry.progress) || 0,
         status: entry.status || 'not-started',
         project_name: entry.project_id ? `Project ${entry.project_id}` : '',

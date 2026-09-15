@@ -208,7 +208,7 @@ const workLogs = ref<any[]>([]);
 const analytics = ref<any>(null);
 
 const newLog = ref({
-  date: new Date().toISOString().split('T')[0],
+  date: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
   taskId: null as number | null,
   status: 'in-progress',
   hoursSpent: 0,
@@ -366,7 +366,7 @@ async function submitWorkLog() {
       await fetchFromDatabase();
       showCreateLogDialog.value = false;
       newLog.value = {
-        date: new Date().toISOString().split('T')[0],
+        date: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
         taskId: null,
         status: 'in-progress',
         hoursSpent: 4,

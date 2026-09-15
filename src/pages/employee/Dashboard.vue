@@ -991,7 +991,7 @@ function openUpdateDialog(task: any) {
 function openSetDeadlineDialog(task: any) {
   console.log('openSetDeadlineDialog called with task:', task);
   selectedTask.value = task;
-  newDeadline.value = task.deadline ? task.deadline.split('T')[0] : '';
+  newDeadline.value = task.deadline ? new Date(new Date(task.deadline).getTime() - (new Date(task.deadline).getTimezoneOffset() * 60000)).toISOString().split('T')[0] || '' : '';
   showSetDeadlineDialog.value = true;
   console.log('Dialog should now show:', showSetDeadlineDialog.value);
 }

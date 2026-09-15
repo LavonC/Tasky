@@ -524,10 +524,10 @@
               rows="3"
             />
 
-            <!-- PRIORITY / DEADLINE -->
+            <!-- PRIORITY / DEADLINE / EFFORT -->
 
-            <div class="row q-mt-lg row q-my-lg" style="gap: 39px">
-              <div class="col-12 col-sm-5">
+            <div class="row q-mt-lg row q-my-lg q-col-gutter-md">
+              <div class="col-12 col-sm-4">
                 <q-select
                   v-model="newTask.priority"
                   :options="priorityOptions.slice(1)"
@@ -537,7 +537,7 @@
                 />
               </div>
 
-              <div class="col-12 col-sm-6">
+              <div class="col-12 col-sm-4">
                 <q-input
                   v-model="newTask.deadline"
                   label="Deadline"
@@ -545,6 +545,16 @@
                   outlined
                   dense
                   stack-label
+                />
+              </div>
+
+              <div class="col-12 col-sm-4">
+                <q-input
+                  v-model.number="newTask.expected_effort"
+                  label="Est. Hours"
+                  type="number"
+                  outlined
+                  dense
                 />
               </div>
             </div>
@@ -1804,7 +1814,7 @@ function openSetDeadlineDialog(task: any) {
   console.log('=== OPEN SET DEADLINE DIALOG ===');
   console.log('Task:', task);
   selectedOverdueTask.value = task;
-  newDeadline.value = task.deadline ? task.deadline.split('T')[0] : '';
+  newDeadline.value = task.deadline ? new Date(new Date(task.deadline).getTime() - (new Date(task.deadline).getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '';
   showSetDeadlineDialog.value = true;
   console.log('Dialog state:', showSetDeadlineDialog.value);
 }
@@ -2270,6 +2280,8 @@ const newTask = ref({
   priority: 'Medium',
 
   deadline: '',
+  
+  expected_effort: 0,
 
   subtasks: [] as { id?: number; title: string; estimated_hours: number }[],
 
@@ -2673,6 +2685,8 @@ function openAddTask() {
     priority: 'Medium',
 
     deadline: '',
+    
+    expected_effort: 0,
 
     subtasks: [],
 
@@ -2719,7 +2733,8 @@ async function createTask() {
       description: newTask.value.description || 'No description added.',
       project_id: newTask.value.project,
       priority: newTask.value.priority.toLowerCase(),
-      deadline: newTask.value.deadline || new Date().toISOString().split('T')[0],
+      deadline: newTask.value.deadline || new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
+      expected_effort: newTask.value.expected_effort || 0,
       user_id: authStore.user?.id ? Number(authStore.user.id) : undefined,
       assignee_ids: authStore.user ? [Number(authStore.user.id)] : [],
       is_self_assigned: 1,

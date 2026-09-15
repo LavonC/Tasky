@@ -210,7 +210,12 @@
       </div>
 
       <div class="col-3 column">
-        <ProjectSummary />
+        <ProjectSummary
+          :projects="analyticsStore.projectProgress"
+          :deadline-risks="analyticsStore.deadlineRisks"
+          :in-progress-tasks="analyticsStore.taskDistribution?.status?.['in-progress'] || 0"
+          :team-utilization="analyticsStore.overview?.avgUtilization || null"
+        />
       </div>
     </div>
 
@@ -303,6 +308,7 @@ import ProjectProgressWidget from '../components/ProjectProgressWidget.vue';
 import TaskStatusDistribution from '../components/TaskStatusDistribution.vue';
 import ProjectSummary from '../components/ProjectSummary.vue';
 import { useOrgStore } from '../stores/orgStore';
+import { useAnalyticsStore } from '../stores/analyticsStore';
 
 const router = useRouter();
 const route = useRoute();
@@ -312,6 +318,7 @@ const projectStore = useProjectStore();
 const taskStoreCommon = useTaskStore();
 const $q = useQuasar();
 const orgStore = useOrgStore();
+const analyticsStore = useAnalyticsStore();
 
 const filters = ref({
   search: (route.query.search as string) || '',
@@ -389,7 +396,10 @@ onMounted(async () => {
   if (orgStore.members.length === 0) {
   await orgStore.fetchMembers();
 }
-  await applyFilters();
+  await Promise.all([
+    applyFilters(),
+    analyticsStore.loadAll()
+  ]);
   console.log('Tasks loaded:', taskStore.tasks.length);
   console.log('Tasks stats:', taskStore.stats);
 

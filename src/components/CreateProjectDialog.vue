@@ -129,7 +129,7 @@ const form = ref({
   description: '',
   status: 'planning',
   priority: 'medium',
-  start_date: new Date().toISOString().split('T')[0],
+  start_date: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
   end_date: '',
   color: '#1976D2',
 });
@@ -147,9 +147,9 @@ watch(
           status: props.projectToEdit.status,
           priority: props.projectToEdit.priority,
           start_date: props.projectToEdit.start_date
-            ? props.projectToEdit.start_date.split('T')[0]
+            ? new Date(new Date(props.projectToEdit.start_date).getTime() - (new Date(props.projectToEdit.start_date).getTimezoneOffset() * 60000)).toISOString().split('T')[0]
             : '',
-          end_date: props.projectToEdit.end_date ? props.projectToEdit.end_date.split('T')[0] : '',
+          end_date: props.projectToEdit.end_date ? new Date(new Date(props.projectToEdit.end_date).getTime() - (new Date(props.projectToEdit.end_date).getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '',
           color: props.projectToEdit.color || '#1976D2',
         };
       } else {
@@ -163,8 +163,8 @@ watch(
           description: '',
           status: 'planning',
           priority: 'medium',
-          start_date: today.toISOString().split('T')[0],
-          end_date: nextMonth.toISOString().split('T')[0] || '',
+          start_date: new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0],
+          end_date: new Date(nextMonth.getTime() - (nextMonth.getTimezoneOffset() * 60000)).toISOString().split('T')[0] || '',
           color: '#1976D2',
         };
       }

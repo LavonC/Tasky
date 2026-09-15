@@ -85,10 +85,10 @@
       <div class="col">
         <StatCard
           title="Total Projects"
-          :value="(analyticsStore.overview?.totalProjects || 0).toString()"
+          :value="(analyticsStore.overview?.total_projects || 0).toString()"
           color="indigo"
           icon="o_folder"
-          caption="active"
+          :caption="`${analyticsStore.overview?.active_projects || 0} active`"
         />
       </div>
       <div class="col">
@@ -97,27 +97,17 @@
           :value="`${analyticsStore.overview?.taskCompletionRate || 0}%`"
           color="green"
           icon="o_verified_user"
-          :caption="`${analyticsStore.overview?.completedTasks || 0} tasks completed`"
-        >
-          <template v-slot:caption>
-            <span class="text-green"><q-icon name="arrow_upward" size="10px" /> 8%</span> from last
-            month
-          </template>
-        </StatCard>
+          :caption="`${analyticsStore.overview?.completed_tasks || 0} tasks completed`"
+        />
       </div>
       <div class="col">
         <StatCard
           title="At Risk Tasks"
-          :value="(analyticsStore.overview?.overdueTasks || 0).toString()"
+          :value="(analyticsStore.overview?.overdue_tasks || 0).toString()"
           color="orange"
           icon="o_warning_amber"
           caption="delayed"
-        >
-          <template v-slot:caption>
-            <span class="text-orange"><q-icon name="arrow_downward" size="10px" /> 2%</span> from
-            last month
-          </template>
-        </StatCard>
+        />
       </div>
       <div class="col">
         <StatCard
@@ -126,12 +116,7 @@
           color="indigo"
           icon="o_pie_chart"
           caption="Across all projects"
-        >
-          <template v-slot:caption>
-            <span class="text-indigo"><q-icon name="arrow_upward" size="10px" /> 5%</span> from last
-            month
-          </template>
-        </StatCard>
+        />
       </div>
       <div class="col">
         <StatCard
@@ -140,12 +125,7 @@
           color="blue"
           icon="o_groups"
           caption="average capacity"
-        >
-          <template v-slot:caption>
-            <span class="text-blue"><q-icon name="arrow_upward" size="10px" /> 1%</span> from last
-            month
-          </template>
-        </StatCard>
+        />
       </div>
     </div>
 
@@ -185,7 +165,7 @@
 
       <!-- Right Column -->
       <div class="col-4 column">
-      <TaskCompletionTrend />
+      <TaskCompletionTrend :data="analyticsStore.completionTrend" />
         <TaskStatusDistribution />
         <TaskPriorityDistribution />
         <UpcomingDeadlineRisks />

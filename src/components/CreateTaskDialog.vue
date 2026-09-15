@@ -40,18 +40,7 @@
           />
 
           <div class="row q-col-md" style="gap:20px;">
-            <div class="col-6">
-              <q-select
-                v-model="form.status"
-                :options="statusOptions"
-                label="Status"
-                outlined
-                dense
-                emit-value
-                map-options
-              />
-            </div>
-            <div class="col-5">
+            <div class="col-12">
               <q-select
                 v-model="form.priority"
                 :options="priorityOptions"
@@ -183,12 +172,7 @@ const taskOptions = computed(() => {
     .map((t) => ({ label: t.title, value: t.id }));
 });
 
-const statusOptions = [
-  { label: 'Not Started', value: 'not-started' },
-  { label: 'In Progress', value: 'in-progress' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Blocked', value: 'blocked' },
-];
+
 
 const priorityOptions = [
   { label: 'Critical', value: 'critical' },
@@ -201,7 +185,6 @@ const form = ref({
   project_id: null as number | null,
   title: '',
   description: '',
-  status: 'not-started',
   priority: 'medium',
   progress: 0,
   expected_effort: null as number | null,
@@ -226,12 +209,11 @@ watch(
           project_id: props.taskToEdit.project_id,
           title: props.taskToEdit.title,
           description: props.taskToEdit.description || '',
-          status: props.taskToEdit.status,
-          priority: props.taskToEdit.priority,
+          priority: props.taskToEdit.priority || 'medium',
           progress: props.taskToEdit.progress || 0,
           expected_effort: props.taskToEdit.expected_effort,
           resources_needed: props.taskToEdit.resources_needed || 1,
-          deadline: props.taskToEdit.deadline ? props.taskToEdit.deadline.split('T')[0] : '',
+          deadline: props.taskToEdit.deadline ? new Date(new Date(props.taskToEdit.deadline).getTime() - (new Date(props.taskToEdit.deadline).getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '',
           assignee_ids: props.taskToEdit.assignees
             ? props.taskToEdit.assignees.map((a: any) => a.id)
             : [],
@@ -249,7 +231,6 @@ watch(
               : null,
           title: '',
           description: '',
-          status: 'not-started',
           priority: 'medium',
           progress: 0,
           expected_effort: null,
