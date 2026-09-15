@@ -7,6 +7,8 @@ export const useDashboardStore = defineStore('dashboard', {
       overloadedResources: 0,
       overdueTasks: 0,
       pendingReviews: 0,
+      totalProjects: 0,
+      inProgressTasks: 0,
     },
     attentionItems: {
       delayedProjects: [] as any[],

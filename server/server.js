@@ -15,6 +15,7 @@ import calendarRoutes from './routes/calendar.js';
 import schedulingRoutes from './routes/scheduling.js';
 import leavesRoutes from './routes/leaves.js';
 import dailyLogsRoutes from './routes/dailyLogs.js';
+import performanceRoutes from './routes/performance.js';
 import cron from 'node-cron';
 import { handleDelayDetection, checkTaskDependencies } from './services/schedulingEngine.js';
 const app = express();
@@ -1418,12 +1419,11 @@ app.get('/api/pm/employee-performance/:userId', async (req, res) => {
       );
 
       // 6. Overall Score
-      let overallScore = 40;
+      let overallScore = 0;
       if (totalTasks > 0) {
-        overallScore += (completedTasks / totalTasks) * 40;
-        overallScore += Math.max(0, 20 - (overdueTasks / totalTasks) * 20);
-      } else {
-        overallScore = 75; 
+        const baseScore = (completedTasks / totalTasks) * 100;
+        const penalty = (overdueTasks / totalTasks) * 20;
+        overallScore = Math.max(0, baseScore - penalty);
       }
       overallScore = Math.round(overallScore);
 
@@ -1654,6 +1654,9 @@ app.put('/api/employee/tasks/:id', async (req, res) => {
         if (taskStatus === 'pending') taskStatus = 'not-started';
         updates.push('status = ?');
         params.push(taskStatus);
+        if (taskStatus === 'completed') {
+          updates.push('completed_at = NOW()');
+        }
       }
       if (actual_effort !== undefined) {
         updates.push('actual_effort = ?');
@@ -2635,6 +2638,7 @@ app.use('/api/pm/schedule', schedulingRoutes(pool));
 app.use('/api/pm/leaves', leavesRoutes(pool));
 app.use('/api/leaves', leavesRoutes(pool));
 app.use('/api/daily-logs', dailyLogsRoutes);
+app.use('/api/pm/employee-performance', performanceRoutes(pool));
 
 // Run delay detection every day at 8:00 AM
 cron.schedule('0 8 * * 1-5', async () => {

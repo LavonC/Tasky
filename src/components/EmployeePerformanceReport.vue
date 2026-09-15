@@ -250,7 +250,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
-import { getAuthHeaders } from '../services/api';
+import { getAuthHeaders, API_URL } from '../services/api';
 import * as d3 from 'd3';
 
 const props = defineProps<{
@@ -337,7 +337,7 @@ async function loadPerformanceData() {
     }
 
     const logsResponse = await fetch(
-      `http://localhost:3007/api/pm/employee-performance/${props.employee.id}/work-logs`,
+      `${API_URL}/api/pm/employee-performance/${props.employee.id}/work-logs`,
       { headers: getAuthHeaders() }
     );
     const logsData = await logsResponse.json();
