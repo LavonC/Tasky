@@ -101,7 +101,7 @@ import { useAnalyticsStore } from '../stores/analyticsStore';
 const router = useRouter();
 const analyticsStore = useAnalyticsStore();
 const currentPage = ref(1);
-const rowsPerPage = 5;
+const rowsPerPage = 3;
 const totalPages = computed(() => Math.ceil((analyticsStore.deadlineRisks?.length || 0) / rowsPerPage));
 const paginatedRisks = computed(() => analyticsStore.deadlineRisks.slice((currentPage.value - 1) * rowsPerPage, currentPage.value * rowsPerPage));
 watch(() => analyticsStore.deadlineRisks, () => { currentPage.value = 1; });
