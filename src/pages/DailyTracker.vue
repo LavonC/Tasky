@@ -204,6 +204,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
+import { getAuthHeaders, readApiResponse } from '@/services/api';
 
 interface DailyTask {
   id: number;
@@ -243,8 +244,10 @@ const pageEnd = computed(() => Math.min(currentPage.value * rowsPerPage.value, d
 // Fetch projects for selection
 const fetchProjects = async () => {
   try {
-    const response = await fetch('http://localhost:3007/api/projects');
-    const result = await response.json();
+    const response = await fetch('http://localhost:3007/api/projects', {
+      headers: getAuthHeaders(),
+    });
+    const result = await readApiResponse<{ success: boolean; projects?: any[] }>(response);
     console.log('Projects API response:', result);
     if (result.success && result.projects) {
       projects.value = result.projects;

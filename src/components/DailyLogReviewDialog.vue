@@ -77,6 +77,7 @@
 import { ref, computed, watch } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
 import { useQuasar } from 'quasar';
+import { getAuthHeaders, readApiResponse } from '../services/api';
 
 const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits(['update:modelValue', 'reviewed']);
@@ -96,8 +97,10 @@ const reviewComments = ref<Record<number, string>>({});
 const fetchPendingLogs = async () => {
   loading.value = true;
   try {
-    const response = await fetch('http://localhost:3007/api/daily-logs/pm/pending');
-    const result = await response.json();
+    const response = await fetch('http://localhost:3007/api/daily-logs/pm/pending', {
+      headers: getAuthHeaders(),
+    });
+    const result = await readApiResponse<{ success: boolean; pending: any[] }>(response);
     if (result.success) {
       pendingLogs.value = result.pending;
     }
@@ -126,7 +129,7 @@ const submitReview = async (submission: any) => {
   try {
     const response = await fetch('http://localhost:3007/api/daily-logs/review', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         compliance_id: submission.id,
         pm_comment: comment,
@@ -135,7 +138,7 @@ const submitReview = async (submission: any) => {
         log_date: submission.log_date
       })
     });
-    const result = await response.json();
+    const result = await readApiResponse<{ success: boolean; message?: string }>(response);
     if (result.success) {
       $q.notify({
         type: 'positive',

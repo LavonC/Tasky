@@ -1130,10 +1130,11 @@ async function fetchFromDatabase() {
       myTasks.value = tasksData.tasks;
     }
 
-    // Fetch projects directly from database - authentication removed
+    // Fetch projects using the same JWT as the rest of the employee dashboard.
     const projectsResponse = await fetch('http://localhost:3007/api/pm/projects', {
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
       },
     });
     const projectsData = await projectsResponse.json();

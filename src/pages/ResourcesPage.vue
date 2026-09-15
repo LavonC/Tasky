@@ -257,6 +257,7 @@ const fetchEmployees = async () => {
     const response = await fetch('http://localhost:3007/api/pm/resources', {
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
       },
     });
     const data = await response.json();

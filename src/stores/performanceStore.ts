@@ -60,21 +60,28 @@ export const usePerformanceStore = defineStore('performance', {
 
         const performance = data.performance;
 
+        const totalTasks = Number(performance.totalTasks) || 0;
+        const completedTasks = Number(performance.completedTasks) || 0;
+        const overdueTasks = Number(performance.overdueTasks) || 0;
+        const hoursLogged = Number(performance.hoursLogged) || 0;
+        const overallScore = Number(performance.overallScore) || 0;
+        const utilization = Number(performance.utilization) || 0;
+
         this.summary = {
-          overallScore: performance.overallScore,
-          totalTasks: performance.totalTasks,
-          completedTasks: performance.completedTasks,
-          overdueTasks: performance.overdueTasks,
-          hoursLogged: performance.hoursLogged,
-          utilization: performance.utilization,
-          taskStats: performance.taskStats,
+          overallScore,
+          totalTasks,
+          completedTasks,
+          overdueTasks,
+          hoursLogged,
+          utilization,
+          taskStats: Object.fromEntries(Object.entries(performance.taskStats || {}).map(([key, value]) => [key, Number(value) || 0])),
           recentTasks: performance.recentTasks,
-          productivityScore: performance.overallScore,
-          completionRate: performance.totalTasks > 0 ? Math.round((performance.completedTasks / performance.totalTasks) * 100) : 0,
-          onTimeRate: performance.totalTasks > 0 ? Math.round(((performance.totalTasks - performance.overdueTasks) / performance.totalTasks) * 100) : 0,
+          productivityScore: overallScore,
+          completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+          onTimeRate: totalTasks > 0 ? Math.round(((totalTasks - overdueTasks) / totalTasks) * 100) : 0,
           focusScore: 75,
-          totalEstimatedHours: performance.hoursLogged * 1.2,
-          totalHoursLogged: performance.hoursLogged,
+          totalEstimatedHours: hoursLogged * 1.2,
+          totalHoursLogged: hoursLogged,
           dailyActivity: [],
           timeAllocation: [],
           qualityMetrics: {
@@ -85,7 +92,10 @@ export const usePerformanceStore = defineStore('performance', {
           }
         };
 
-        this.trend = performance.weeklyProgress || [];
+        this.trend = (performance.weeklyProgress || []).map((item: any) => ({
+          ...item,
+          hours: Number(item.hours) || 0,
+        }));
 
         this.priorityReport = performance.taskStats || null;
 

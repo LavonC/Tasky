@@ -1317,9 +1317,9 @@
                   />
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label class="text-weight-bold">{{ task.title }}</q-item-label>
+                  <q-item-label class="text-weight-bold">{{ task.name }}</q-item-label>
                   <q-item-label caption class="text-grey-7">
-                    Project: {{ task.project_name || 'Project' }}
+                    Project: {{ task.project || 'Project' }}
                   </q-item-label>
                 </q-item-section>
                 <q-item-section side>
@@ -1370,8 +1370,8 @@
                 <q-badge :color="getPriorityBadgeColor(task.priority)" :label="task.priority" />
               </q-item-section>
               <q-item-section>
-                <q-item-label class="text-weight-bold">{{ task.title }}</q-item-label>
-                <q-item-label caption>{{ task.project_name || 'Project' }}</q-item-label>
+                <q-item-label class="text-weight-bold">{{ task.name }}</q-item-label>
+                <q-item-label caption>{{ task.project || 'Project' }}</q-item-label>
                 <q-item-label caption class="text-red">{{ formatDate(task.deadline) }}</q-item-label>
               </q-item-section>
               <q-item-section side>
@@ -1915,7 +1915,7 @@ async function automateOverdueTask() {
       });
       showOverdueTaskDialog.value = false;
       showOverdueDialog.value = false;
-      await loadTasks();
+      await fetchTasks();
     } else {
       Notify.create({
         type: 'negative',
@@ -2096,7 +2096,9 @@ const projects = ref<any[]>([]);
 
 const fetchProjects = async () => {
   try {
-    const response = await fetch('http://localhost:3007/api/pm/projects');
+    const response = await fetch('http://localhost:3007/api/pm/projects', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
     const result = await response.json();
     if (result.success && result.projects) {
       projects.value = result.projects;

@@ -17,7 +17,6 @@ import leavesRoutes from './routes/leaves.js';
 import dailyLogsRoutes from './routes/dailyLogs.js';
 import cron from 'node-cron';
 import { handleDelayDetection, checkTaskDependencies } from './services/schedulingEngine.js';
-import jwt from 'jsonwebtoken';
 const app = express();
 const port = 3007;
 
@@ -27,20 +26,8 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
-
-// Auth token middleware removed fallback
-app.use((req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (token && token !== 'undefined' && token !== 'null') {
-    try {
-      req.user = jwt.verify(token, process.env.JWT_SECRET || 'tasky_jwt_secret_key_2024');
-    } catch (e) {
-      // Invalid or expired token, req.user remains undefined
-    }
-  }
-  next();
-});
+// Protect every PM endpoint, including legacy handlers declared below.
+app.use('/api/pm', authenticateToken);
 
 // Database connection pool
 const pool = mysql.createPool(dbConfig);
@@ -127,6 +114,49 @@ pool
       console.log('Updated daily_work_log status enum to include in-review');
     } catch (e) {
       // Already updated
+    }
+
+    try {
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS reschedule_event (
+          id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+          org_id INT UNSIGNED NOT NULL,
+          trigger_type VARCHAR(50) NOT NULL,
+          trigger_ref_id INT UNSIGNED DEFAULT NULL,
+          affected_task_count INT NOT NULL DEFAULT 0,
+          status VARCHAR(20) NOT NULL DEFAULT 'pending_review',
+          payload TEXT NOT NULL,
+          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          applied_by INT UNSIGNED DEFAULT NULL,
+          reviewed_at DATETIME DEFAULT NULL,
+          PRIMARY KEY (id),
+          CONSTRAINT fk_reschedule_event_org FOREIGN KEY (org_id)
+            REFERENCES organization (id) ON DELETE CASCADE,
+          CONSTRAINT fk_reschedule_event_user FOREIGN KEY (applied_by)
+            REFERENCES user (id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS task_schedule_history (
+          id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+          task_id INT UNSIGNED NOT NULL,
+          reschedule_event_id INT UNSIGNED NOT NULL,
+          old_scheduled_start DATE DEFAULT NULL,
+          new_scheduled_start DATE DEFAULT NULL,
+          old_scheduled_end DATE DEFAULT NULL,
+          new_scheduled_end DATE DEFAULT NULL,
+          reason VARCHAR(255) DEFAULT NULL,
+          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          CONSTRAINT fk_task_schedule_history_task FOREIGN KEY (task_id)
+            REFERENCES task (id) ON DELETE CASCADE,
+          CONSTRAINT fk_task_schedule_history_event FOREIGN KEY (reschedule_event_id)
+            REFERENCES reschedule_event (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      console.log('Ensured reschedule event tables exist');
+    } catch (e) {
+      console.error('Failed to ensure reschedule event tables:', e.message);
     }
 
     try {
@@ -2524,7 +2554,12 @@ app.post('/api/employee/:id/task/:taskId/reschedule', async (req, res) => {
   }
 });
 
-// PM API Routes (Authentication removed for testing)
+// Router-specific middleware below remains explicit for the mounted PM APIs.
+app.use('/api/leaves', authenticateToken);
+app.use('/api/daily-logs', authenticateToken);
+// Legacy project consumers use /api/projects; keep that endpoint on the same
+// authenticated router so it cannot fall through to the SPA HTML entrypoint.
+app.use('/api/projects', authenticateToken, projectRoutes(pool));
 app.use('/api/pm/dashboard', dashboardRoutes(pool));
 app.use('/api/pm/projects', projectRoutes(pool));
 app.use('/api/pm/tasks', taskRoutes(pool));

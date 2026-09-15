@@ -572,7 +572,7 @@ const monthNames = [
   'December',
 ];
 
-const dayStatusOptions = [
+const dayStatusOptions: Array<{ label: string; value: DayStatus; icon: string }> = [
   {
     label: 'Worked',
     value: 'worked',
@@ -1346,10 +1346,9 @@ const monthlyHours = computed(() => {
    SELECTED STATUS
 ============================================================ */
 
-const selectedDayStatusComputed = computed(() => {
-  if (dayStatuses.value[selectedDate.value]) {
-    return dayStatuses.value[selectedDate.value];
-  }
+const selectedDayStatusComputed = computed<DayStatus>(() => {
+  const savedStatus = dayStatuses.value[selectedDate.value];
+  if (savedStatus) return savedStatus;
 
   const date = parseDate(selectedDate.value);
 

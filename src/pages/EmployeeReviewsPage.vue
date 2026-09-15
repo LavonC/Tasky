@@ -411,7 +411,9 @@ async function fetchTasks() {
 
 async function fetchProjects() {
   try {
-    const response = await fetch('http://localhost:3007/api/pm/projects');
+    const response = await fetch('http://localhost:3007/api/pm/projects', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
     const data = await response.json();
     if (data.success) {
       projects.value = data.projects;
