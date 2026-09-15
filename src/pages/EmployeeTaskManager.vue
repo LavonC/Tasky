@@ -1814,7 +1814,7 @@ function openSetDeadlineDialog(task: any) {
   console.log('=== OPEN SET DEADLINE DIALOG ===');
   console.log('Task:', task);
   selectedOverdueTask.value = task;
-  newDeadline.value = task.deadline ? new Date(new Date(task.deadline).getTime() - (new Date(task.deadline).getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '';
+  newDeadline.value = task.deadline ? new Date(new Date(task.deadline).getTime() - (new Date(task.deadline).getTimezoneOffset() * 60000)).toISOString().split('T')[0] || '' : '';
   showSetDeadlineDialog.value = true;
   console.log('Dialog state:', showSetDeadlineDialog.value);
 }
@@ -3293,6 +3293,7 @@ async function submitInterrupt() {
 
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
 
   overflow: hidden;

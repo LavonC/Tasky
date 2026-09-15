@@ -147,9 +147,9 @@ watch(
           status: props.projectToEdit.status,
           priority: props.projectToEdit.priority,
           start_date: props.projectToEdit.start_date
-            ? new Date(new Date(props.projectToEdit.start_date).getTime() - (new Date(props.projectToEdit.start_date).getTimezoneOffset() * 60000)).toISOString().split('T')[0]
+            ? new Date(new Date(props.projectToEdit.start_date).getTime() - (new Date(props.projectToEdit.start_date).getTimezoneOffset() * 60000)).toISOString().split('T')[0] || ''
             : '',
-          end_date: props.projectToEdit.end_date ? new Date(new Date(props.projectToEdit.end_date).getTime() - (new Date(props.projectToEdit.end_date).getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '',
+          end_date: props.projectToEdit.end_date ? new Date(new Date(props.projectToEdit.end_date).getTime() - (new Date(props.projectToEdit.end_date).getTimezoneOffset() * 60000)).toISOString().split('T')[0] || '' : '',
           color: props.projectToEdit.color || '#1976D2',
         };
       } else {

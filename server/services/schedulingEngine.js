@@ -23,7 +23,7 @@ export async function calculateResourceWorkload(pool, userId) {
       COUNT(DISTINCT t.project_id) AS project_count
     FROM user u
     LEFT JOIN task_assignment ta ON ta.user_id = u.id AND ta.is_active = 1
-    LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started', 'in-progress', 'blocked')
+    LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started', 'in-progress', 'blocked', 'in-review', 'on-hold')
     LEFT JOIN (
       SELECT task_id, COUNT(*) AS active_assignee_count
       FROM task_assignment WHERE is_active = 1 GROUP BY task_id
@@ -37,9 +37,10 @@ export async function calculateResourceWorkload(pool, userId) {
   if (rows.length === 0) return null;
 
   const workload = rows[0];
+  const maxHours = workload.max_hours_per_week || 40;
   const utilization =
-    workload.max_hours_per_week > 0
-      ? (workload.weekly_required_hours / workload.max_hours_per_week) * 100
+    maxHours > 0
+      ? (workload.weekly_required_hours / maxHours) * 100
       : 0;
 
   return {
@@ -80,7 +81,7 @@ export async function getOrgResourceWorkloads(pool, orgId) {
     FROM user u
     JOIN role r ON r.id = u.role_id
     LEFT JOIN task_assignment ta ON ta.user_id = u.id AND ta.is_active = 1
-    LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started', 'in-progress', 'blocked')
+    LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started', 'in-progress', 'blocked', 'in-review', 'on-hold')
     LEFT JOIN (
       SELECT task_id, COUNT(*) AS active_assignee_count
       FROM task_assignment WHERE is_active = 1 GROUP BY task_id
@@ -93,8 +94,9 @@ export async function getOrgResourceWorkloads(pool, orgId) {
   );
 
   return rows.map((r) => {
+    const maxHours = r.max_hours_per_week || 40;
     const utilization =
-      r.max_hours_per_week > 0 ? (r.weekly_required_hours / r.max_hours_per_week) * 100 : 0;
+      maxHours > 0 ? (r.weekly_required_hours / maxHours) * 100 : 0;
     return {
       ...r,
       utilization: Math.round(utilization * 100) / 100,
@@ -108,7 +110,6 @@ export async function getOrgResourceWorkloads(pool, orgId) {
  * Auto-assign: Score and rank resources for a task.
  * Scoring factors:
  *   - Available capacity (lower workload = higher score)
- *   - Skill match (matching skills = bonus)
  *   - Project involvement (already on project = bonus for context)
  *   - Task load (fewer active tasks = higher score)
  */
@@ -128,6 +129,19 @@ export async function recommendResources(pool, orgId, taskId) {
   );
   const assignedIds = new Set(existingAssignments.map((a) => a.user_id));
 
+  // Get project involvement: find users currently active on this project
+  const [projectAssignments] = await pool.execute(
+    `SELECT DISTINCT ta.user_id 
+     FROM task_assignment ta 
+     JOIN task t ON t.id = ta.task_id 
+     WHERE t.project_id = ? AND ta.is_active = 1`,
+    [task.project_id]
+  );
+  const projectUserIds = new Set(projectAssignments.map((a) => a.user_id));
+
+  // Build keyword set from task title + description for skill matching
+  const taskText = `${task.title || ''} ${task.description || ''}`.toLowerCase();
+
   // Score each resource
   const scored = resources
     .filter((r) => !assignedIds.has(r.user_id))
@@ -138,24 +152,25 @@ export async function recommendResources(pool, orgId, taskId) {
       const capacityScore = Math.max(0, 40 - r.utilization * 0.4);
       score += capacityScore;
 
-      // Skill match score (0-30 points)
-      let skills = [];
-      try {
-        skills = typeof r.skills === 'string' ? JSON.parse(r.skills) : r.skills || [];
-      } catch (e) {
-        skills = [];
-      }
-      const taskTitle = (task.title + ' ' + (task.description || '')).toLowerCase();
-      const matchingSkills = skills.filter((s) => taskTitle.includes(s.toLowerCase()));
-      score += Math.min(30, matchingSkills.length * 10);
-
       // Project involvement score (0-15 points)
-      // Check if resource is already on this project's other tasks
-      score += r.project_count > 0 ? 15 : 0;
+      const isOnProject = projectUserIds.has(r.user_id);
+      score += isOnProject ? 15 : 0;
 
       // Task load score (0-15 points): fewer tasks = higher score
       const taskLoadScore = Math.max(0, 15 - r.active_task_count * 2.5);
       score += taskLoadScore;
+
+      // Skill match score (0-20 points): match user skills against task title/description
+      let skillScore = 0;
+      if (r.skills && taskText.length > 0) {
+        const userSkills = (typeof r.skills === 'string'
+          ? r.skills.split(',')
+          : Array.isArray(r.skills) ? r.skills : []
+        ).map((s) => s.trim().toLowerCase());
+        const matches = userSkills.filter((skill) => skill && taskText.includes(skill));
+        skillScore = Math.min(20, matches.length * 7);
+      }
+      score += skillScore;
 
       return {
         user_id: r.user_id,
@@ -163,21 +178,23 @@ export async function recommendResources(pool, orgId, taskId) {
         employee_code: r.employee_code,
         role_name: r.role_name,
         avatar: r.avatar,
-        skills,
         utilization: r.utilization,
         active_task_count: r.active_task_count,
         workload_status: r.workload_status,
         score: Math.round(score * 100) / 100,
+        _rand: Math.random(),
         reasons: [
           `Capacity: ${Math.round(100 - r.utilization)}% available`,
-          matchingSkills.length > 0
-            ? `Skills: ${matchingSkills.join(', ')}`
-            : 'No direct skill match',
           `Current tasks: ${r.active_task_count}`,
+          ...(isOnProject ? ['Already involved in this project'] : []),
+          ...(skillScore > 0 ? [`Skill match score: ${skillScore}`] : []),
         ],
       };
     })
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return b._rand - a._rand;
+    });
 
   return scored;
 }
@@ -329,7 +346,7 @@ export async function rebalanceWorkloads(pool, orgId) {
              (SELECT COUNT(*) FROM task_assignment WHERE task_id = t.id AND is_active = 1) as active_assignee_count
       FROM task t
       JOIN task_assignment ta ON ta.task_id = t.id AND ta.user_id = ? AND ta.is_active = 1
-      WHERE t.status IN ('not-started', 'in-progress', 'blocked')
+      WHERE t.status IN ('not-started', 'in-progress', 'blocked', 'in-review', 'on-hold')
       ORDER BY FIELD(t.priority, 'low', 'medium', 'high', 'critical'), t.progress ASC
     `,
       [resource.user_id],
