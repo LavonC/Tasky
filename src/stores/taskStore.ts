@@ -146,7 +146,7 @@ export const useTaskStore = defineStore('taskStore', {
     async fetchProjects() {
       try {
         const authStore = useAuthStore();
-        const endpoint = authStore.user?.application_role === 'employee' 
+        const endpoint = authStore.user?.role === 'employee' 
           ? `http://localhost:3007/api/employee/${authStore.user?.id}/projects`
           : 'http://localhost:3007/api/pm/projects';
           

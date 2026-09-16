@@ -712,6 +712,7 @@ const executeReassignment = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
       },
       body: JSON.stringify(payload),
     });

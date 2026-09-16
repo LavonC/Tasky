@@ -256,11 +256,23 @@ export default function resourceRoutes(pool) {
     }
   });
 
+  // POST /api/pm/resources/rebalance/simulate
+  router.post('/rebalance/simulate', async (req, res) => {
+    try {
+      const orgId = req.user.org_id;
+      const result = await rebalanceWorkloads(pool, orgId, true);
+      res.json(result);
+    } catch (error) {
+      console.error('Simulate rebalance error:', error);
+      res.status(500).json({ success: false, error: 'Server error during simulate rebalance' });
+    }
+  });
+
   // POST /api/pm/resources/rebalance
   router.post('/rebalance', async (req, res) => {
     try {
       const orgId = req.user.org_id;
-      const result = await rebalanceWorkloads(pool, orgId);
+      const result = await rebalanceWorkloads(pool, orgId, false);
       res.json(result);
     } catch (error) {
       console.error('Rebalance error:', error);
