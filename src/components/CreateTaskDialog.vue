@@ -8,7 +8,7 @@
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
 
-      <q-card-section class="q-pa-lg">
+      <q-card-section class="q-pa-lg scroll" style="max-height: 75vh;">
         <q-form @submit="onSubmit" class="q-gutter-md">
           <q-select
             v-model="form.project_id"
@@ -98,14 +98,14 @@
           <q-select
             v-model="form.assignee_ids"
             :options="resourceOptions"
-            label="Assign To *"
+            label="Assign To"
             outlined
             dense
             multiple
             use-chips
             emit-value
             map-options
-            :rules="[(val) => (val && val.length > 0) || 'Please assign at least one employee']"
+            :rules="form.auto_assign ? [(val) => (val && val.length > 0) || 'Please assign at least one employee'] : []"
             hint="Select employees to assign this task to"
           />
 
