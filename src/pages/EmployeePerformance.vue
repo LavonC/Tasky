@@ -2,8 +2,8 @@
   <q-page class="bg-grey-1 q-pa-lg">
     <div class="row items-center justify-between q-mb-lg">
       <div>
-        <div class="text-h4 text-weight-bold">My Performance</div>
-        <div class="text-body1 text-grey-6">Track your productivity, consistency, and delivery quality over time.</div>
+        <div class="text-h4 text-weight-bold"></div>
+        <div class="text-body1 text-grey-6"></div>
       </div>
       <div class="row q-gutter-sm">
         <q-select v-model="selectedPeriod" :options="periodOptions" outlined dense style="width: 140px" @update:model-value="handlePeriodChange" />

@@ -384,12 +384,6 @@
         </div>
       </div>
 
-      <q-chip
-        color="indigo-1"
-        text-color="indigo-9"
-        icon="auto_awesome"
-        label="Live Dashboard"
-      />
     </div>
 
     <!-- KPI Cards -->

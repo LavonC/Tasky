@@ -863,11 +863,6 @@
           no-caps
           broad-indicator
         >
-          <q-tab name="details" icon="tune" label="Details" />
-
-          <q-tab name="timeline" icon="timeline" label="Progress Timeline" />
-
-          <q-tab name="impact" icon="analytics" label="Simulate Impact" />
         </q-tabs>
 
         <!-- ================= CONTENT ================= -->

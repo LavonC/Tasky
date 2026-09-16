@@ -163,7 +163,7 @@ const highUtilizationCount = computed(() => {
 .scatter-container {
   position: relative;
   height: 135px;
-  padding: 5px 5px 2px 42px;
+  padding: 5px 5px 10px 42px;
 }
 
 .chart-area {
