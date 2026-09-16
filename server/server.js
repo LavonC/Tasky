@@ -2564,53 +2564,44 @@ app.post('/api/employee/:id/automate-schedule', async (req, res) => {
 
       while (hasClashes && iterations < MAX_ITERATIONS) {
         iterations++;
-        const dateMap = new Map();
-        for (const t of taskList) {
-          const d = t.currentDeadline;
-          if (!dateMap.has(d)) dateMap.set(d, []);
-          dateMap.get(d).push(t);
-        }
-
-        const clashingDates = [];
-        for (const [d, grp] of dateMap.entries()) {
-          if (grp.length > 1) {
-            clashingDates.push(d);
+        
+        // Sort tasks by currentDeadline, then by priority
+        taskList.sort((a, b) => {
+          if (a.currentDeadline !== b.currentDeadline) {
+            return a.currentDeadline.localeCompare(b.currentDeadline);
           }
-        }
-
-        if (clashingDates.length === 0) {
-          hasClashes = false;
-          break;
-        }
-
-        // Pick earliest clashing date
-        clashingDates.sort();
-        const clashDate = clashingDates[0];
-        const clashingTasks = dateMap.get(clashDate);
-
-        // Sort by priority: Critical (0) > High (1) > Medium (2) > Low (3)
-        clashingTasks.sort((a, b) => {
           const pA = PRIORITY_ORDER[a.priority] ?? 99;
           const pB = PRIORITY_ORDER[b.priority] ?? 99;
           if (pA !== pB) return pA - pB;
-          const aOrig = a.originalDeadline === clashDate ? 0 : 1;
-          const bOrig = b.originalDeadline === clashDate ? 0 : 1;
-          if (aOrig !== bOrig) return aOrig - bOrig;
           return a.id - b.id;
         });
 
-        // Highest priority task stays on clashDate
-        let anchor = clashDate;
-
-        // Lower-priority tasks move forward until at least 3-day gap (4 days)
-        for (let i = 1; i < clashingTasks.length; i++) {
-          const lowerTask = clashingTasks[i];
-          const nextSlot = addCalendarDays(anchor, 4);
-          lowerTask.currentDeadline = nextSlot;
-          anchor = nextSlot;
+        let clashFound = false;
+        // Find the first adjacent pair that has a clash (gap < 4 days)
+        for (let i = 0; i < taskList.length - 1; i++) {
+          const t1 = taskList[i];
+          const t2 = taskList[i + 1];
+          
+          if (diffDays(t1.currentDeadline, t2.currentDeadline) < 4) {
+            const pA = PRIORITY_ORDER[t1.priority] ?? 99;
+            const pB = PRIORITY_ORDER[t2.priority] ?? 99;
+            
+            if (pA <= pB) {
+              // t1 has higher or equal priority. Move t2 forward to ensure 4-day gap.
+              t2.currentDeadline = addCalendarDays(t1.currentDeadline, 4);
+            } else {
+              // t2 has strictly higher priority. Move t1 forward past t2 to ensure 4-day gap.
+              t1.currentDeadline = addCalendarDays(t2.currentDeadline, 4);
+            }
+            clashFound = true;
+            break; // Stop and re-evaluate in the next iteration
+          }
         }
 
-        // Re-evaluate entire schedule on next iteration
+        if (!clashFound) {
+          hasClashes = false;
+          break;
+        }
       }
 
       // Collect updated tasks

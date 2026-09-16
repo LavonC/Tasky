@@ -1254,7 +1254,7 @@ async function submitDayToPM() {
   console.log('Selected Status:', selectedDayStatus.value);
 
   try {
-    const response = await fetch('http://localhost:3007/api/daily-logs/save-status', {
+    const response = await fetch('http://localhost:3007/api/daily-logs/submit', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
