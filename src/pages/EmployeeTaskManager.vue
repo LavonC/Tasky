@@ -1979,7 +1979,9 @@ const fetchLeaveDates = async () => {
   if (!empId) return;
 
   try {
-    const response = await fetch(`http://localhost:3007/api/daily-logs/employee/${empId}/leave-dates`);
+    const response = await fetch(`http://localhost:3007/api/daily-logs/employee/${empId}/leave-dates`, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    });
     const data = await response.json();
     if (data.success && data.leaveDates) {
       leaveDates.value = data.leaveDates;

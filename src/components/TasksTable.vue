@@ -1,6 +1,6 @@
 <template>
   <div
-    class="table-container position-relative"
+    class="table-container position-relative full-width"
     style="height: 100%; min-height: 0; overflow: hidden; display: flex; flex-direction: column"
   >
     <q-table
@@ -10,7 +10,7 @@
   flat
   bordered
   v-model:pagination="pagination"
-  class="full-height-table"
+  class="full-height-table full-width"
   style="border-radius: 8px; flex: 1 1 0"
   :loading="taskStore.loading"
 >
@@ -98,32 +98,6 @@
               :color="getProgressColor(props.row.progress)"
               size="8px" rounded class="q-mt-sm" />
             <div class="text-caption text-weight-bold q-mt-xs">{{ Math.round(Number(props.row.progress) || 0) }}%</div>
-          </div>
-        </q-td>
-      </template>
-
-      <!-- Scheduled Window Column -->
-      <template v-slot:body-cell-scheduled="props">
-        <q-td :props="props">
-          <div class="column items-center">
-            <template v-if="props.row.scheduled_start && props.row.scheduled_end">
-              <div class="text-weight-bold text-grey-8" style="font-size: 11px; white-space: nowrap;">
-                {{ formatDate(props.row.scheduled_start) }} ➡ {{ formatDate(props.row.scheduled_end) }}
-              </div>
-              <q-badge
-                v-if="isOffTrack(props.row)"
-                color="red-1" text-color="red" label="At Risk" class="q-mt-xs" style="font-size: 9px"
-              />
-              <q-badge
-                v-else-if="isTight(props.row)"
-                color="orange-1" text-color="orange" label="Tight" class="q-mt-xs" style="font-size: 9px"
-              />
-              <q-badge
-                v-else
-                color="green-1" text-color="green" label="On Track" class="q-mt-xs" style="font-size: 9px"
-              />
-            </template>
-            <span v-else class="text-caption text-grey-5">Unscheduled</span>
           </div>
         </q-td>
       </template>
@@ -330,7 +304,6 @@ const columns: QTableProps['columns'] = [
   { name: 'priority', label: 'Priority', field: 'priority', align: 'center', sortable: true },
   { name: 'status', label: 'Status', field: 'status', align: 'center', sortable: true },
   { name: 'progress', label: 'Progress', field: 'progress', align: 'left', sortable: true },
-  { name: 'scheduled', label: 'Scheduled Window', field: 'scheduled_start', align: 'center', sortable: true },
   { name: 'assignee', label: 'Assignee', field: 'assignees', align: 'center' },
   { name: 'deadline', label: 'Deadline', field: 'deadline', align: 'left', sortable: true },
   { name: 'actions', label: 'Actions', field: 'actions', align: 'center' },
