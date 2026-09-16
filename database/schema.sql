@@ -452,6 +452,7 @@ CREATE TABLE `task_review` (
   `completed_at`       DATETIME     DEFAULT NULL,
   `task_owner_points`  INT          DEFAULT 0,
   `reviewer_points`    INT          DEFAULT 0,
+  `finalized_at`       DATETIME     DEFAULT NULL,
   PRIMARY KEY (`id`),
   INDEX `idx_review_task`     (`task_id`),
   INDEX `idx_review_owner`    (`task_owner_id`),

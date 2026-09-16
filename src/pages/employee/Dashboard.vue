@@ -890,7 +890,9 @@ async function fetchFromDatabase() {
     }
 
     // Fetch employees directly from database
-    const employeesResponse = await fetch('http://localhost:3007/api/users');
+    const employeesResponse = await fetch('http://localhost:3007/api/users', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
     const employeesData = await employeesResponse.json();
     console.log('Employees API response:', employeesData);
     if (employeesData.success) {

@@ -171,6 +171,14 @@ pool
     } catch (e) {
       console.error('Failed to update existing self-assigned tasks:', e.message);
     }
+    try {
+      await connection.query(
+        'ALTER TABLE task_review ADD COLUMN finalized_at DATETIME DEFAULT NULL;'
+      );
+      console.log('Added finalized_at column to task_review table');
+    } catch (e) {
+      // Ignore error if column already exists
+    }
 
     connection.release();
   })
@@ -1241,7 +1249,7 @@ app.get('/api/pm/reviews/all', async (req, res) => {
                tr.review_comment, tr.pm_final_comment,
                u.first_name as reviewer_first_name, u.last_name as reviewer_last_name,
                u2.first_name as task_owner_first_name, u2.last_name as task_owner_last_name,
-               tr.task_owner_points, tr.reviewer_points
+               tr.task_owner_points, tr.reviewer_points, tr.finalized_at
         FROM task t
         JOIN project p ON p.id = t.project_id
         JOIN task_review tr ON tr.task_id = t.id
@@ -1257,6 +1265,37 @@ app.get('/api/pm/reviews/all', async (req, res) => {
     }
   } catch (error) {
     console.error('Get PM reviews error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// PUT /api/pm/reviews/:id/finalize - PM finalizes a review-done task
+app.put('/api/pm/reviews/:id/finalize', async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const { pm_final_comment } = req.body;
+
+    const connection = await pool.getConnection();
+    try {
+      const [reviews] = await connection.execute(
+        `SELECT id FROM task_review WHERE task_id = ? AND status = 'review-done'`,
+        [taskId]
+      );
+      if (reviews.length === 0) {
+        return res.status(404).json({ success: false, error: 'Review not found or already finalized' });
+      }
+
+      await connection.execute(
+        `UPDATE task_review SET status = 'finalized', pm_final_comment = ?, finalized_at = NOW() WHERE task_id = ? AND status = 'review-done'`,
+        [pm_final_comment || null, taskId]
+      );
+
+      res.json({ success: true });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Finalize review error:', error);
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });
@@ -1987,6 +2026,15 @@ app.post('/api/employee/tasks/:id/submit-review', async (req, res) => {
         return res.status(404).json({ success: false, error: 'Task not found' });
       }
 
+      // Prevent duplicate review submissions
+      const [existingReviews] = await connection.execute(
+        `SELECT id FROM task_review WHERE task_id = ? AND status IN ('pending', 'review-done')`,
+        [taskId]
+      );
+      if (existingReviews.length > 0) {
+        return res.status(409).json({ success: false, error: 'Task is already submitted for review' });
+      }
+
       // Update task status
       await connection.execute(
         `UPDATE task SET status = 'in-review' WHERE id = ?`,
@@ -2241,7 +2289,7 @@ app.get('/api/employee/reviews/history', async (req, res) => {
         SELECT t.id, t.title, t.status as task_status, t.progress,
                p.name as project_name,
                tr.status as review_status, tr.review_comment, tr.pm_final_comment, tr.submitted_at,
-               tr.task_owner_points
+               tr.task_owner_id, tr.task_owner_points
         FROM task t
         JOIN project p ON p.id = t.project_id
         JOIN task_review tr ON tr.task_id = t.id

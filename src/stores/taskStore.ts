@@ -359,6 +359,7 @@ export const useTaskStore = defineStore('taskStore', {
             body: JSON.stringify({
               completion_comment: completionComment,
               reviewer_id: reviewerId,
+              task_owner_id: authStore.user?.id,
             }),
           },
         );

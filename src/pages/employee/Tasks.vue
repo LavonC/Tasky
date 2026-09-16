@@ -242,6 +242,8 @@
               v-model="selectedReviewer"
               :options="reviewerOptions"
               label="Select Reviewer"
+              emit-value
+              map-options
               outlined
               class="q-mt-md"
             />
@@ -466,7 +468,9 @@ async function fetchFromDatabase() {
       projects.value = projectsData.projects;
     }
 
-    const employeesResponse = await fetch('http://localhost:3007/api/users');
+    const employeesResponse = await fetch('http://localhost:3007/api/users', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
     const employeesData = await employeesResponse.json();
     if (employeesData.success) {
       employees.value = employeesData.users;
