@@ -195,6 +195,7 @@
       @view="openTaskDetail"
       @assign-reviewer="openAssignReviewerDialog"
       @finalize-review="openFinalizeReviewDialog"
+      @send-comment="openSendCommentDialog"
     />
     </div>
 
@@ -227,6 +228,10 @@
       :task-id="selectedTaskId"
       @edit="openEditDialog"
       @deleted="onTaskDeleted"
+    />
+    <SendCommentDialog
+      v-model="showSendCommentDialog"
+      :prefilled-task="selectedTaskForComment"
     />
 
     <!-- Assign Reviewer Dialog -->
@@ -307,6 +312,7 @@ import TaskDetailDialog from '../components/TaskDetailDialog.vue';
 import ProjectProgressWidget from '../components/ProjectProgressWidget.vue';
 import TaskStatusDistribution from '../components/TaskStatusDistribution.vue';
 import ProjectSummary from '../components/ProjectSummary.vue';
+import SendCommentDialog from '../components/SendCommentDialog.vue';
 import { useOrgStore } from '../stores/orgStore';
 import { useAnalyticsStore } from '../stores/analyticsStore';
 
@@ -435,12 +441,19 @@ const logout = () => {
 // Dialogs
 const showCreateDialog = ref(false);
 const showDetailDialog = ref(false);
+const showSendCommentDialog = ref(false);
 const taskToEdit = ref(null);
 const selectedTaskId = ref('');
+const selectedTaskForComment = ref<any>(null);
 
 const openCreateDialog = () => {
   taskToEdit.value = null;
   showCreateDialog.value = true;
+};
+
+const openSendCommentDialog = (task: any) => {
+  selectedTaskForComment.value = task;
+  showSendCommentDialog.value = true;
 };
 
 const openEditDialog = (task: any) => {

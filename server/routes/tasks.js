@@ -528,6 +528,47 @@ export default function taskRoutes(pool) {
     }
   });
 
+  // POST /api/pm/tasks/comment
+  router.post('/comment', async (req, res) => {
+    try {
+      const pmId = req.user.id;
+      const { task_id, employee_id, comment } = req.body;
+      
+      if (!task_id || !employee_id || !comment) {
+        return res.status(400).json({ success: false, error: 'Missing required fields' });
+      }
+
+      // Verify employee is assigned to this task
+      const [assignment] = await pool.execute(
+        'SELECT id FROM task_assignment WHERE task_id = ? AND user_id = ? AND is_active = 1',
+        [task_id, employee_id]
+      );
+      if (assignment.length === 0) {
+        return res.status(400).json({ success: false, error: 'Employee is not assigned to this task' });
+      }
+
+      // Get task details for title
+      const [tasks] = await pool.execute('SELECT title FROM task WHERE id = ?', [task_id]);
+      if (tasks.length === 0) return res.status(404).json({ success: false, error: 'Task not found' });
+      const taskTitle = tasks[0].title;
+
+      // Get PM name for notification
+      const [pmRows] = await pool.execute('SELECT first_name, last_name FROM user WHERE id = ?', [pmId]);
+      const pmName = pmRows.length > 0 ? `${pmRows[0].first_name} ${pmRows[0].last_name}` : 'Your PM';
+
+      await pool.execute(
+        `INSERT INTO notification (user_id, type, title, message, reference_type, reference_id, is_read, created_at)
+         VALUES (?, 'comment_added', ?, ?, 'task', ?, 0, NOW())`,
+        [employee_id, `Comment from ${pmName} on: ${taskTitle}`, comment, task_id]
+      );
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Send comment error:', error);
+      res.status(500).json({ success: false, error: 'Server error' });
+    }
+  });
+
   // POST /api/pm/tasks/:id/assign
   router.post('/:id/assign', async (req, res) => {
     try {
@@ -760,6 +801,8 @@ export default function taskRoutes(pool) {
       res.status(500).json({ success: false, error: 'Server error' });
     }
   });
+
+  // Note: /comment route moved above /:id routes to avoid Express route shadowing
 
   return router;
 }

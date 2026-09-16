@@ -232,6 +232,10 @@
                     <q-item-section avatar><q-icon name="edit" size="sm" /></q-item-section>
                     <q-item-section>Edit Task</q-item-section>
                   </q-item>
+                  <q-item clickable v-close-popup @click="$emit('send-comment', props.row)">
+                    <q-item-section avatar><q-icon name="comment" size="sm" color="blue" /></q-item-section>
+                    <q-item-section class="text-blue">Send Comment</q-item-section>
+                  </q-item>
                   <q-separator />
                   <q-item clickable v-close-popup @click="$emit('delete', props.row)">
                     <q-item-section avatar

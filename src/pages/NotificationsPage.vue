@@ -138,6 +138,7 @@ const getIcon = (type: string) => {
   if (type === 'alert') return 'warning';
   if (type === 'reminder') return 'history_edu';
   if (type === 'update') return 'info';
+  if (type === 'pm_comment') return 'chat';
   return 'notifications';
 };
 
@@ -145,6 +146,7 @@ const getIconColor = (type: string) => {
   if (type === 'alert') return 'red';
   if (type === 'reminder') return 'orange';
   if (type === 'system') return 'grey';
+  if (type === 'pm_comment') return 'indigo';
   return 'blue';
 };
 </script>

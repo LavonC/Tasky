@@ -143,6 +143,14 @@
             </q-badge>
           </q-td>
         </template>
+
+        <template v-slot:body-cell-actions="props">
+          <q-td :props="props">
+            <q-btn flat round dense icon="comment" color="blue" @click.stop="openSendCommentDialog(props.row)">
+              <q-tooltip>Send Comment</q-tooltip>
+            </q-btn>
+          </q-td>
+        </template>
       </q-table>
     </div>
 
@@ -173,6 +181,11 @@
       v-model="showResourceDialog"
       :resource-id="selectedResourceId"
       @reassigned="fetchEmployees"
+    />
+
+    <SendCommentDialog
+      v-model="showSendCommentDialog"
+      :prefilled-employee="selectedEmployeeForComment"
     />
 
     <!-- Auto Rebalance Dialog -->
@@ -233,6 +246,7 @@ import ResourceDetailDialog from '../components/ResourceDetailDialog.vue';
 import ResourceUtilizationChart from '../components/ResourceUtilizationChart.vue';
 import ActiveTasksChart from '../components/ActiveTasksChart.vue';
 import WorkloadScatterChart from '../components/WorkloadScatterChart.vue';
+import SendCommentDialog from '../components/SendCommentDialog.vue';
 import { useAuthStore } from '../stores/authStore'
 
 const authStore = useAuthStore()
@@ -251,6 +265,14 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const showResourceDialog = ref(false);
 const selectedResourceId = ref<number>(0);
+const showSendCommentDialog = ref(false);
+const selectedEmployeeForComment = ref<any>(null);
+
+const openSendCommentDialog = (employee: any) => {
+  // Add 'id' since SendCommentDialog expects it to be 'id'
+  selectedEmployeeForComment.value = { ...employee, id: employee.user_id };
+  showSendCommentDialog.value = true;
+};
 
 const showRebalanceDialog = ref(false);
 const rebalanceChanges = ref<any[]>([]);
@@ -313,6 +335,7 @@ const columns = [
   { name: 'tasks', label: 'Active Tasks', field: 'active_task_count', align: 'center' as const, sortable: true },
   { name: 'hours', label: 'Weekly Hours', field: 'weekly_required_hours', align: 'center' as const, sortable: true, format: (val: number) => `${Math.round(val)}h` },
   { name: 'status', label: 'Status', field: 'workload_status', align: 'center' as const, sortable: true },
+  { name: 'actions', label: 'Actions', field: 'actions', align: 'center' as const },
 ];
 
 const statusOptions = [
