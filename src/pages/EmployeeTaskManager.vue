@@ -980,6 +980,31 @@
               </div>
             </div>
 
+            <!-- ================= DEPENDENCIES ================= -->
+            
+            <div class="section-title q-mt-xl q-mb-md">Dependencies</div>
+            
+            <q-list
+              v-if="selectedTask.dependencies && selectedTask.dependencies.length > 0"
+              dense
+            >
+              <q-item
+                v-for="dep in selectedTask.dependencies"
+                :key="dep.id || dep"
+                class="q-px-none q-py-xs"
+              >
+                <q-item-section avatar style="min-width: 36px">
+                  <q-icon name="link" color="grey-6" size="sm" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-body2"
+                    >{{ dep.title || dep.name || dep.id || dep }}</q-item-label
+                  >
+                </q-item-section>
+              </q-item>
+            </q-list>
+            <div v-else class="text-body2 text-grey-6 q-mb-md">No dependencies.</div>
+
             <!-- ================= TASK STATUS ================= -->
 
             <div class="section-title q-mt-xl q-mb-md">Task Status</div>
@@ -1527,6 +1552,8 @@ interface Task {
   createdAt: string;
 
   progress: number;
+
+  dependencies?: any[];
 }
 
 // ============================================================
@@ -1737,6 +1764,7 @@ const fetchTasks = async () => {
               createdAt: task.created_at || '',
               subtasks: subtasks,
               progress: parseFloat(task.progress) || 0,
+              dependencies: task.dependencies || [],
             };
           } catch (error) {
             console.error('Error fetching subtasks for task:', task.id, error);
@@ -1762,6 +1790,7 @@ const fetchTasks = async () => {
               createdAt: task.created_at || '',
               subtasks: [],
               progress: parseFloat(task.progress) || 0,
+              dependencies: task.dependencies || [],
             };
           }
         }),

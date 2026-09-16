@@ -56,7 +56,7 @@ export default function taskRoutes(pool) {
 
       const [tasks] = await pool.execute(query, params);
 
-      // Get assignees for each task
+      // Get assignees and dependencies for each task
       for (const task of tasks) {
         const [assignees] = await pool.execute(
           `
@@ -68,6 +68,17 @@ export default function taskRoutes(pool) {
           [task.id],
         );
         task.assignees = assignees;
+        
+        const [dependsOn] = await pool.execute(
+          `
+          SELECT td.*, t.title, t.status, t.progress
+          FROM task_dependency td
+          JOIN task t ON t.id = td.depends_on_id
+          WHERE td.task_id = ?
+        `,
+          [task.id]
+        );
+        task.dependsOn = dependsOn;
       }
 
       // Filter by assignee after fetching (since it's a join)
@@ -220,6 +231,7 @@ export default function taskRoutes(pool) {
           assignees,
           progressHistory,
           comments,
+          dependencies: dependsOn,
           dependsOn,
           dependedBy,
           dailyLogs,
@@ -345,6 +357,29 @@ export default function taskRoutes(pool) {
       );
 
       const [newTask] = await pool.execute('SELECT * FROM task WHERE id = ?', [taskId]);
+      
+      const [assignees] = await pool.execute(
+        `
+        SELECT u.id, u.first_name, u.last_name, u.avatar, u.employee_code
+        FROM task_assignment ta
+        JOIN user u ON u.id = ta.user_id
+        WHERE ta.task_id = ? AND ta.is_active = 1
+      `,
+        [taskId],
+      );
+      newTask[0].assignees = assignees;
+
+      const [dependsOn] = await pool.execute(
+        `
+        SELECT td.*, t.title, t.status, t.progress
+        FROM task_dependency td
+        JOIN task t ON t.id = td.depends_on_id
+        WHERE td.task_id = ?
+      `,
+        [taskId]
+      );
+      newTask[0].dependsOn = dependsOn;
+
       res.json({ success: true, task: newTask[0] });
     } catch (error) {
       console.error('Create task error:', error);
@@ -472,6 +507,17 @@ export default function taskRoutes(pool) {
       );
 
       updated[0].assignees = assignees;
+
+      const [dependsOn] = await pool.execute(
+        `
+        SELECT td.*, t.title, t.status, t.progress
+        FROM task_dependency td
+        JOIN task t ON t.id = td.depends_on_id
+        WHERE td.task_id = ?
+      `,
+        [taskId]
+      );
+      updated[0].dependsOn = dependsOn;
 
       res.json({ success: true, task: updated[0] });
     } catch (error) {

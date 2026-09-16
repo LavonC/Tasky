@@ -194,6 +194,32 @@
                   </q-list>
                   <div v-else class="text-caption text-grey">No assignees</div>
                 </q-card>
+
+                <q-card flat bordered class="bg-white q-pa-md">
+                  <div class="text-subtitle2 text-grey-7 q-mb-sm">Dependencies</div>
+                  <q-list
+                    v-if="
+                      taskStore.currentTask.dependencies && taskStore.currentTask.dependencies.length > 0
+                    "
+                    dense
+                  >
+                    <q-item
+                      v-for="dep in taskStore.currentTask.dependencies"
+                      :key="dep.id || dep"
+                      class="q-px-none q-py-xs"
+                    >
+                      <q-item-section avatar style="min-width: 36px">
+                        <q-icon name="link" color="grey-6" size="sm" />
+                      </q-item-section>
+                      <q-item-section>
+                        <q-item-label class="text-body2"
+                          >{{ dep.title || dep.name || dep.id || dep }}</q-item-label
+                        >
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                  <div v-else class="text-caption text-grey">No dependencies</div>
+                </q-card>
               </div>
             </div>
           </q-tab-panel>

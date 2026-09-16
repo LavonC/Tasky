@@ -23,10 +23,6 @@
           <q-badge color="red" floating>{{ pendingDailyLogsCount }}</q-badge>
           <q-tooltip>Review Daily Logs</q-tooltip>
         </q-btn>
-        <q-btn v-if="pendingRescheduleCount > 0" color="orange" icon="event" outline round @click="showScheduleReview = true">
-          <q-badge color="red" floating>{{ pendingRescheduleCount }}</q-badge>
-          <q-tooltip>Pending Reschedule Reviews</q-tooltip>
-        </q-btn>
         <q-avatar size="36px" class="cursor-pointer">
           <img :src="authStore.currentUser?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
           <q-menu anchor="bottom right" self="top right">
@@ -1126,15 +1122,6 @@
     <!-- Daily Log Review Dialog -->
     <DailyLogReviewDialog v-model="showDailyLogReview" @reviewed="fetchPendingDailyLogs" />
 
-    <!-- Schedule Review Dialog -->
-    <ScheduleReviewDialog 
-      v-if="pendingScheduleEvent" 
-      v-model="showScheduleReview" 
-      :event="pendingScheduleEvent" 
-      @confirmed="fetchPendingReschedules" 
-      @rejected="fetchPendingReschedules" 
-    />
-
     <!-- Task Detail Dialog -->
     <q-dialog v-model="showTaskDetailDialog">
       <q-card style="min-width: 600px">
@@ -1187,7 +1174,6 @@ import { getAuthHeaders, readApiResponse } from '../services/api';
 import { useDashboardStore } from '../stores/dashboardStore';
 import { useAnalyticsStore } from '../stores/analyticsStore';
 import EmployeePerformanceReport from '../components/EmployeePerformanceReport.vue';
-import ScheduleReviewDialog from '../components/ScheduleReviewDialog.vue';
 import DailyLogReviewDialog from '../components/DailyLogReviewDialog.vue';
 import ProjectPerformanceTable from '../components/ProjectPerformanceTable.vue';
 import TaskPriorityDonut from '../components/TaskPriorityDonut.vue';
@@ -1246,7 +1232,6 @@ analyticsStore.loadAll();
   // Pre-load completed reviews
   fetchCompletedReviews();
   fetchPendingDailyLogs();
-  fetchPendingReschedules();
   fetchResources();
 });
 
@@ -1261,31 +1246,6 @@ async function fetchResources() {
     console.error('Failed to load resources for graphs', error);
   }
 }
-
-const showScheduleReview = ref(false);
-const pendingScheduleEvent = ref(null);
-const pendingRescheduleCount = ref(0);
-
-async function fetchPendingReschedules() {
-  try {
-    const res = await fetch('http://localhost:3007/api/pm/schedule/queue', {
-      headers: getAuthHeaders(),
-    });
-    const data = await readApiResponse<{ success: boolean; events: any[] }>(res);
-    if (data.success && data.events.length > 0) {
-      pendingRescheduleCount.value = data.events.length;
-      pendingScheduleEvent.value = data.events[0]; // get oldest
-    } else {
-      pendingRescheduleCount.value = 0;
-      pendingScheduleEvent.value = null;
-      showScheduleReview.value = false;
-    }
-  } catch (err) {
-    console.error('Failed to fetch reschedules', err);
-  }
-}
-
-
 
 const filteredUsers = computed(() => {
   const query = teamSearchQuery.value.toLowerCase().trim();

@@ -1762,6 +1762,17 @@ app.get('/api/tasks/employee/:id', async (req, res) => {
           [task.id]
         );
         task.assignees = assignees;
+
+        const [dependencies] = await connection.execute(
+          `
+          SELECT td.*, t.title, t.status, t.progress
+          FROM task_dependency td
+          JOIN task t ON t.id = td.depends_on_id
+          WHERE td.task_id = ?
+          `,
+          [task.id]
+        );
+        task.dependencies = dependencies;
       }
 
       res.json({ success: true, tasks });
