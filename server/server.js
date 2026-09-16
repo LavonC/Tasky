@@ -15,7 +15,7 @@ import calendarRoutes from './routes/calendar.js';
 import schedulingRoutes from './routes/scheduling.js';
 import leavesRoutes from './routes/leaves.js';
 import dailyLogsRoutes from './routes/dailyLogs.js';
-import performanceRoutes from './routes/performance.js';
+import performanceRoutes, { employeePerformanceRoutes } from './routes/performance.js';
 import cron from 'node-cron';
 import { handleDelayDetection, checkTaskDependencies } from './services/schedulingEngine.js';
 const app = express();
@@ -28,7 +28,7 @@ app.use(cors({
 }));
 app.use(express.json());
 // Protect every PM endpoint, including legacy handlers declared below.
-app.use('/api/pm', authenticateToken);
+app.use('/api/pm', authenticateToken, requireRole('pm'));
 
 // Database connection pool
 const pool = mysql.createPool(dbConfig);
@@ -2639,6 +2639,7 @@ app.use('/api/pm/leaves', leavesRoutes(pool));
 app.use('/api/leaves', leavesRoutes(pool));
 app.use('/api/daily-logs', dailyLogsRoutes);
 app.use('/api/pm/employee-performance', performanceRoutes(pool));
+app.use('/api/employee/performance', authenticateToken, requireRole('employee'), employeePerformanceRoutes(pool));
 
 // Run delay detection every day at 8:00 AM
 cron.schedule('0 8 * * 1-5', async () => {

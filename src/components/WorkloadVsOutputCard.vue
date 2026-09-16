@@ -20,7 +20,7 @@
       <div v-for="item in workloadItems" :key="item.label">
         <div class="row justify-between q-mb-xs">
           <span class="text-body2 text-grey-7">{{ item.label }}</span>
-          <span class="text-body2 text-weight-bold">{{ item.value }}h</span>
+          <span class="text-body2 text-weight-bold">{{ item.value.toFixed(1) }}h</span>
         </div>
         <q-linear-progress
           :value="item.percentage / 100"
@@ -35,14 +35,14 @@
     <div class="row items-center q-gutter-lg">
       <div class="column items-center">
         <q-circular-progress
-          :value="efficiency / 100"
+          :value="efficiency === null ? 0 : efficiency / 100"
           size="80px"
           :thickness="0.2"
           color="primary"
           track-color="grey-3"
           class="q-mb-sm"
         >
-          <div class="text-h6 text-weight-bold">{{ efficiency }}%</div>
+          <div class="text-h6 text-weight-bold">{{ efficiency === null ? '--' : `${efficiency}%` }}</div>
           <div class="text-caption text-grey-6">Efficiency</div>
         </q-circular-progress>
       </div>
@@ -71,7 +71,7 @@ interface Props {
   title: string;
   subtitle: string;
   workloadItems: WorkloadItem[];
-  efficiency: number;
+  efficiency: number | null;
   efficiencyMessage?: string;
   showPeriodSelector?: boolean;
   periodOptions?: string[];

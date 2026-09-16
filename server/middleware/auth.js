@@ -41,8 +41,9 @@ export function requireRole(role) {
     if (!req.user) {
       return res.status(401).json({ success: false, error: 'Unauthorized: No user found' });
     }
-    // You could also enforce that req.user.role === role here if needed, 
-    // but the original code just injected the requested role as a mock user.
+    if (req.user.role !== role) {
+      return res.status(403).json({ success: false, error: 'Forbidden: insufficient role' });
+    }
     next();
   };
 }

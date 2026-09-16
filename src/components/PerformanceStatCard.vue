@@ -4,7 +4,7 @@
       <q-avatar size="44px" :style="{ background: background }">
         <q-icon :name="icon" :style="{ color: color }" size="22px" />
       </q-avatar>
-      <div class="stat-trend" :class="positive ? 'text-positive' : 'text-grey-6'">
+      <div v-if="trend" class="stat-trend" :class="positive ? 'text-positive' : 'text-grey-6'">
         {{ trend }}
       </div>
     </div>
@@ -38,12 +38,13 @@ interface Props {
   icon: string;
   color: string;
   background: string;
-  trend: string;
+  trend?: string;
   positive: boolean;
   sparklineData?: number[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  trend: '',
   sparklineData: () => [],
 });
 

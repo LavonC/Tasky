@@ -1,146 +1,88 @@
 import { defineStore } from 'pinia';
-import { getAuthHeaders, API_URL } from '@/services/api';
+import { ref } from 'vue';
+import { getAuthHeaders, API_URL, readApiResponse } from '@/services/api';
+import { useAuthStore } from './authStore';
 
-export const usePerformanceStore = defineStore('performance', {
-  state: () => ({
-    summary: null as any,
-    trend: [] as any[],
-    priorityReport: null as any,
-    tasksByPriority: [] as any[],
-    tasksByPriorityTotal: 0,
-    loading: false,
-    error: null as string | null,
-  }),
+export type PerformanceRange = 'this_week' | 'this_month' | 'last_3_months';
 
-  actions: {
-    getHeaders() {
-      return getAuthHeaders();
-    },
+export const usePerformanceStore = defineStore('performance', () => {
+  const summary = ref<any>(null);
+  const trend = ref<any[]>([]);
+  const priorityReport = ref<any[]>([]);
+  const loading = ref(false);
+  const error = ref<string | null>(null);
+  const range = ref<PerformanceRange>('this_month');
 
-    getUserId(): string {
-      const storedUser = sessionStorage.getItem('tasky_user');
+  async function loadAll(requestedRange?: PerformanceRange) {
+    const authStore = useAuthStore();
+    const selectedRange = requestedRange || range.value;
+    if (!authStore.currentUser || authStore.currentUser.role !== 'employee') {
+      error.value = 'An authenticated employee session is required.';
+      summary.value = null;
+      return null;
+    }
 
-      if (storedUser) {
-        try {
-          const user = JSON.parse(storedUser);
-          return String(user.id);
-        } catch {
-          // Fall through to the next method
-        }
+    loading.value = true;
+    error.value = null;
+    range.value = selectedRange;
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/employee/performance?range=${encodeURIComponent(selectedRange)}`,
+        { headers: getAuthHeaders() },
+      );
+      const data = await readApiResponse<{ success: boolean; performance: any }>(response);
+      if (!data.success || !data.performance) {
+        throw new Error('The performance API returned no performance data.');
       }
 
-      const userId = sessionStorage.getItem('user_id');
+      summary.value = data.performance;
+      trend.value = data.performance.weeklyProgress || [];
+      priorityReport.value = data.performance.priorityPerformance || [];
+      return data.performance;
+    } catch (err) {
+      summary.value = null;
+      trend.value = [];
+      priorityReport.value = [];
+      error.value = err instanceof Error ? err.message : 'Failed to load performance data.';
+      return null;
+    } finally {
+      loading.value = false;
+    }
+  }
 
-      if (userId) {
-        return userId;
-      }
+  function fetchPerformance(requestedRange?: PerformanceRange) {
+    return loadAll(requestedRange);
+  }
 
-      throw new Error('User ID not found');
-    },
+  function fetchSummary(requestedRange?: PerformanceRange) {
+    return loadAll(requestedRange);
+  }
 
-    async fetchPerformance() {
-      this.loading = true;
-      this.error = null;
+  function fetchTrend(requestedRange?: PerformanceRange) {
+    return loadAll(requestedRange);
+  }
 
-      try {
-        const userId = this.getUserId();
+  function fetchPriorityReport(requestedRange?: PerformanceRange) {
+    return loadAll(requestedRange);
+  }
 
-        const response = await fetch(
-          `${API_URL}/api/pm/employee-performance/${userId}`,
-          {
-            headers: this.getHeaders(),
-          },
-        );
+  function fetchTasksByPriority(requestedRange?: PerformanceRange) {
+    return loadAll(requestedRange);
+  }
 
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-          throw new Error(data.error || 'Failed to fetch performance data');
-        }
-
-        const performance = data.performance;
-
-        const totalTasks = Number(performance.totalTasks) || 0;
-        const completedTasks = Number(performance.completedTasks) || 0;
-        const overdueTasks = Number(performance.overdueTasks) || 0;
-        const hoursLogged = Number(performance.hoursLogged) || 0;
-        const overallScore = Number(performance.overallScore) || 0;
-        const utilization = Number(performance.utilization) || 0;
-
-        this.summary = {
-          overallScore,
-          totalTasks,
-          completedTasks,
-          overdueTasks,
-          hoursLogged,
-          utilization,
-          taskStats: Object.fromEntries(Object.entries(performance.taskStats || {}).map(([key, value]) => [key, Number(value) || 0])),
-          recentTasks: performance.recentTasks,
-          productivityScore: overallScore,
-          completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
-          onTimeRate: totalTasks > 0 ? Math.round(((totalTasks - overdueTasks) / totalTasks) * 100) : 0,
-          focusScore: 75,
-          totalEstimatedHours: hoursLogged * 1.2,
-          totalHoursLogged: hoursLogged,
-          dailyActivity: [],
-          timeAllocation: [],
-          qualityMetrics: {
-            reopenedTasks: 0,
-            revisionRequests: 0,
-            firstTimeCompletionRate: 85,
-            avgSubtaskAccuracy: 90
-          }
-        };
-
-        this.trend = (performance.weeklyProgress || []).map((item: any) => ({
-          ...item,
-          hours: Number(item.hours) || 0,
-        }));
-
-        this.priorityReport = performance.taskStats || null;
-
-        this.tasksByPriority = [];
-        this.tasksByPriorityTotal = 0;
-
-        return performance;
-      } catch (err: any) {
-        this.error = err.message || 'Failed to load performance data';
-        console.error('Error loading performance data:', err);
-        return null;
-      } finally {
-        this.loading = false;
-      }
-    },
-
-        async fetchSummary(range = 'this_month') {
-      void range;
-      return this.fetchPerformance();
-    },
-
-    async fetchTrend(range = 'this_month') {
-      void range;
-      return this.fetchPerformance();
-    },
-
-    async fetchPriorityReport(filters: any = {}) {
-      void filters;
-      return this.fetchPerformance();
-    },
-
-    async fetchTasksByPriority(
-      filters: any = {},
-      page = 1,
-      perPage = 10,
-    ) {
-      void filters;
-      void page;
-      void perPage;
-      return this.fetchPerformance();
-    },
-
-    async loadAll(range = 'this_month') {
-      void range;
-      return this.fetchPerformance();
-    },
-  },
+  return {
+    summary,
+    trend,
+    priorityReport,
+    loading,
+    error,
+    range,
+    loadAll,
+    fetchPerformance,
+    fetchSummary,
+    fetchTrend,
+    fetchPriorityReport,
+    fetchTasksByPriority,
+  };
 });

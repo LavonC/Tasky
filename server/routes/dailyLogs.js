@@ -10,7 +10,8 @@ const pool = mysql.createPool(dbConfig);
 // 2. Add or update manual/automatic work log
 router.post('/work-log', async (req, res) => {
   try {
-    const { task_id, user_id, log_date, work_completed, hours_spent, status } = req.body;
+    const { task_id, log_date, work_completed, hours_spent, status } = req.body;
+    const user_id = req.user.id;
     // Use NULL for task_id if not provided (manual entries not tied to a task)
     const taskIdValue = task_id || null;
     
@@ -24,6 +25,15 @@ router.post('/work-log', async (req, res) => {
        status = VALUES(status)`,
       [taskIdValue, user_id, log_date, work_completed, hours_spent || 0, status || 'in-progress']
     );
+
+    if (taskIdValue) {
+      await pool.query(
+        `UPDATE task SET actual_effort = (
+           SELECT COALESCE(SUM(hours_spent), 0) FROM daily_work_log WHERE task_id = ?
+         ) WHERE id = ?`,
+        [taskIdValue, taskIdValue],
+      );
+    }
     
     res.json({ success: true, message: 'Log added successfully' });
   } catch (error) {

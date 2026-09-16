@@ -76,8 +76,13 @@ function renderHeatmap() {
 
   const svg = d3.select(container).append('svg').attr('width', width).attr('height', height);
 
-  // Create heatmap data structure (weeks x days)
-  const weeks = 5;
+  // Use the selected data range rather than anchoring cells to the current day.
+  const dates = props.data.map((item) => new Date(`${item.activity_date}T00:00:00Z`));
+  const firstDate = dates.length ? new Date(Math.min(...dates.map((date) => date.getTime()))) : new Date();
+  const lastDate = dates.length ? new Date(Math.max(...dates.map((date) => date.getTime()))) : firstDate;
+  const firstMonday = new Date(firstDate);
+  firstMonday.setUTCDate(firstMonday.getUTCDate() - (firstMonday.getUTCDay() || 7) + 1);
+  const weeks = Math.max(1, Math.ceil((lastDate.getTime() - firstMonday.getTime() + 86400000) / (7 * 86400000)));
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const cellSize = (width - margin.left - margin.right) / weeks;
   const rowHeight = (height - margin.top - margin.bottom) / days.length;
@@ -85,12 +90,10 @@ function renderHeatmap() {
   // Create activity map
   const activityMap = new Map<string, number>();
   props.data.forEach((item) => {
-    const date = new Date(item.activity_date);
+    const date = new Date(`${item.activity_date}T00:00:00Z`);
     const dayIndex = date.getDay();
     const adjustedDayIndex = dayIndex === 0 ? 6 : dayIndex - 1; // Convert to Mon-Sun (0-6)
-    const weekIndex = Math.floor(
-      (new Date().getTime() - date.getTime()) / (7 * 24 * 60 * 60 * 1000),
-    );
+    const weekIndex = Math.floor((date.getTime() - firstMonday.getTime()) / (7 * 24 * 60 * 60 * 1000));
     const key = `${weekIndex}-${adjustedDayIndex}`;
     activityMap.set(key, item.activity_count);
   });
