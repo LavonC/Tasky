@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <div class="row items-center justify-between q-mb-md">
-      <div class="text-h4 text-weight-bold">Daily Tracker</div>
+      <div class="text-h4 text-weight-bold"></div>
       <q-btn color="primary" icon="add" label="Add Daily Task" @click="showAddDialog = true" />
     </div>
 

@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="text-h5 text-weight-bold q-mb-md">Reviews</div>
+    <div class="text-h5 text-weight-bold q-mb-md"></div>
 
     <q-tabs
       v-model="activeTab"

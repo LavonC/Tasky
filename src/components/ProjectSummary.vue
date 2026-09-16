@@ -5,6 +5,15 @@
         <div class="row items-center q-gutter-sm">
           <div class="text-h6 text-weight-bold">Project Summary</div>
         </div>
+        <q-btn
+          unelevated
+          color="green-6"
+          icon="o_assessment"
+          label="View Reports"
+          no-caps
+          class="rounded-borders"
+          @click="emit('view-report')"
+        />
 
 
       </div>
@@ -42,7 +51,7 @@ const props = withDefaults(defineProps<Props>(), {
   teamUtilization: null,
 });
 
-defineEmits<{
+const emit = defineEmits<{
   (event: 'view-report'): void;
 }>();
 

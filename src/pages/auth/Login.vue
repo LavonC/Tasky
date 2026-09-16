@@ -21,7 +21,7 @@
     v-model="form.id"
     outlined
     :label="form.role === 'Project Manager' ? 'Manager ID' : 'Employee ID'"
-    :placeholder="form.role === 'Project Manager' ? 'PM-001' : 'EMP001 or EMP-001'"
+    :placeholder="form.role === 'Project Manager' ? 'PM-001 or PM001' : 'EMP001 or EMP-001'"
     class="col"
   />
 </div>

@@ -41,19 +41,6 @@
         </div></div>
         <div class="row items-center q-mb-md" style="flex: 0 0 auto">
         
-        <q-input
-            v-model="searchQuery"
-            outlined
-            dense
-            rounded
-            bg-color="white"
-            placeholder="Search reports..."
-            style="width: 320px"
-          >
-            <template v-slot:prepend>
-              <q-icon name="search" />
-            </template>
-          </q-input>
         <div class="row items-center q-gutter-x-sm q-ml-auto">
           <q-select
             v-model="filterMonth"
