@@ -1400,9 +1400,19 @@ function openSubmitReviewDialog(task: any) {
 }
 
 async function submitForReview() {
-  if (!selectedReviewTask.value || !selectedReviewer.value) return;
+  if (!selectedReviewTask.value) return;
 
   try {
+    const requestBody: any = {
+      completion_comment: completionComment.value,
+      task_owner_id: authStore.user?.id,
+    };
+
+    // Only include reviewer_id if a reviewer is selected
+    if (selectedReviewer.value !== null && selectedReviewer.value !== undefined) {
+      requestBody.reviewer_id = selectedReviewer.value;
+    }
+
     // Authentication removed for testing
     const response = await fetch(
       `http://localhost:3007/api/employee/tasks/${selectedReviewTask.value.id}/submit-review`,
@@ -1411,10 +1421,7 @@ async function submitForReview() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          completion_comment: completionComment.value,
-          reviewer_id: selectedReviewer.value,
-        }),
+        body: JSON.stringify(requestBody),
       },
     );
 
