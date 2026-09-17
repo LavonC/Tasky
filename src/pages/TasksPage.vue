@@ -216,6 +216,7 @@
           :deadline-risks="analyticsStore.deadlineRisks"
           :in-progress-tasks="analyticsStore.taskDistribution?.status?.['in-progress'] || 0"
           :team-utilization="analyticsStore.overview?.avgUtilization || null"
+          @view-report="exportReport"
         />
       </div>
     </div>
@@ -316,6 +317,8 @@ import SendCommentDialog from '../components/SendCommentDialog.vue';
 import { useOrgStore } from '../stores/orgStore';
 import { useAnalyticsStore } from '../stores/analyticsStore';
 
+import { exportFile } from 'quasar';
+
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
@@ -325,6 +328,42 @@ const taskStoreCommon = useTaskStore();
 const $q = useQuasar();
 const orgStore = useOrgStore();
 const analyticsStore = useAnalyticsStore();
+
+const exportReport = () => {
+  const projects = analyticsStore.projectProgress || [];
+  
+  let content = 'Project Name,Status,Progress\n';
+  projects.forEach((p: any) => {
+    const name = p.project_name || p.name || 'Unknown';
+    const status = p.status || 'Unknown';
+    const progress = p.progress || 0;
+    content += `"${name}","${status}",${progress}\n`;
+  });
+
+  content += '\nDeadline Risks\nTask,Risk,Days Remaining\n';
+  const risks = analyticsStore.deadlineRisks || [];
+  risks.forEach((r: any) => {
+    const taskTitle = r.task_title || r.title || 'Unknown';
+    const riskLevel = r.risk_level || 'Unknown';
+    const days = r.days_until !== undefined ? r.days_until : 0;
+    content += `"${taskTitle}","${riskLevel}",${days}\n`;
+  });
+
+  const status = exportFile('project-report.csv', content, 'text/csv');
+  if (status !== true) {
+    $q.notify({
+      message: 'Browser denied file download',
+      color: 'negative',
+      icon: 'warning'
+    });
+  } else {
+    $q.notify({
+      message: 'Report downloaded successfully',
+      color: 'positive',
+      icon: 'check'
+    });
+  }
+};
 
 const filters = ref({
   search: (route.query.search as string) || '',
