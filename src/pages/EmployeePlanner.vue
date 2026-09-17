@@ -1512,7 +1512,15 @@ const showSetDeadlineDialog = ref(false);
 
 function openSetDeadlineDialog() {
   showDeadlineOnLeaveDialog.value = false;
-  newDeadline.value = selectedAffectedTask.value?.deadline || '';
+  if (selectedAffectedTask.value?.deadline) {
+    const d = new Date(selectedAffectedTask.value.deadline);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    newDeadline.value = `${year}-${month}-${day}`;
+  } else {
+    newDeadline.value = '';
+  }
   showSetDeadlineDialog.value = true;
 }
 
@@ -1585,9 +1593,12 @@ async function automateDeadline() {
       showDeadlineOnLeaveDialog.value = false;
       await fetchLeaveImpact(); // Refresh affected tasks
       await fetchTasks(); // Refresh tasks
+    } else {
+      alert(data.error || 'Failed to automate deadline');
     }
   } catch (error) {
     console.error('Error automating deadline:', error);
+    alert('Error automating deadline');
   } finally {
     automatingDeadline.value = false;
   }
