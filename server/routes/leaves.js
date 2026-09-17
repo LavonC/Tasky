@@ -265,15 +265,26 @@ export default function leavesRoutes(pool) {
       let attempts = 0;
       const maxAttempts = 30; // Prevent infinite loop
 
+      function getLocalDateStr(dateObj) {
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
       while (!foundValidDate && attempts < maxAttempts) {
         const dayOfWeek = newDeadline.getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 = Sunday, 6 = Saturday
+        const dateStr = getLocalDateStr(newDeadline);
 
         let isOnLeave = false;
         for (const leave of allLeaves) {
           const leaveStart = new Date(leave.start_date);
           const leaveEnd = new Date(leave.end_date);
-          if (newDeadline >= leaveStart && newDeadline <= leaveEnd) {
+          const leaveStartStr = getLocalDateStr(leaveStart);
+          const leaveEndStr = getLocalDateStr(leaveEnd);
+          
+          if (dateStr >= leaveStartStr && dateStr <= leaveEndStr) {
             isOnLeave = true;
             break;
           }
@@ -293,14 +304,15 @@ export default function leavesRoutes(pool) {
       }
 
       // Update task deadline
+      const finalDateStr = getLocalDateStr(newDeadline);
       await pool.execute(
         `UPDATE task SET deadline = ? WHERE id = ?`,
-        [newDeadline.toISOString().split('T')[0], taskId]
+        [finalDateStr, taskId]
       );
 
       res.json({
         success: true,
-        new_deadline: newDeadline.toISOString().split('T')[0]
+        new_deadline: finalDateStr
       });
     } catch (error) {
       console.error('Automate deadline error:', error);
