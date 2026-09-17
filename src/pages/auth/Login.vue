@@ -16,12 +16,21 @@
         />
 
 <div class="row items-center q-gutter-sm q-mb-md">
-  <!-- Full ID -->
+  <!-- ID Prefix -->
+  <q-input
+    :model-value="form.role === 'Project Manager' ? 'PM' : 'EMP'"
+    outlined
+    readonly
+    dense
+    style="width: 75px"
+  />
+
+  <!-- ID Number -->
   <q-input
     v-model="form.id"
     outlined
     :label="form.role === 'Project Manager' ? 'Manager ID' : 'Employee ID'"
-    :placeholder="form.role === 'Project Manager' ? 'PM-001 or PM001' : 'EMP001 or EMP-001'"
+    placeholder="001"
     class="col"
   />
 </div>
@@ -260,8 +269,9 @@ const handleLogin = async () => {
   loading.value = true;
 
 try {
-  // Use the full ID directly as entered by the user
-  const identifier = form.id;
+  // Create the full ID based on the selected role
+  const prefix = form.role === 'Project Manager' ? 'PM' : 'EMP';
+  const identifier = `${prefix}${form.id}`;
 
   // Call backend API directly
   const response = await fetch('http://localhost:3007/api/auth/login', {
@@ -276,36 +286,50 @@ try {
   });
 
   const result = await response.json();
-
   console.log('Login result:', result);
 
-  if (result.success && result.user) {
-    // Reset failed attempts on successful login
-    failedAttempts.value = 0;
-    lockoutEndTime.value = null;
-    if (countdownTimer.value) {
-      clearInterval(countdownTimer.value);
-      countdownTimer.value = null;
-    }
+    if (result.success && result.user) {
+      const selectedRole = form.role === 'Project Manager' ? 'pm' : 'employee';
+      if (result.user.role !== selectedRole) {
+        alert(`This account is registered as ${result.user.role === 'pm' ? 'a Project Manager' : 'an Employee'}. Please select the correct role.`);
+        generateCaptcha();
+        return;
+      }
+      // Reset failed attempts on successful login
+      failedAttempts.value = 0;
+      lockoutEndTime.value = null;
+      if (countdownTimer.value) {
+        clearInterval(countdownTimer.value);
+        countdownTimer.value = null;
+      }
 
-    // Store user data in authStore and localStorage
-    authStore.user = result.user;
-    authStore.token = result.token;
-    authStore.isAuthenticated = true;
-    sessionStorage.setItem('tasky_user', JSON.stringify(result.user));
-    sessionStorage.setItem('tasky_token', result.token);
+      // Store user data in authStore and localStorage
+      authStore.user = result.user;
+      authStore.token = result.token;
+      authStore.isAuthenticated = true;
+      sessionStorage.setItem('tasky_user', JSON.stringify(result.user));
+      sessionStorage.setItem('tasky_token', result.token);
 
-    // Route based on role from database
-    if (result.user.role === 'pm') {
-      void router.replace('/dashboard');
+      // Route based on role from database - all in same project
+      if (result.user.role === 'pm') {
+        void router.replace('/dashboard');
+      } else {
+        void router.replace('/employee/task-manager');
+      }
     } else {
-      void router.replace('/employee/task-manager');
+      // Increment failed attempts
+      failedAttempts.value++;
+
+      if (failedAttempts.value >= 3) {
+        startLockout();
+        alert('Too many failed attempts. Account locked for 2 minutes.');
+      } else {
+        const remainingAttempts = 3 - failedAttempts.value;
+        alert(
+          `Login failed: ${result.error || 'Unknown error'}. ${remainingAttempts} attempts remaining.`,
+        );
+      }
     }
-  } else {
-    // Reset failed attempts for testing
-    failedAttempts.value = 0;
-    alert(`Login failed: ${result.error || 'Unknown error'}. Please try again.`);
-  }
   } catch (error) {
     console.error('Login error:', error);
     alert('Error: ' + String(error));
