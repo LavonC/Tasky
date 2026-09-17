@@ -38,7 +38,7 @@
         <q-item
           clickable
           v-ripple
-          to="/dashboard"
+          to="/dashboard/profile"
           class="q-pa-sm q-mb-lg rounded-borders profile-item"
           :class="sidebarCollapsed ? 'justify-center' : ''"
         >
