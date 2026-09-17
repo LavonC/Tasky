@@ -177,7 +177,11 @@ const resourceOptions = computed(() => {
 
 const taskOptions = computed(() => {
   return taskStore.tasks
-    .filter((t) => !props.taskToEdit || t.id !== props.taskToEdit.id)
+    .filter((t) => {
+      if (props.taskToEdit && t.id === props.taskToEdit.id) return false;
+      if (form.value.project_id && t.project_id != form.value.project_id) return false;
+      return true;
+    })
     .map((t) => ({ label: t.title, value: t.id }));
 });
 
