@@ -241,9 +241,10 @@
             <q-select
               v-model="selectedReviewer"
               :options="reviewerOptions"
-              label="Select Reviewer"
+              label="Select Reviewer (Optional)"
               outlined
               class="q-mt-md"
+              clearable
             />
           </div>
         </q-card-section>
@@ -399,7 +400,7 @@ const projectOptions = computed(() =>
 const reviewerOptions = computed(() => {
   if (!employees.value || employees.value.length === 0) {
     console.log('❌ Tasks: No employees loaded');
-    return [];
+    return [{ label: 'No reviewer (auto-assign)', value: null }];
   }
 
   const options = employees.value
@@ -409,6 +410,9 @@ const reviewerOptions = computed(() => {
       value: e.id,
       id: e.id
     }));
+
+  // Add "No reviewer" option at the top
+  options.unshift({ label: 'No reviewer (auto-assign)', value: null });
 
   console.log('✅ Tasks reviewer options:', options);
   return options;
@@ -581,7 +585,7 @@ function openSubmitReviewDialog(task: any) {
 }
 
 async function submitForReview() {
-  if (!selectedTask.value || !selectedReviewer.value) return;
+  if (!selectedTask.value) return;
 
   submitting.value = true;
   try {
@@ -597,12 +601,17 @@ async function submitForReview() {
     console.log('Task owner ID:', authStore.user?.id);
     console.log('Reviewer ID:', selectedReviewer.value);
     console.log('Completion comment:', completionComment.value);
-    
-    const requestBody = {
+
+    const requestBody: any = {
       completion_comment: completionComment.value,
-      reviewer_id: selectedReviewer.value || null,
       task_owner_id: authStore.user?.id,
     };
+
+    // Only include reviewer_id if a reviewer is selected
+    if (selectedReviewer.value !== null && selectedReviewer.value !== undefined) {
+      requestBody.reviewer_id = selectedReviewer.value;
+    }
+
     console.log('Request body:', requestBody);
     
     const response = await fetch(
