@@ -15,9 +15,9 @@ import calendarRoutes from './routes/calendar.js';
 import schedulingRoutes from './routes/scheduling.js';
 import leavesRoutes from './routes/leaves.js';
 import dailyLogsRoutes from './routes/dailyLogs.js';
+import performanceRoutes, { employeePerformanceRoutes } from './routes/performance.js';
 import cron from 'node-cron';
 import { handleDelayDetection, checkTaskDependencies } from './services/schedulingEngine.js';
-import jwt from 'jsonwebtoken';
 const app = express();
 const port = 3007;
 
@@ -27,29 +27,8 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
-
-// Auth token middleware (allows token if present, otherwise falls back to mock user)
-app.use((req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (token) {
-    try {
-      req.user = jwt.verify(token, process.env.JWT_SECRET || 'tasky_jwt_secret_key_2024');
-      return next();
-    } catch (e) {
-      // Invalid or expired token, fall back
-    }
-  }
-  if (!req.user) {
-    req.user = {
-      id: 1, // PM user ID who created all projects
-      email: 'pm@tasky.com',
-      role: 'pm',
-      org_id: 1
-    };
-  }
-  next();
-});
+// Protect every PM endpoint, including legacy handlers declared below.
+app.use('/api/pm', authenticateToken, requireRole('pm'));
 
 // Database connection pool
 const pool = mysql.createPool(dbConfig);
@@ -139,6 +118,49 @@ pool
     }
 
     try {
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS reschedule_event (
+          id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+          org_id INT UNSIGNED NOT NULL,
+          trigger_type VARCHAR(50) NOT NULL,
+          trigger_ref_id INT UNSIGNED DEFAULT NULL,
+          affected_task_count INT NOT NULL DEFAULT 0,
+          status VARCHAR(20) NOT NULL DEFAULT 'pending_review',
+          payload TEXT NOT NULL,
+          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          applied_by INT UNSIGNED DEFAULT NULL,
+          reviewed_at DATETIME DEFAULT NULL,
+          PRIMARY KEY (id),
+          CONSTRAINT fk_reschedule_event_org FOREIGN KEY (org_id)
+            REFERENCES organization (id) ON DELETE CASCADE,
+          CONSTRAINT fk_reschedule_event_user FOREIGN KEY (applied_by)
+            REFERENCES user (id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS task_schedule_history (
+          id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+          task_id INT UNSIGNED NOT NULL,
+          reschedule_event_id INT UNSIGNED NOT NULL,
+          old_scheduled_start DATE DEFAULT NULL,
+          new_scheduled_start DATE DEFAULT NULL,
+          old_scheduled_end DATE DEFAULT NULL,
+          new_scheduled_end DATE DEFAULT NULL,
+          reason VARCHAR(255) DEFAULT NULL,
+          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          CONSTRAINT fk_task_schedule_history_task FOREIGN KEY (task_id)
+            REFERENCES task (id) ON DELETE CASCADE,
+          CONSTRAINT fk_task_schedule_history_event FOREIGN KEY (reschedule_event_id)
+            REFERENCES reschedule_event (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      console.log('Ensured reschedule event tables exist');
+    } catch (e) {
+      console.error('Failed to ensure reschedule event tables:', e.message);
+    }
+
+    try {
       await connection.query(
         'UPDATE task t JOIN task_assignment ta ON ta.task_id = t.id SET t.is_self_assigned = 1, t.created_by = ta.user_id WHERE t.id > 25 AND t.created_by = 1 AND ta.user_id != 1'
       );
@@ -148,6 +170,14 @@ pool
       console.log('Updated existing self-assigned tasks');
     } catch (e) {
       console.error('Failed to update existing self-assigned tasks:', e.message);
+    }
+    try {
+      await connection.query(
+        'ALTER TABLE task_review ADD COLUMN finalized_at DATETIME DEFAULT NULL;'
+      );
+      console.log('Added finalized_at column to task_review table');
+    } catch (e) {
+      // Ignore error if column already exists
     }
 
     connection.release();
@@ -719,6 +749,37 @@ app.put('/api/users/:id', async (req, res) => {
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });
+// GET /api/employee/:userId/projects - Get all active projects for employee's organization
+app.get('/api/employee/:userId/projects', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const connection = await pool.getConnection();
+    try {
+      const [userRows] = await connection.execute('SELECT org_id FROM user WHERE id = ?', [userId]);
+      if (userRows.length === 0) {
+        return res.status(404).json({ success: false, error: 'User not found' });
+      }
+      const orgId = userRows[0].org_id;
+
+      // Get all active projects for the employee's organization so they can self-assign tasks
+      const [projects] = await connection.execute(
+        `SELECT p.* 
+         FROM project p 
+         WHERE p.org_id = ? 
+           AND p.status != 'archived'
+         ORDER BY p.name ASC`, 
+        [orgId]
+      );
+      res.json({ success: true, projects });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Get employee projects error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
 // GET /api/employee/tasks/:id/subtasks - Get subtasks for a task
 app.get('/api/employee/tasks/:id/subtasks', async (req, res) => {
   try {
@@ -1080,8 +1141,9 @@ app.delete('/api/employee/daily-tracker/:id', async (req, res) => {
 });
 
 // Get active employees for reviewer selection. Keep this before /api/users/:id.
-app.get('/api/users/employees', async (req, res) => {
+app.get('/api/users/employees', authenticateToken, async (req, res) => {
   try {
+    const orgId = req.user?.org_id || 1;
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.execute(
@@ -1089,8 +1151,9 @@ app.get('/api/users/employees', async (req, res) => {
                 r.name AS role_name, r.access_level
          FROM user u
          JOIN role r ON u.role_id = r.id
-         WHERE u.is_active = 1 AND r.access_level = 'employee'
-         ORDER BY u.first_name, u.last_name`
+         WHERE u.org_id = ? AND u.is_active = 1 AND r.access_level = 'employee'
+         ORDER BY u.first_name, u.last_name`,
+        [orgId]
       );
       res.json({ success: true, users: rows });
     } finally {
@@ -1143,18 +1206,21 @@ app.get('/api/users/:id', async (req, res) => {
 });
 
 // Get all users endpoint (for testing)
-app.get('/api/users', async (req, res) => {
+app.get('/api/users', authenticateToken, async (req, res) => {
   try {
+    const orgId = req.user?.org_id || 1;
     const connection = await pool.getConnection();
     try {
       let rows;
       try {
         [rows] = await connection.execute(
-          'SELECT u.id, u.employee_code, u.first_name, u.last_name, u.email, u.phone, u.points, r.name as role_name, r.access_level FROM user u JOIN role r ON u.role_id = r.id',
+          'SELECT u.id, u.employee_code, u.first_name, u.last_name, u.email, u.phone, u.points, r.name as role_name, r.access_level FROM user u JOIN role r ON u.role_id = r.id WHERE u.org_id = ?',
+          [orgId]
         );
       } catch (colErr) {
         [rows] = await connection.execute(
-          'SELECT u.id, u.employee_code, u.first_name, u.last_name, u.email, u.phone, r.name as role_name, r.access_level FROM user u JOIN role r ON u.role_id = r.id',
+          'SELECT u.id, u.employee_code, u.first_name, u.last_name, u.email, u.phone, r.name as role_name, r.access_level FROM user u JOIN role r ON u.role_id = r.id WHERE u.org_id = ?',
+          [orgId]
         );
         rows.forEach((r) => {
           r.points = 0;
@@ -1183,7 +1249,7 @@ app.get('/api/pm/reviews/all', async (req, res) => {
                tr.review_comment, tr.pm_final_comment,
                u.first_name as reviewer_first_name, u.last_name as reviewer_last_name,
                u2.first_name as task_owner_first_name, u2.last_name as task_owner_last_name,
-               tr.task_owner_points, tr.reviewer_points
+               tr.task_owner_points, tr.reviewer_points, tr.finalized_at
         FROM task t
         JOIN project p ON p.id = t.project_id
         JOIN task_review tr ON tr.task_id = t.id
@@ -1199,6 +1265,37 @@ app.get('/api/pm/reviews/all', async (req, res) => {
     }
   } catch (error) {
     console.error('Get PM reviews error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// PUT /api/pm/reviews/:id/finalize - PM finalizes a review-done task
+app.put('/api/pm/reviews/:id/finalize', async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const { pm_final_comment } = req.body;
+
+    const connection = await pool.getConnection();
+    try {
+      const [reviews] = await connection.execute(
+        `SELECT id FROM task_review WHERE task_id = ? AND status = 'review-done'`,
+        [taskId]
+      );
+      if (reviews.length === 0) {
+        return res.status(404).json({ success: false, error: 'Review not found or already finalized' });
+      }
+
+      await connection.execute(
+        `UPDATE task_review SET status = 'finalized', pm_final_comment = ?, finalized_at = NOW() WHERE task_id = ? AND status = 'review-done'`,
+        [pm_final_comment || null, taskId]
+      );
+
+      res.json({ success: true });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Finalize review error:', error);
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });
@@ -1361,12 +1458,11 @@ app.get('/api/pm/employee-performance/:userId', async (req, res) => {
       );
 
       // 6. Overall Score
-      let overallScore = 40;
+      let overallScore = 0;
       if (totalTasks > 0) {
-        overallScore += (completedTasks / totalTasks) * 40;
-        overallScore += Math.max(0, 20 - (overdueTasks / totalTasks) * 20);
-      } else {
-        overallScore = 75; 
+        const baseScore = (completedTasks / totalTasks) * 100;
+        const penalty = (overdueTasks / totalTasks) * 20;
+        overallScore = Math.max(0, baseScore - penalty);
       }
       overallScore = Math.round(overallScore);
 
@@ -1394,24 +1490,56 @@ app.get('/api/pm/employee-performance/:userId', async (req, res) => {
 });
 
 // GET /api/pm/employee-performance/:userId/work-logs - Get daily logs for a specific employee
-app.get('/api/pm/employee-performance/:userId/work-logs', async (req, res) => {
+app.get('/api/pm/employee-performance/:userId/work-logs', authenticateToken, async (req, res) => {
   try {
     const { userId } = req.params;
     const connection = await pool.getConnection();
     
     try {
-      const [logs] = await connection.execute(
-        `SELECT t.title as task_title, p.name as project_name, d.log_date, d.hours_spent, d.work_completed
-         FROM daily_work_log d
-         JOIN task t ON d.task_id = t.id
-         JOIN project p ON t.project_id = p.id
-         WHERE d.user_id = ?
-         ORDER BY d.log_date DESC
-         LIMIT 30`,
-        [userId]
+      // Get all dates where the user has a work log or a compliance record
+      const [datesList] = await connection.execute(
+        `SELECT DISTINCT date_val FROM (
+           SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date_val FROM daily_log_compliance WHERE user_id = ?
+           UNION
+           SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date_val FROM daily_work_log WHERE user_id = ?
+         ) as combined_dates ORDER BY date_val DESC`,
+        [userId, userId]
       );
+
+      const submissions = [];
+      const logsByDate = {};
       
-      res.json({ success: true, logs });
+      for (const { date_val } of datesList) {
+        const [comp] = await connection.execute(
+          `SELECT *, DATE_FORMAT(log_date, '%Y-%m-%d') as formatted_date FROM daily_log_compliance WHERE user_id = ? AND DATE(log_date) = ?`,
+          [userId, date_val]
+        );
+        
+        const sub = comp.length > 0 ? comp[0] : { 
+          id: `unfinalized-${date_val}`, 
+          user_id: userId, 
+          log_date: date_val, 
+          status: 'not-finalized',
+          day_status: 'worked',
+          formatted_date: date_val
+        };
+        
+        const dateStr = sub.formatted_date || date_val;
+        sub.log_date_str = dateStr;
+        
+        const [logs] = await connection.execute(
+          `SELECT dwl.*, DATE_FORMAT(dwl.log_date, '%Y-%m-%d') as log_date, t.title AS task_title, p.name AS project_name, p.color AS project_color
+           FROM daily_work_log dwl
+           LEFT JOIN task t ON t.id = dwl.task_id
+           LEFT JOIN project p ON p.id = t.project_id
+           WHERE dwl.user_id = ? AND DATE(dwl.log_date) = ?`,
+          [userId, dateStr]
+        );
+        sub.logs = logs;
+        submissions.push(sub);
+      }
+
+      res.json({ success: true, submissions });
     } finally {
       connection.release();
     }
@@ -1565,6 +1693,9 @@ app.put('/api/employee/tasks/:id', async (req, res) => {
         if (taskStatus === 'pending') taskStatus = 'not-started';
         updates.push('status = ?');
         params.push(taskStatus);
+        if (taskStatus === 'completed') {
+          updates.push('completed_at = NOW()');
+        }
       }
       if (actual_effort !== undefined) {
         updates.push('actual_effort = ?');
@@ -1628,12 +1759,8 @@ app.put('/api/employee/tasks/:id', async (req, res) => {
   }
 });
 
-// Employee API Routes (Authentication removed for testing)
-app.use('/api/employee', (req, res, next) => {
-  // Skip authentication for testing
-  req.user = { id: 1, email: 'test@test.com', role: 'employee', org_id: 1 };
-  next();
-});
+// Employee API Routes
+// Note: Global authentication middleware handles security
 
 // GET /api/tasks/employee/:id - Get tasks assigned to employee
 app.get('/api/tasks/employee/:id', async (req, res) => {
@@ -1674,6 +1801,17 @@ app.get('/api/tasks/employee/:id', async (req, res) => {
           [task.id]
         );
         task.assignees = assignees;
+
+        const [dependencies] = await connection.execute(
+          `
+          SELECT td.*, t.title, t.status, t.progress
+          FROM task_dependency td
+          JOIN task t ON t.id = td.depends_on_id
+          WHERE td.task_id = ?
+          `,
+          [task.id]
+        );
+        task.dependencies = dependencies;
       }
 
       res.json({ success: true, tasks });
@@ -1782,9 +1920,9 @@ app.post('/api/employee/daily-logs/finalize', async (req, res) => {
     try {
       await connection.execute(
         `INSERT INTO daily_log_compliance (user_id, log_date, status, submitted_at) 
-         VALUES (?, CURDATE(), 'logged', NOW())
+         VALUES (?, CURDATE(), 'submitted', NOW())
          ON DUPLICATE KEY UPDATE 
-           status = 'logged', 
+           status = 'submitted', 
            submitted_at = NOW()`,
         [userId]
       );
@@ -1840,7 +1978,7 @@ app.post('/api/employee/tasks', async (req, res) => {
 // (Duplicate PUT /api/employee/tasks/:id removed — handled above at line 1311)
 
 // POST /api/employee/tasks/:id/comment - Add comment to task
-app.post('/api/employee/tasks/:id/comment', async (req, res) => {
+app.post('/api/employee/tasks/:id/comment', authenticateToken, async (req, res) => {
   try {
     const taskId = req.params.id;
     const userId = req.user.id;
@@ -1886,6 +2024,15 @@ app.post('/api/employee/tasks/:id/submit-review', async (req, res) => {
       if (tasks.length === 0) {
         console.log('Task not found:', taskId);
         return res.status(404).json({ success: false, error: 'Task not found' });
+      }
+
+      // Prevent duplicate review submissions
+      const [existingReviews] = await connection.execute(
+        `SELECT id FROM task_review WHERE task_id = ? AND status IN ('pending', 'review-done')`,
+        [taskId]
+      );
+      if (existingReviews.length > 0) {
+        return res.status(409).json({ success: false, error: 'Task is already submitted for review' });
       }
 
       // Update task status
@@ -2142,7 +2289,7 @@ app.get('/api/employee/reviews/history', async (req, res) => {
         SELECT t.id, t.title, t.status as task_status, t.progress,
                p.name as project_name,
                tr.status as review_status, tr.review_comment, tr.pm_final_comment, tr.submitted_at,
-               tr.task_owner_points
+               tr.task_owner_id, tr.task_owner_points
         FROM task t
         JOIN project p ON p.id = t.project_id
         JOIN task_review tr ON tr.task_id = t.id
@@ -2417,53 +2564,44 @@ app.post('/api/employee/:id/automate-schedule', async (req, res) => {
 
       while (hasClashes && iterations < MAX_ITERATIONS) {
         iterations++;
-        const dateMap = new Map();
-        for (const t of taskList) {
-          const d = t.currentDeadline;
-          if (!dateMap.has(d)) dateMap.set(d, []);
-          dateMap.get(d).push(t);
-        }
-
-        const clashingDates = [];
-        for (const [d, grp] of dateMap.entries()) {
-          if (grp.length > 1) {
-            clashingDates.push(d);
+        
+        // Sort tasks by currentDeadline, then by priority
+        taskList.sort((a, b) => {
+          if (a.currentDeadline !== b.currentDeadline) {
+            return a.currentDeadline.localeCompare(b.currentDeadline);
           }
-        }
-
-        if (clashingDates.length === 0) {
-          hasClashes = false;
-          break;
-        }
-
-        // Pick earliest clashing date
-        clashingDates.sort();
-        const clashDate = clashingDates[0];
-        const clashingTasks = dateMap.get(clashDate);
-
-        // Sort by priority: Critical (0) > High (1) > Medium (2) > Low (3)
-        clashingTasks.sort((a, b) => {
           const pA = PRIORITY_ORDER[a.priority] ?? 99;
           const pB = PRIORITY_ORDER[b.priority] ?? 99;
           if (pA !== pB) return pA - pB;
-          const aOrig = a.originalDeadline === clashDate ? 0 : 1;
-          const bOrig = b.originalDeadline === clashDate ? 0 : 1;
-          if (aOrig !== bOrig) return aOrig - bOrig;
           return a.id - b.id;
         });
 
-        // Highest priority task stays on clashDate
-        let anchor = clashDate;
-
-        // Lower-priority tasks move forward until at least 3-day gap (4 days)
-        for (let i = 1; i < clashingTasks.length; i++) {
-          const lowerTask = clashingTasks[i];
-          const nextSlot = addCalendarDays(anchor, 4);
-          lowerTask.currentDeadline = nextSlot;
-          anchor = nextSlot;
+        let clashFound = false;
+        // Find the first adjacent pair that has a clash (gap < 4 days)
+        for (let i = 0; i < taskList.length - 1; i++) {
+          const t1 = taskList[i];
+          const t2 = taskList[i + 1];
+          
+          if (diffDays(t1.currentDeadline, t2.currentDeadline) < 4) {
+            const pA = PRIORITY_ORDER[t1.priority] ?? 99;
+            const pB = PRIORITY_ORDER[t2.priority] ?? 99;
+            
+            if (pA <= pB) {
+              // t1 has higher or equal priority. Move t2 forward to ensure 4-day gap.
+              t2.currentDeadline = addCalendarDays(t1.currentDeadline, 4);
+            } else {
+              // t2 has strictly higher priority. Move t1 forward past t2 to ensure 4-day gap.
+              t1.currentDeadline = addCalendarDays(t2.currentDeadline, 4);
+            }
+            clashFound = true;
+            break; // Stop and re-evaluate in the next iteration
+          }
         }
 
-        // Re-evaluate entire schedule on next iteration
+        if (!clashFound) {
+          hasClashes = false;
+          break;
+        }
       }
 
       // Collect updated tasks
@@ -2532,7 +2670,12 @@ app.post('/api/employee/:id/task/:taskId/reschedule', async (req, res) => {
   }
 });
 
-// PM API Routes (Authentication removed for testing)
+// Router-specific middleware below remains explicit for the mounted PM APIs.
+app.use('/api/leaves', authenticateToken);
+app.use('/api/daily-logs', authenticateToken);
+// Legacy project consumers use /api/projects; keep that endpoint on the same
+// authenticated router so it cannot fall through to the SPA HTML entrypoint.
+app.use('/api/projects', authenticateToken, projectRoutes(pool));
 app.use('/api/pm/dashboard', dashboardRoutes(pool));
 app.use('/api/pm/projects', projectRoutes(pool));
 app.use('/api/pm/tasks', taskRoutes(pool));
@@ -2545,6 +2688,8 @@ app.use('/api/pm/schedule', schedulingRoutes(pool));
 app.use('/api/pm/leaves', leavesRoutes(pool));
 app.use('/api/leaves', leavesRoutes(pool));
 app.use('/api/daily-logs', dailyLogsRoutes);
+app.use('/api/pm/employee-performance', performanceRoutes(pool));
+app.use('/api/employee/performance', authenticateToken, requireRole('employee'), employeePerformanceRoutes(pool));
 
 // Run delay detection every day at 8:00 AM
 cron.schedule('0 8 * * 1-5', async () => {
@@ -2576,3 +2721,5 @@ cron.schedule('0 9 * * *', async () => {
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
+
+

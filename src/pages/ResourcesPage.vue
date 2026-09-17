@@ -81,6 +81,14 @@
         >
           <q-tooltip>Clear filters</q-tooltip>
         </q-btn>
+        <q-btn
+          color="primary"
+          icon="balance"
+          label="Auto Rebalance"
+          rounded
+          class="q-ml-sm"
+          @click="openRebalanceSimulate"
+        />
         </div>
         </div>
 
@@ -135,6 +143,14 @@
             </q-badge>
           </q-td>
         </template>
+
+        <template v-slot:body-cell-actions="props">
+          <q-td :props="props">
+            <q-btn flat round dense icon="comment" color="blue" @click.stop="openSendCommentDialog(props.row)">
+              <q-tooltip>Send Comment</q-tooltip>
+            </q-btn>
+          </q-td>
+        </template>
       </q-table>
     </div>
 
@@ -166,6 +182,60 @@
       :resource-id="selectedResourceId"
       @reassigned="fetchEmployees"
     />
+
+    <SendCommentDialog
+      v-model="showSendCommentDialog"
+      :prefilled-employee="selectedEmployeeForComment"
+    />
+
+    <!-- Auto Rebalance Dialog -->
+    <q-dialog v-model="showRebalanceDialog">
+      <q-card style="min-width: 500px; max-width: 800px;">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6">Auto Rebalance Proposal</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+
+        <q-card-section>
+          <div v-if="rebalanceLoading" class="flex flex-center q-pa-md">
+            <q-spinner-dots size="40px" color="primary" />
+          </div>
+          <div v-else-if="rebalanceError" class="text-red">
+            {{ rebalanceError }}
+          </div>
+          <div v-else-if="rebalanceChanges.length === 0" class="text-grey-7 text-center q-pa-md">
+            No overloaded resources found or no tasks can be reassigned.
+          </div>
+          <div v-else>
+            <div class="q-mb-md text-subtitle2">The following tasks will be reassigned to balance workloads:</div>
+            <q-list bordered separator class="rounded-borders">
+              <q-item v-for="change in rebalanceChanges" :key="change.task_id">
+                <q-item-section>
+                  <q-item-label class="text-weight-bold">{{ change.title || `Task #${change.task_id}` }}</q-item-label>
+                  <q-item-label caption class="q-mt-xs">
+                    <q-badge color="red-1" text-color="red-8" class="q-pa-xs">
+                      <q-icon name="person_remove" class="q-mr-xs" />
+                      {{ change.from_user_name }}
+                    </q-badge>
+                    <q-icon name="arrow_forward" class="q-mx-sm text-grey" />
+                    <q-badge color="green-1" text-color="green-8" class="q-pa-xs">
+                      <q-icon name="person_add" class="q-mr-xs" />
+                      {{ change.to_user_name }}
+                    </q-badge>
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </div>
+        </q-card-section>
+
+        <q-card-actions align="right" class="text-primary q-pa-md">
+          <q-btn flat label="Cancel" color="grey-7" v-close-popup />
+          <q-btn color="primary" label="Apply Changes" @click="applyRebalance" :loading="rebalanceLoading" :disable="rebalanceChanges.length === 0" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -176,6 +246,7 @@ import ResourceDetailDialog from '../components/ResourceDetailDialog.vue';
 import ResourceUtilizationChart from '../components/ResourceUtilizationChart.vue';
 import ActiveTasksChart from '../components/ActiveTasksChart.vue';
 import WorkloadScatterChart from '../components/WorkloadScatterChart.vue';
+import SendCommentDialog from '../components/SendCommentDialog.vue';
 import { useAuthStore } from '../stores/authStore'
 
 const authStore = useAuthStore()
@@ -194,6 +265,68 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const showResourceDialog = ref(false);
 const selectedResourceId = ref<number>(0);
+const showSendCommentDialog = ref(false);
+const selectedEmployeeForComment = ref<any>(null);
+
+const openSendCommentDialog = (employee: any) => {
+  // Add 'id' since SendCommentDialog expects it to be 'id'
+  selectedEmployeeForComment.value = { ...employee, id: employee.user_id };
+  showSendCommentDialog.value = true;
+};
+
+const showRebalanceDialog = ref(false);
+const rebalanceChanges = ref<any[]>([]);
+const rebalanceLoading = ref(false);
+const rebalanceError = ref<string | null>(null);
+
+const openRebalanceSimulate = async () => {
+  rebalanceLoading.value = true;
+  showRebalanceDialog.value = true;
+  rebalanceError.value = null;
+  try {
+    const response = await fetch('http://localhost:3007/api/pm/resources/rebalance/simulate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
+      }
+    });
+    const data = await response.json();
+    if (data.success) {
+      rebalanceChanges.value = data.changes || [];
+    } else {
+      rebalanceError.value = data.error || 'Failed to simulate rebalance';
+    }
+  } catch (err: any) {
+    rebalanceError.value = err.message || 'Network error';
+  } finally {
+    rebalanceLoading.value = false;
+  }
+};
+
+const applyRebalance = async () => {
+  rebalanceLoading.value = true;
+  try {
+    const response = await fetch('http://localhost:3007/api/pm/resources/rebalance', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
+      }
+    });
+    const data = await response.json();
+    if (data.success) {
+      showRebalanceDialog.value = false;
+      fetchEmployees();
+    } else {
+      rebalanceError.value = data.error || 'Failed to rebalance';
+    }
+  } catch (err: any) {
+    rebalanceError.value = err.message || 'Network error';
+  } finally {
+    rebalanceLoading.value = false;
+  }
+};
 
 const columns = [
   { name: 'name', label: 'Employee', field: 'first_name', align: 'left' as const, sortable: true },
@@ -202,6 +335,7 @@ const columns = [
   { name: 'tasks', label: 'Active Tasks', field: 'active_task_count', align: 'center' as const, sortable: true },
   { name: 'hours', label: 'Weekly Hours', field: 'weekly_required_hours', align: 'center' as const, sortable: true, format: (val: number) => `${Math.round(val)}h` },
   { name: 'status', label: 'Status', field: 'workload_status', align: 'center' as const, sortable: true },
+  { name: 'actions', label: 'Actions', field: 'actions', align: 'center' as const },
 ];
 
 const statusOptions = [
@@ -257,6 +391,7 @@ const fetchEmployees = async () => {
     const response = await fetch('http://localhost:3007/api/pm/resources', {
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
       },
     });
     const data = await response.json();

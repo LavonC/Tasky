@@ -40,20 +40,24 @@ export default defineRouter((/* { store, ssrContext } */) => {
     const isAuthenticated = Boolean(savedUser && savedToken);
     const isProtectedRoute = to.matched.some((record) => record.meta.requiresAuth);
     const isAuthRoute = to.path.startsWith('/auth');
+    let role: string | undefined;
+
+    try {
+      role = JSON.parse(savedUser || '{}').role;
+    } catch {
+      role = undefined;
+    }
 
     if (isProtectedRoute && !isAuthenticated) {
       return { path: '/auth/login', replace: true };
     }
 
-    if (isAuthRoute && isAuthenticated) {
-      let role: string | undefined;
-      try {
-        role = JSON.parse(savedUser || '{}').role;
-      } catch {
-        sessionStorage.removeItem('tasky_user');
-        sessionStorage.removeItem('tasky_token');
-      }
+    const requiredRole = to.matched.find((record) => record.meta.requiresRole)?.meta.requiresRole;
+    if (isAuthenticated && requiredRole && role !== requiredRole) {
+      return { path: role === 'employee' ? '/employee/task-manager' : '/dashboard', replace: true };
+    }
 
+    if (isAuthRoute && isAuthenticated) {
       return {
         path: role === 'employee' ? '/employee/task-manager' : '/dashboard',
         replace: true,

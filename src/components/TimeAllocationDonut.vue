@@ -16,7 +16,8 @@
       />
     </div>
 
-    <div class="row items-center q-gutter-lg">
+    <div v-if="!data.length" class="text-grey-6 q-pa-lg">No work has been logged in this period.</div>
+    <div v-else class="row items-center q-gutter-lg">
       <div ref="donutContainer" class="donut-container"></div>
 
       <div class="column q-gutter-sm">
@@ -70,10 +71,11 @@ function handlePeriodChange(value: string) {
 }
 
 function renderDonut() {
-  if (!donutContainer.value || !props.data.length) return;
+  if (!donutContainer.value) return;
 
   const container = donutContainer.value;
   container.innerHTML = '';
+  if (!props.data.length) return;
 
   const width = 200;
   const height = 200;

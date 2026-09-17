@@ -109,7 +109,7 @@ export default function resourceRoutes(pool) {
         SELECT p.id, p.name, p.color,
           COALESCE(SUM(
             CASE WHEN ta2.cnt > 0
-              THEN (t.expected_effort * (100 - t.progress) / 100) / ta2.cnt
+              THEN ((t.expected_effort * (100 - t.progress) / 100) / ta2.cnt) / GREATEST(1, DATEDIFF(t.deadline, CURDATE()) / 7.0)
               ELSE 0 END
           ), 0) AS hours
         FROM task t
@@ -122,10 +122,14 @@ export default function resourceRoutes(pool) {
         [userId],
       );
 
-      // Round workload hours to whole numbers
+      // Round workload hours to whole numbers and calculate total
+      let totalWeeklyHours = 0;
       for (const wp of workloadByProject) {
+        totalWeeklyHours += Number(wp.hours);
         wp.hours = Math.round(Number(wp.hours));
       }
+
+      const utilization = user.max_hours_per_week > 0 ? (totalWeeklyHours / user.max_hours_per_week) * 100 : 0;
 
       // Daily log compliance
       const [compliance] = await pool.execute(
@@ -155,6 +159,7 @@ export default function resourceRoutes(pool) {
           workloadByProject,
           compliance,
           leaves,
+          utilization,
           password_hash: undefined, // don't expose
         },
       });
@@ -251,11 +256,23 @@ export default function resourceRoutes(pool) {
     }
   });
 
+  // POST /api/pm/resources/rebalance/simulate
+  router.post('/rebalance/simulate', async (req, res) => {
+    try {
+      const orgId = req.user.org_id;
+      const result = await rebalanceWorkloads(pool, orgId, true);
+      res.json(result);
+    } catch (error) {
+      console.error('Simulate rebalance error:', error);
+      res.status(500).json({ success: false, error: 'Server error during simulate rebalance' });
+    }
+  });
+
   // POST /api/pm/resources/rebalance
   router.post('/rebalance', async (req, res) => {
     try {
       const orgId = req.user.org_id;
-      const result = await rebalanceWorkloads(pool, orgId);
+      const result = await rebalanceWorkloads(pool, orgId, false);
       res.json(result);
     } catch (error) {
       console.error('Rebalance error:', error);

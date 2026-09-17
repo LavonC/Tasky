@@ -5,6 +5,7 @@ export const useAnalyticsStore = defineStore('analytics', {
     overview: null as any,
     projectProgress: [] as any[],
     taskDistribution: null as any,
+    completionTrend: [] as any[],
     resourceWorkload: [] as any[],
     deadlineRisks: [] as any[],
     projectPerformance: [] as any[],
@@ -15,8 +16,11 @@ export const useAnalyticsStore = defineStore('analytics', {
 
   actions: {
     getHeaders() {
-      // Authentication removed for testing
-      return { 'Content-Type': 'application/json' };
+      const token = sessionStorage.getItem('tasky_token');
+      return {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      };
     },
 
     async fetchOverview(period = 'this_month') {
@@ -78,6 +82,18 @@ export const useAnalyticsStore = defineStore('analytics', {
       }
     },
 
+    async fetchCompletionTrend() {
+      try {
+        const response = await fetch('http://localhost:3007/api/pm/analytics/completion-trend', {
+          headers: this.getHeaders(),
+        });
+        const data = await response.json();
+        if (data.success) this.completionTrend = data.trend;
+      } catch (err: any) {
+        this.error = err.message;
+      }
+    },
+
     async fetchResourceWorkload() {
       try {
         const response = await fetch('http://localhost:3007/api/pm/analytics/resource-workload', {
@@ -108,7 +124,19 @@ export const useAnalyticsStore = defineStore('analytics', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
-        if (data.success) this.projectPerformance = data.projects;
+        if (data.success) {
+          this.projectPerformance = data.projects.map((project: any) => ({
+            ...project,
+            progress: Number(project.progress) || 0,
+            total_tasks: Number(project.total_tasks) || 0,
+            completed_tasks: Number(project.completed_tasks) || 0,
+            overdue_tasks: Number(project.overdue_tasks) || 0,
+            team_size: Number(project.team_size) || 0,
+            total_hours_logged: Number(project.total_hours_logged) || 0,
+            total_estimated_hours: Number(project.total_estimated_hours) || 0,
+            days_remaining: Number(project.days_remaining) || 0,
+          }));
+        }
       } catch (err: any) {
         this.error = err.message;
       }
@@ -135,6 +163,7 @@ export const useAnalyticsStore = defineStore('analytics', {
         this.fetchOverview(period),
         this.fetchProjectProgress(period),
         this.fetchTaskDistribution(),
+        this.fetchCompletionTrend(),
         this.fetchResourceWorkload(),
         this.fetchDeadlineRisks(),
         this.fetchProjectPerformance(),

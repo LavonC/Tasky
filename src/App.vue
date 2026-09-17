@@ -3,39 +3,25 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
 import { useAuthStore } from './stores/authStore';
 
 const authStore = useAuthStore();
 
-onMounted(() => {
-  console.log('App.vue mounted - initializing auth');
-  
-  // Initialize auth from localStorage first
-  authStore.initializeAuth();
-  console.log('Auth initialized. Is authenticated:', authStore.isAuthenticated);
-  
-  // Check for auth token and user data from URL parameters (from main project login)
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get('token');
-  const userData = urlParams.get('user');
+// Initialize auth before the first render so protected child pages cannot start
+// requests with an empty token.
+const urlParams = new URLSearchParams(window.location.search);
+const token = urlParams.get('token');
+const userData = urlParams.get('user');
 
-  if (token && userData) {
-    try {
-      // Store auth data in localStorage for admin project using the correct keys
-      sessionStorage.setItem('tasky_token', token);
-      sessionStorage.setItem('tasky_user', userData);
-
-      // Re-initialize auth with the new data
-      authStore.initializeAuth();
-
-      // Clean URL by removing parameters
-      window.history.replaceState({}, document.title, window.location.pathname);
-
-      console.log('Auth data received from main project and stored');
-    } catch (error) {
-      console.error('Error storing auth data:', error);
-    }
+if (token && userData) {
+  try {
+    sessionStorage.setItem('tasky_token', token);
+    sessionStorage.setItem('tasky_user', userData);
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } catch (error) {
+    console.error('Error storing auth data:', error);
   }
-});
+}
+
+authStore.initializeAuth();
 </script>

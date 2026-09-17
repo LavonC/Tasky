@@ -242,6 +242,8 @@
               v-model="selectedReviewer"
               :options="reviewerOptions"
               label="Select Reviewer (Optional)"
+              emit-value
+              map-options
               outlined
               class="q-mt-md"
               clearable
@@ -462,13 +464,17 @@ async function fetchFromDatabase() {
       myTasks.value = tasksData.tasks;
     }
 
-    const projectsResponse = await fetch('http://localhost:3007/api/pm/projects');
+    const projectsResponse = await fetch(`http://localhost:3007/api/employee/${authStore.user?.id}/projects`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
     const projectsData = await projectsResponse.json();
     if (projectsData.success) {
       projects.value = projectsData.projects;
     }
 
-    const employeesResponse = await fetch('http://localhost:3007/api/users');
+    const employeesResponse = await fetch('http://localhost:3007/api/users', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
     const employeesData = await employeesResponse.json();
     if (employeesData.success) {
       employees.value = employeesData.users;

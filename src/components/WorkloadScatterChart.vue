@@ -1,11 +1,7 @@
 <template>
-  <q-card flat bordered class="q-pa-md bg-white">
+  <q-card flat bordered class="q-pa-md bg-white workload-card">
     <div class="text-subtitle1 text-weight-bold">
       Workload vs Utilization
-    </div>
-
-    <div class="text-caption text-grey-7 q-mb-md">
-      Compare active tasks with current resource utilization
     </div>
 
     <div v-if="resources.length === 0" class="text-center text-grey-6 q-pa-lg">
@@ -66,7 +62,7 @@
     </div>
 
     <!-- Insight -->
-    <div class="row q-mt-sm q-gutter-sm">
+    <div class="row q-gutter-sm insight-row">
       <q-chip
         icon="trending_up"
         color="orange"
@@ -159,10 +155,15 @@ const highUtilizationCount = computed(() => {
 </script>
 
 <style scoped>
+.workload-card {
+  display: flex;
+  flex-direction: column;
+}
+
 .scatter-container {
   position: relative;
-  height: 220px;
-  padding: 15px 25px 35px 45px;
+  height: 135px;
+  padding: 5px 5px 10px 42px;
 }
 
 .chart-area {
@@ -209,7 +210,7 @@ const highUtilizationCount = computed(() => {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -25px;
+  bottom: -5px;
 }
 
 .x-axis span {
@@ -221,7 +222,7 @@ const highUtilizationCount = computed(() => {
 
 .y-axis-label {
   position: absolute;
-  left: -20px;
+  left: -25px;
   top: 45%;
   transform: rotate(-90deg);
   font-size: 12px;
@@ -231,10 +232,16 @@ const highUtilizationCount = computed(() => {
 
 .x-axis-label {
   position: absolute;
-  bottom: 0;
+  bottom: 10;
   left: 50%;
   transform: translateX(-50%);
   font-size: 12px;
   color: #666;
+  white-space: nowrap;
+}
+
+.insight-row {
+  margin-top: auto;
+  margin-bottom: -16px;
 }
 </style>

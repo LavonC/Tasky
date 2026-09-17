@@ -880,7 +880,9 @@ async function fetchFromDatabase() {
     }
 
     // Fetch projects directly from database
-    const projectsResponse = await fetch('http://localhost:3007/api/pm/projects');
+    const projectsResponse = await fetch(`http://localhost:3007/api/employee/${authStore.user?.id}/projects`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
     const projectsData = await projectsResponse.json();
     if (projectsData.success) {
       projects.value = projectsData.projects;
@@ -888,7 +890,9 @@ async function fetchFromDatabase() {
     }
 
     // Fetch employees directly from database
-    const employeesResponse = await fetch('http://localhost:3007/api/users');
+    const employeesResponse = await fetch('http://localhost:3007/api/users', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
     const employeesData = await employeesResponse.json();
     console.log('Employees API response:', employeesData);
     if (employeesData.success) {
@@ -989,7 +993,7 @@ function openUpdateDialog(task: any) {
 function openSetDeadlineDialog(task: any) {
   console.log('openSetDeadlineDialog called with task:', task);
   selectedTask.value = task;
-  newDeadline.value = task.deadline ? task.deadline.split('T')[0] : '';
+  newDeadline.value = task.deadline ? new Date(new Date(task.deadline).getTime() - (new Date(task.deadline).getTimezoneOffset() * 60000)).toISOString().split('T')[0] || '' : '';
   showSetDeadlineDialog.value = true;
   console.log('Dialog should now show:', showSetDeadlineDialog.value);
 }

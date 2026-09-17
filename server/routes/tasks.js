@@ -56,7 +56,7 @@ export default function taskRoutes(pool) {
 
       const [tasks] = await pool.execute(query, params);
 
-      // Get assignees for each task
+      // Get assignees and dependencies for each task
       for (const task of tasks) {
         const [assignees] = await pool.execute(
           `
@@ -68,6 +68,17 @@ export default function taskRoutes(pool) {
           [task.id],
         );
         task.assignees = assignees;
+        
+        const [dependsOn] = await pool.execute(
+          `
+          SELECT td.*, t.title, t.status, t.progress
+          FROM task_dependency td
+          JOIN task t ON t.id = td.depends_on_id
+          WHERE td.task_id = ?
+        `,
+          [task.id]
+        );
+        task.dependsOn = dependsOn;
       }
 
       // Filter by assignee after fetching (since it's a join)
@@ -88,6 +99,32 @@ export default function taskRoutes(pool) {
       res.json({ success: true, tasks: filteredTasks, stats });
     } catch (error) {
       console.error('Get tasks error:', error);
+      res.status(500).json({ success: false, error: 'Server error' });
+    }
+  });
+
+  // GET /api/pm/tasks/unassigned
+  router.get('/unassigned', async (req, res) => {
+    try {
+      const orgId = req.user.org_id;
+      const pmId = req.user.id;
+
+      const [tasks] = await pool.execute(
+        `
+        SELECT t.*, p.name AS project_name, p.color AS project_color
+        FROM task t
+        JOIN project p ON p.id = t.project_id
+        WHERE p.org_id = ? AND p.created_by = ? 
+          AND t.status != 'completed'
+          AND t.id NOT IN (SELECT task_id FROM task_assignment WHERE is_active = 1)
+        ORDER BY t.deadline ASC
+      `,
+        [orgId, pmId]
+      );
+
+      res.json({ success: true, tasks });
+    } catch (error) {
+      console.error('Get unassigned tasks error:', error);
       res.status(500).json({ success: false, error: 'Server error' });
     }
   });
@@ -194,6 +231,7 @@ export default function taskRoutes(pool) {
           assignees,
           progressHistory,
           comments,
+          dependencies: dependsOn,
           dependsOn,
           dependedBy,
           dailyLogs,
@@ -319,6 +357,29 @@ export default function taskRoutes(pool) {
       );
 
       const [newTask] = await pool.execute('SELECT * FROM task WHERE id = ?', [taskId]);
+      
+      const [assignees] = await pool.execute(
+        `
+        SELECT u.id, u.first_name, u.last_name, u.avatar, u.employee_code
+        FROM task_assignment ta
+        JOIN user u ON u.id = ta.user_id
+        WHERE ta.task_id = ? AND ta.is_active = 1
+      `,
+        [taskId],
+      );
+      newTask[0].assignees = assignees;
+
+      const [dependsOn] = await pool.execute(
+        `
+        SELECT td.*, t.title, t.status, t.progress
+        FROM task_dependency td
+        JOIN task t ON t.id = td.depends_on_id
+        WHERE td.task_id = ?
+      `,
+        [taskId]
+      );
+      newTask[0].dependsOn = dependsOn;
+
       res.json({ success: true, task: newTask[0] });
     } catch (error) {
       console.error('Create task error:', error);
@@ -432,22 +493,7 @@ export default function taskRoutes(pool) {
 
       const [updated] = await pool.execute('SELECT * FROM task WHERE id = ?', [taskId]);
 
-      // Hook into the scheduler
-      if ((status === 'blocked' || status === 'on-hold') && current[0].status !== status) {
-        await handleTaskInterrupt(pool, taskId, 'Status changed to ' + status);
-      }
-      if (status === 'completed' && current[0].status !== 'completed') {
-        await handleEarlyCompletion(pool, taskId);
-        await runGlobalAutoScheduler(pool, current[0].org_id || req.user.org_id);
-      } else if (priority !== undefined && priority !== current[0].priority) {
-        await runGlobalAutoScheduler(pool, current[0].org_id || req.user.org_id);
-        const { buildRescheduleProposal } = await import('../services/schedulingEngine.js');
-        const [users] = await pool.execute('SELECT user_id FROM task_assignment WHERE task_id = ? AND is_active = 1', [taskId]);
-        const userIds = users.map(u => u.user_id);
-        if (userIds.length > 0) {
-          await buildRescheduleProposal(pool, current[0].org_id || req.user.org_id, 'priority_up', taskId, userIds);
-        }
-      }
+
 
       // Fetch fresh assignees to return to frontend
       const [assignees] = await pool.execute(
@@ -461,6 +507,17 @@ export default function taskRoutes(pool) {
       );
 
       updated[0].assignees = assignees;
+
+      const [dependsOn] = await pool.execute(
+        `
+        SELECT td.*, t.title, t.status, t.progress
+        FROM task_dependency td
+        JOIN task t ON t.id = td.depends_on_id
+        WHERE td.task_id = ?
+      `,
+        [taskId]
+      );
+      updated[0].dependsOn = dependsOn;
 
       res.json({ success: true, task: updated[0] });
     } catch (error) {
@@ -483,6 +540,77 @@ export default function taskRoutes(pool) {
       res.json({ success: true });
     } catch (error) {
       console.error('Delete task error:', error);
+      res.status(500).json({ success: false, error: 'Server error' });
+    }
+  });
+
+  // POST /api/pm/tasks/assign
+  router.post('/assign', async (req, res) => {
+    try {
+      const pmId = req.user.id;
+      const { taskId, userId } = req.body;
+
+      if (!taskId || !userId) {
+        return res.status(400).json({ success: false, error: 'taskId and userId required' });
+      }
+
+      // Check if already assigned
+      const [existing] = await pool.execute(
+        'SELECT id FROM task_assignment WHERE task_id = ? AND user_id = ? AND is_active = 1',
+        [taskId, userId],
+      );
+
+      if (existing.length === 0) {
+        await pool.execute(
+          'INSERT INTO task_assignment (task_id, user_id, assigned_by) VALUES (?, ?, ?)',
+          [taskId, userId, pmId],
+        );
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Assign task error:', error);
+      res.status(500).json({ success: false, error: 'Server error' });
+    }
+  });
+
+  // POST /api/pm/tasks/comment
+  router.post('/comment', async (req, res) => {
+    try {
+      const pmId = req.user.id;
+      const { task_id, employee_id, comment } = req.body;
+      
+      if (!task_id || !employee_id || !comment) {
+        return res.status(400).json({ success: false, error: 'Missing required fields' });
+      }
+
+      // Verify employee is assigned to this task
+      const [assignment] = await pool.execute(
+        'SELECT id FROM task_assignment WHERE task_id = ? AND user_id = ? AND is_active = 1',
+        [task_id, employee_id]
+      );
+      if (assignment.length === 0) {
+        return res.status(400).json({ success: false, error: 'Employee is not assigned to this task' });
+      }
+
+      // Get task details for title
+      const [tasks] = await pool.execute('SELECT title FROM task WHERE id = ?', [task_id]);
+      if (tasks.length === 0) return res.status(404).json({ success: false, error: 'Task not found' });
+      const taskTitle = tasks[0].title;
+
+      // Get PM name for notification
+      const [pmRows] = await pool.execute('SELECT first_name, last_name FROM user WHERE id = ?', [pmId]);
+      const pmName = pmRows.length > 0 ? `${pmRows[0].first_name} ${pmRows[0].last_name}` : 'Your PM';
+
+      await pool.execute(
+        `INSERT INTO notification (user_id, type, title, message, reference_type, reference_id, is_read, created_at)
+         VALUES (?, 'comment_added', ?, ?, 'task', ?, 0, NOW())`,
+        [employee_id, `Comment from ${pmName} on: ${taskTitle}`, comment, task_id]
+      );
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Send comment error:', error);
       res.status(500).json({ success: false, error: 'Server error' });
     }
   });
@@ -719,6 +847,8 @@ export default function taskRoutes(pool) {
       res.status(500).json({ success: false, error: 'Server error' });
     }
   });
+
+  // Note: /comment route moved above /:id routes to avoid Express route shadowing
 
   return router;
 }

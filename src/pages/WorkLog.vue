@@ -208,7 +208,7 @@ const workLogs = ref<any[]>([]);
 const analytics = ref<any>(null);
 
 const newLog = ref({
-  date: new Date().toISOString().split('T')[0],
+  date: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
   taskId: null as number | null,
   status: 'in-progress',
   hoursSpent: 0,
@@ -236,7 +236,9 @@ async function fetchFromDatabase() {
       myTasks.value = tasksData.tasks;
     }
 
-    const projectsResponse = await fetch('http://localhost:3007/api/pm/projects');
+    const projectsResponse = await fetch(`http://localhost:3007/api/employee/${authStore.user?.id}/projects`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
     const projectsData = await projectsResponse.json();
     if (projectsData.success) {
       projects.value = projectsData.projects;
@@ -364,7 +366,7 @@ async function submitWorkLog() {
       await fetchFromDatabase();
       showCreateLogDialog.value = false;
       newLog.value = {
-        date: new Date().toISOString().split('T')[0],
+        date: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
         taskId: null,
         status: 'in-progress',
         hoursSpent: 4,

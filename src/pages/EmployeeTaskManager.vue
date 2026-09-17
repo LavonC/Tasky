@@ -524,10 +524,10 @@
               rows="3"
             />
 
-            <!-- PRIORITY / DEADLINE -->
+            <!-- PRIORITY / DEADLINE / EFFORT -->
 
-            <div class="row q-mt-lg row q-my-lg" style="gap: 39px">
-              <div class="col-12 col-sm-5">
+            <div class="row q-mt-lg row q-my-lg q-col-gutter-md">
+              <div class="col-12 col-sm-4">
                 <q-select
                   v-model="newTask.priority"
                   :options="priorityOptions.slice(1)"
@@ -537,7 +537,7 @@
                 />
               </div>
 
-              <div class="col-12 col-sm-6">
+              <div class="col-12 col-sm-4">
                 <q-input
                   v-model="newTask.deadline"
                   label="Deadline"
@@ -545,6 +545,16 @@
                   outlined
                   dense
                   stack-label
+                />
+              </div>
+
+              <div class="col-12 col-sm-4">
+                <q-input
+                  v-model.number="newTask.expected_effort"
+                  label="Est. Hours"
+                  type="number"
+                  outlined
+                  dense
                 />
               </div>
             </div>
@@ -853,11 +863,6 @@
           no-caps
           broad-indicator
         >
-          <q-tab name="details" icon="tune" label="Details" />
-
-          <q-tab name="timeline" icon="timeline" label="Progress Timeline" />
-
-          <q-tab name="impact" icon="analytics" label="Simulate Impact" />
         </q-tabs>
 
         <!-- ================= CONTENT ================= -->
@@ -969,6 +974,31 @@
                 </div>
               </div>
             </div>
+
+            <!-- ================= DEPENDENCIES ================= -->
+            
+            <div class="section-title q-mt-xl q-mb-md">Dependencies</div>
+            
+            <q-list
+              v-if="selectedTask.dependencies && selectedTask.dependencies.length > 0"
+              dense
+            >
+              <q-item
+                v-for="dep in selectedTask.dependencies"
+                :key="dep.id || dep"
+                class="q-px-none q-py-xs"
+              >
+                <q-item-section avatar style="min-width: 36px">
+                  <q-icon name="link" color="grey-6" size="sm" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-body2"
+                    >{{ dep.title || dep.name || dep.id || dep }}</q-item-label
+                  >
+                </q-item-section>
+              </q-item>
+            </q-list>
+            <div v-else class="text-body2 text-grey-6 q-mb-md">No dependencies.</div>
 
             <!-- ================= TASK STATUS ================= -->
 
@@ -1317,9 +1347,9 @@
                   />
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label class="text-weight-bold">{{ task.title }}</q-item-label>
+                  <q-item-label class="text-weight-bold">{{ task.name }}</q-item-label>
                   <q-item-label caption class="text-grey-7">
-                    Project: {{ task.project_name || 'Project' }}
+                    Project: {{ task.project || 'Project' }}
                   </q-item-label>
                 </q-item-section>
                 <q-item-section side>
@@ -1370,8 +1400,8 @@
                 <q-badge :color="getPriorityBadgeColor(task.priority)" :label="task.priority" />
               </q-item-section>
               <q-item-section>
-                <q-item-label class="text-weight-bold">{{ task.title }}</q-item-label>
-                <q-item-label caption>{{ task.project_name || 'Project' }}</q-item-label>
+                <q-item-label class="text-weight-bold">{{ task.name }}</q-item-label>
+                <q-item-label caption>{{ task.project || 'Project' }}</q-item-label>
                 <q-item-label caption class="text-red">{{ formatDate(task.deadline) }}</q-item-label>
               </q-item-section>
               <q-item-section side>
@@ -1517,6 +1547,8 @@ interface Task {
   createdAt: string;
 
   progress: number;
+
+  dependencies?: any[];
 }
 
 // ============================================================
@@ -1595,7 +1627,9 @@ const colleagues = ref<{ id: number; name: string }[]>([]);
 // Fetch colleagues for review selection
 const fetchColleagues = async () => {
   try {
-    const response = await fetch('http://localhost:3007/api/users/employees');
+    const response = await fetch('http://localhost:3007/api/users/employees', {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    });
     const result = await response.json();
     if (result.success && result.users) {
       colleagues.value = result.users
@@ -1725,6 +1759,7 @@ const fetchTasks = async () => {
               createdAt: task.created_at || '',
               subtasks: subtasks,
               progress: parseFloat(task.progress) || 0,
+              dependencies: task.dependencies || [],
             };
           } catch (error) {
             console.error('Error fetching subtasks for task:', task.id, error);
@@ -1750,6 +1785,7 @@ const fetchTasks = async () => {
               createdAt: task.created_at || '',
               subtasks: [],
               progress: parseFloat(task.progress) || 0,
+              dependencies: task.dependencies || [],
             };
           }
         }),
@@ -1802,7 +1838,7 @@ function openSetDeadlineDialog(task: any) {
   console.log('=== OPEN SET DEADLINE DIALOG ===');
   console.log('Task:', task);
   selectedOverdueTask.value = task;
-  newDeadline.value = task.deadline ? task.deadline.split('T')[0] : '';
+  newDeadline.value = task.deadline ? new Date(new Date(task.deadline).getTime() - (new Date(task.deadline).getTimezoneOffset() * 60000)).toISOString().split('T')[0] || '' : '';
   showSetDeadlineDialog.value = true;
   console.log('Dialog state:', showSetDeadlineDialog.value);
 }
@@ -1915,7 +1951,7 @@ async function automateOverdueTask() {
       });
       showOverdueTaskDialog.value = false;
       showOverdueDialog.value = false;
-      await loadTasks();
+      await fetchTasks();
     } else {
       Notify.create({
         type: 'negative',
@@ -1967,7 +2003,9 @@ const fetchLeaveDates = async () => {
   if (!empId) return;
 
   try {
-    const response = await fetch(`http://localhost:3007/api/daily-logs/employee/${empId}/leave-dates`);
+    const response = await fetch(`http://localhost:3007/api/daily-logs/employee/${empId}/leave-dates`, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    });
     const data = await response.json();
     if (data.success && data.leaveDates) {
       leaveDates.value = data.leaveDates;
@@ -2096,7 +2134,9 @@ const projects = ref<any[]>([]);
 
 const fetchProjects = async () => {
   try {
-    const response = await fetch('http://localhost:3007/api/pm/projects');
+    const response = await fetch(`http://localhost:3007/api/employee/${authStore.user?.id}/projects`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
     const result = await response.json();
     if (result.success && result.projects) {
       projects.value = result.projects;
@@ -2133,7 +2173,9 @@ const fetchUserPointsAndRank = async () => {
     }
 
     // Fetch all users to calculate rank
-    const allUsersResponse = await fetch('http://localhost:3007/api/users');
+    const allUsersResponse = await fetch('http://localhost:3007/api/users', {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    });
     const allUsersResult = await allUsersResponse.json();
     if (allUsersResult.success && allUsersResult.users) {
       const sortedUsers = allUsersResult.users.sort(
@@ -2264,6 +2306,8 @@ const newTask = ref({
   priority: 'Medium',
 
   deadline: '',
+  
+  expected_effort: 0,
 
   subtasks: [] as { id?: number; title: string; estimated_hours: number }[],
 
@@ -2667,6 +2711,8 @@ function openAddTask() {
     priority: 'Medium',
 
     deadline: '',
+    
+    expected_effort: 0,
 
     subtasks: [],
 
@@ -2713,7 +2759,8 @@ async function createTask() {
       description: newTask.value.description || 'No description added.',
       project_id: newTask.value.project,
       priority: newTask.value.priority.toLowerCase(),
-      deadline: newTask.value.deadline || new Date().toISOString().split('T')[0],
+      deadline: newTask.value.deadline || new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
+      expected_effort: newTask.value.expected_effort || 0,
       user_id: authStore.user?.id ? Number(authStore.user.id) : undefined,
       assignee_ids: authStore.user ? [Number(authStore.user.id)] : [],
       is_self_assigned: 1,
@@ -3272,6 +3319,7 @@ async function submitInterrupt() {
 
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
 
   overflow: hidden;

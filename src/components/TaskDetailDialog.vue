@@ -1,36 +1,28 @@
 <template>
-  <q-dialog
-    v-model="isOpen"
-    position="right"
-    maximized
-    transition-show="slide-left"
-    transition-hide="slide-right"
-  >
+  <q-dialog v-model="isOpen">
     <q-card
-      style="width: 600px; max-width: 100vw"
-      class="full-height column bg-grey-1"
+      class="detail-dialog-card bg-grey-1 column"
+      style="width: 800px; max-width: 90vw; max-height: 90vh;"
       v-if="taskStore.currentTask"
     >
       <!-- Header -->
       <q-card-section
-        class="bg-white row items-center justify-between q-pa-md shadow-2 z-top"
+        class="detail-dialog-header row items-center q-pb-md z-top"
         style="flex: 0 0 auto"
       >
-        <div class="row items-center">
-          <q-btn flat round dense icon="close" v-close-popup class="q-mr-sm" />
-          <div class="column">
-            <div class="text-caption text-grey-7 text-uppercase">
-              {{ taskStore.currentTask.project_name }}
-            </div>
-            <div class="text-h6 text-weight-bold" style="line-height: 1.2">
-              {{ taskStore.currentTask.title }}
-            </div>
+        <q-avatar color="white" text-color="indigo" icon="assignment" size="42px" class="q-mr-md" />
+        <div>
+          <div class="text-h6 text-weight-bold" style="line-height: 1.2">
+            {{ taskStore.currentTask.title }}
+          </div>
+          <div class="text-caption text-indigo-1 text-uppercase">
+            {{ taskStore.currentTask.project_name }}
           </div>
         </div>
-
-        <div>
-          <q-btn flat round dense icon="edit" color="primary" @click="onEdit" />
-          <q-btn flat round dense icon="more_vert" color="grey-7">
+        <q-space />
+        <div class="row items-center">
+          <q-btn flat round dense icon="edit" color="white" @click="onEdit" />
+          <q-btn flat round dense icon="more_vert" color="white">
             <q-menu>
               <q-list style="min-width: 150px">
                 <q-item clickable v-close-popup @click="handleDelete">
@@ -42,11 +34,12 @@
               </q-list>
             </q-menu>
           </q-btn>
+          <q-btn flat round dense icon="close" color="white" v-close-popup class="q-ml-sm" />
         </div>
       </q-card-section>
 
       <!-- Main Content -->
-      <q-card-section class="q-pa-md" style="flex: 1 1 0; overflow-y: auto">
+      <q-card-section class="q-pa-md scroll" style="max-height: 75vh;">
         <q-tabs
           v-model="tab"
           dense
@@ -200,6 +193,32 @@
                     </q-item>
                   </q-list>
                   <div v-else class="text-caption text-grey">No assignees</div>
+                </q-card>
+
+                <q-card flat bordered class="bg-white q-pa-md">
+                  <div class="text-subtitle2 text-grey-7 q-mb-sm">Dependencies</div>
+                  <q-list
+                    v-if="
+                      taskStore.currentTask.dependencies && taskStore.currentTask.dependencies.length > 0
+                    "
+                    dense
+                  >
+                    <q-item
+                      v-for="dep in taskStore.currentTask.dependencies"
+                      :key="dep.id || dep"
+                      class="q-px-none q-py-xs"
+                    >
+                      <q-item-section avatar style="min-width: 36px">
+                        <q-icon name="link" color="grey-6" size="sm" />
+                      </q-item-section>
+                      <q-item-section>
+                        <q-item-label class="text-body2"
+                          >{{ dep.title || dep.name || dep.id || dep }}</q-item-label
+                        >
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                  <div v-else class="text-caption text-grey">No dependencies</div>
                 </q-card>
               </div>
             </div>
@@ -436,3 +455,8 @@ const runSimulation = () => {
   }, 1000);
 };
 </script>
+
+<style scoped>
+.detail-dialog-card { border-radius: 18px; overflow: hidden; }
+.detail-dialog-header { color: white; background: linear-gradient(135deg, #3949ab, #5c6bc0); padding: 16px 24px; }
+</style>

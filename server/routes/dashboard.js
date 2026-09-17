@@ -66,6 +66,25 @@ export default function dashboardRoutes(pool) {
         [orgId],
       );
 
+      // Total Projects
+      const [totalProjects] = await pool.execute(
+        `
+        SELECT COUNT(*) AS count FROM project
+        WHERE org_id = ? AND created_by = ? AND status IN ('active','planning')
+        `,
+        [orgId, pmId],
+      );
+
+      // In Progress Tasks
+      const [inProgress] = await pool.execute(
+        `
+        SELECT COUNT(*) AS count FROM task t
+        JOIN project p ON p.id = t.project_id
+        WHERE p.org_id = ? AND p.created_by = ? AND t.status = 'in-progress'
+        `,
+        [orgId, pmId],
+      );
+
       const [loggedToday] = await pool.execute(
         `
         SELECT COUNT(DISTINCT dlc.user_id) AS count
@@ -85,6 +104,8 @@ export default function dashboardRoutes(pool) {
           overloadedResources: overloaded[0].count,
           overdueTasks: overdue[0].count,
           pendingReviews: Math.max(0, pendingReviews),
+          totalProjects: totalProjects[0].count,
+          inProgressTasks: inProgress[0].count,
         },
       });
     } catch (error) {

@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { readApiResponse } from '@/services/api';
 
 export const useProjectStore = defineStore('project', {
   state: () => ({
@@ -16,9 +17,10 @@ export const useProjectStore = defineStore('project', {
 
   actions: {
     getHeaders() {
-      // Authentication removed for testing
+      const token = sessionStorage.getItem('tasky_token');
       return {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
       };
     },
 
@@ -29,11 +31,11 @@ export const useProjectStore = defineStore('project', {
         const response = await fetch(`http://localhost:3007/api/pm/projects?${queryParams}`, {
           headers: this.getHeaders(),
         });
-        const data = await response.json();
+        const data = await readApiResponse<{ success: boolean; projects: any[]; error?: string }>(response);
         if (data.success) {
           this.projects = data.projects;
         } else {
-          this.error = data.error;
+          this.error = data.error ?? null;
         }
       } catch (err: any) {
         this.error = err.message;
@@ -48,11 +50,11 @@ export const useProjectStore = defineStore('project', {
         const response = await fetch(`http://localhost:3007/api/pm/projects/${id}`, {
           headers: this.getHeaders(),
         });
-        const data = await response.json();
+        const data = await readApiResponse<{ success: boolean; project: any; error?: string }>(response);
         if (data.success) {
           this.currentProject = data.project;
         } else {
-          this.error = data.error;
+          this.error = data.error ?? null;
         }
       } catch (err: any) {
         this.error = err.message;
@@ -66,7 +68,7 @@ export const useProjectStore = defineStore('project', {
         const response = await fetch(`http://localhost:3007/api/pm/projects/${id}/timeline`, {
           headers: this.getHeaders(),
         });
-        const data = await response.json();
+        const data = await readApiResponse<{ success: boolean; timeline?: any[] }>(response);
         if (data.success) {
           this.currentProjectTimeline = data.timeline || [];
         }
@@ -82,7 +84,7 @@ export const useProjectStore = defineStore('project', {
           headers: this.getHeaders(),
           body: JSON.stringify(projectData),
         });
-        const data = await response.json();
+        const data = await readApiResponse<{ success: boolean; project: any; error?: string }>(response);
         if (data.success) {
           this.projects.unshift(data.project);
           return data.project;
@@ -100,7 +102,7 @@ export const useProjectStore = defineStore('project', {
           headers: this.getHeaders(),
           body: JSON.stringify(updates),
         });
-        const data = await response.json();
+        const data = await readApiResponse<{ success: boolean; project?: any; error?: string }>(response);
         if (data.success) {
           const index = this.projects.findIndex((p) => p.id == id);
           if (index !== -1) {
@@ -123,7 +125,7 @@ export const useProjectStore = defineStore('project', {
           method: 'DELETE',
           headers: this.getHeaders(),
         });
-        const data = await response.json();
+        const data = await readApiResponse<{ success: boolean; error?: string }>(response);
         if (data.success) {
           this.projects = this.projects.filter((p) => p.id != id);
           if (this.currentProject && this.currentProject.id == id) {

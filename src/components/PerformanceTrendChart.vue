@@ -6,6 +6,7 @@
         <div class="text-body2 text-grey-6">{{ subtitle }}</div>
       </div>
       <q-select
+        v-if="showPeriodSelector"
         v-model="selectedPeriod"
         :options="periodOptions"
         outlined
@@ -25,7 +26,8 @@
       </div>
     </div>
 
-    <div ref="chartContainer" class="chart-container"></div>
+    <div v-if="!data.length" class="chart-empty text-grey-6">No task trend data available.</div>
+    <div v-else ref="chartContainer" class="chart-container"></div>
 
     <div class="row justify-center q-gutter-lg q-mt-md">
       <div v-for="series in seriesConfig" :key="series.key" class="row items-center q-gutter-xs">
@@ -59,11 +61,13 @@ interface Props {
   subtitle: string;
   seriesConfig: { key: string; label: string; color: string }[];
   showStats?: boolean;
+  showPeriodSelector?: boolean;
   periodOptions?: string[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showStats: true,
+  showPeriodSelector: true,
   periodOptions: () => ['Weekly', 'Monthly'],
 });
 
@@ -126,7 +130,7 @@ function renderChart() {
 
   const y = d3
     .scaleLinear()
-    .domain([0, maxValue * 1.1])
+    .domain([0, Math.max(1, maxValue * 1.1)])
     .range([height - margin.bottom, margin.top]);
 
   // Create color scale
@@ -262,6 +266,13 @@ useD3Resize(chartContainer, renderChart);
 .chart-container {
   width: 100%;
   height: 250px;
+}
+
+.chart-empty {
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .legend-box {

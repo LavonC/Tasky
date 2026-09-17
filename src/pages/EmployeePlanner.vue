@@ -572,7 +572,7 @@ const monthNames = [
   'December',
 ];
 
-const dayStatusOptions = [
+const dayStatusOptions: Array<{ label: string; value: DayStatus; icon: string }> = [
   {
     label: 'Worked',
     value: 'worked',
@@ -1254,7 +1254,7 @@ async function submitDayToPM() {
   console.log('Selected Status:', selectedDayStatus.value);
 
   try {
-    const response = await fetch('http://localhost:3007/api/daily-logs/save-status', {
+    const response = await fetch('http://localhost:3007/api/daily-logs/submit', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1346,10 +1346,9 @@ const monthlyHours = computed(() => {
    SELECTED STATUS
 ============================================================ */
 
-const selectedDayStatusComputed = computed(() => {
-  if (dayStatuses.value[selectedDate.value]) {
-    return dayStatuses.value[selectedDate.value];
-  }
+const selectedDayStatusComputed = computed<DayStatus>(() => {
+  const savedStatus = dayStatuses.value[selectedDate.value];
+  if (savedStatus) return savedStatus;
 
   const date = parseDate(selectedDate.value);
 
@@ -1513,7 +1512,15 @@ const showSetDeadlineDialog = ref(false);
 
 function openSetDeadlineDialog() {
   showDeadlineOnLeaveDialog.value = false;
-  newDeadline.value = selectedAffectedTask.value?.deadline || '';
+  if (selectedAffectedTask.value?.deadline) {
+    const d = new Date(selectedAffectedTask.value.deadline);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    newDeadline.value = `${year}-${month}-${day}`;
+  } else {
+    newDeadline.value = '';
+  }
   showSetDeadlineDialog.value = true;
 }
 
@@ -1586,9 +1593,12 @@ async function automateDeadline() {
       showDeadlineOnLeaveDialog.value = false;
       await fetchLeaveImpact(); // Refresh affected tasks
       await fetchTasks(); // Refresh tasks
+    } else {
+      alert(data.error || 'Failed to automate deadline');
     }
   } catch (error) {
     console.error('Error automating deadline:', error);
+    alert('Error automating deadline');
   } finally {
     automatingDeadline.value = false;
   }

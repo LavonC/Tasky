@@ -252,7 +252,9 @@ async function fetchFromDatabase() {
       reviewHistory.value = historyData.reviews;
     }
 
-    const projectsResponse = await fetch('http://localhost:3007/api/pm/projects');
+    const projectsResponse = await fetch(`http://localhost:3007/api/employee/${authStore.user?.id}/projects`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
     const projectsData = await projectsResponse.json();
     if (projectsData.success) {
       projects.value = projectsData.projects;

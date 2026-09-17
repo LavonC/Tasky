@@ -71,6 +71,11 @@
         <div class="text-weight-bold text-orange q-mr-sm">{{ atRiskProjectCount }}</div>
         <div class="text-caption text-grey-7">At Risk</div>
       </div>
+      <div class="row items-center">
+  <q-icon name="o_check_circle" color="green" size="20px" class="q-mr-xs" />
+  <div class="text-weight-bold text-green q-mr-sm">{{ completedProjectCount }}</div>
+  <div class="text-caption text-grey-7">Completed</div>
+</div>
     </div>
 
     <!-- Toolbar -->
@@ -336,6 +341,9 @@ const showingEnd = computed(() =>
 // Stats
 const activeProjectCount = computed(() => projectStore.activeProjects.length);
 const atRiskProjectCount = computed(() => projectStore.atRiskProjects.length);
+const completedProjectCount = computed(
+  () => projectStore.projects.filter((project) => project.status === 'completed').length
+);
 
 const logout = () => {
   authStore.logout();

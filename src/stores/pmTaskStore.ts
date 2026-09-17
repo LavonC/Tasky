@@ -17,9 +17,10 @@ export const usePmTaskStore = defineStore('pmTask', {
 
   actions: {
     getHeaders() {
-      // Authentication removed for testing
+      const token = sessionStorage.getItem('tasky_token');
       return {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
       };
     },
 

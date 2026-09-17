@@ -420,6 +420,7 @@
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useResourceStore } from '../stores/resourceStore';
+import { useAuthStore } from '../stores/authStore';
 import { useQuasar } from 'quasar';
 import EmployeePerformanceReport from './EmployeePerformanceReport.vue';
 
@@ -439,6 +440,7 @@ const emit = defineEmits(['update:modelValue', 'reassigned']);
 console.log('ResourceDetailDialog props:', props);
 
 const resourceStore = useResourceStore();
+const authStore = useAuthStore();
 const router = useRouter();
 const $q = useQuasar();
 
@@ -547,10 +549,10 @@ const goToProject = (projectId: number) => {
 // Manual task assignment functions
 const fetchUnassignedTasks = async () => {
   try {
-    // Authentication removed for testing
     const response = await fetch('http://localhost:3007/api/pm/tasks/unassigned', {
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
       },
     });
     const data = await response.json();
@@ -589,6 +591,7 @@ const assignTask = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
       },
       body: JSON.stringify({
         taskId: selectedTask.value.id,
@@ -644,10 +647,10 @@ const openReassignDialog = async (task: any) => {
 
 const fetchEligibleEmployees = async () => {
   try {
-    // Authentication removed for testing
     const response = await fetch('http://localhost:3007/api/pm/resources', {
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
       },
     });
     const data = await response.json();
@@ -709,6 +712,7 @@ const executeReassignment = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
       },
       body: JSON.stringify(payload),
     });

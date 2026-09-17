@@ -23,15 +23,7 @@ export function authenticateToken(req, res, next) {
   let token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
   if (!token || token === 'undefined' || token === 'null') {
-    if (!req.user) {
-      req.user = {
-        id: 1,
-        email: 'employee@tasky.com',
-        role: 'employee',
-        org_id: 1,
-      };
-    }
-    return next();
+    return res.status(401).json({ success: false, error: 'Unauthorized: No token provided' });
   }
 
   try {
@@ -40,27 +32,17 @@ export function authenticateToken(req, res, next) {
     next();
   } catch (err) {
     console.warn('JWT Verify warning:', err.message);
-    if (!req.user) {
-      req.user = {
-        id: 1,
-        email: 'employee@tasky.com',
-        role: 'employee',
-        org_id: 1,
-      };
-    }
-    next();
+    return res.status(401).json({ success: false, error: 'Unauthorized: Invalid token' });
   }
 }
 
 export function requireRole(role) {
   return (req, res, next) => {
     if (!req.user) {
-      req.user = {
-        id: 1,
-        email: role === 'pm' ? 'pm@tasky.com' : 'employee@tasky.com',
-        role: role,
-        org_id: 1,
-      };
+      return res.status(401).json({ success: false, error: 'Unauthorized: No user found' });
+    }
+    if (req.user.role !== role) {
+      return res.status(403).json({ success: false, error: 'Forbidden: insufficient role' });
     }
     next();
   };

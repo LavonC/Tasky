@@ -8,7 +8,7 @@
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
 
-      <q-card-section class="q-pa-lg">
+      <q-card-section class="q-pa-lg scroll" style="max-height: 75vh;">
         <q-form @submit="onSubmit" class="q-gutter-md">
           <q-select
             v-model="form.project_id"
@@ -40,18 +40,7 @@
           />
 
           <div class="row q-col-md" style="gap:20px;">
-            <div class="col-6">
-              <q-select
-                v-model="form.status"
-                :options="statusOptions"
-                label="Status"
-                outlined
-                dense
-                emit-value
-                map-options
-              />
-            </div>
-            <div class="col-5">
+            <div class="col-12">
               <q-select
                 v-model="form.priority"
                 :options="priorityOptions"
@@ -83,7 +72,14 @@
                 outlined
                 dense
                 min="1"
+                :readonly="!form.auto_assign"
                 :rules="[(val) => val > 0 || 'Must be > 0']"
+              />
+              <q-toggle
+                v-model="form.auto_assign"
+                label="Smart Auto Assign"
+                dense
+                class="q-mt-xs"
               />
             </div>
             <div class="col-3">
@@ -102,14 +98,14 @@
           <q-select
             v-model="form.assignee_ids"
             :options="resourceOptions"
-            label="Assign To *"
+            label="Assign To"
             outlined
             dense
             multiple
             use-chips
             emit-value
             map-options
-            :rules="[(val) => (val && val.length > 0) || 'Please assign at least one employee']"
+            :rules="form.auto_assign ? [(val) => (val && val.length > 0) || 'Please assign at least one employee'] : []"
             hint="Select employees to assign this task to"
           />
 
@@ -148,6 +144,7 @@ import { ref, watch, computed } from 'vue';
 import { usePmTaskStore } from '../stores/pmTaskStore';
 import { useProjectStore } from '../stores/projectStore';
 import { useOrgStore } from '../stores/orgStore';
+import { useAuthStore } from '../stores/authStore';
 import { useQuasar } from 'quasar';
 
 const props = defineProps<{
@@ -161,6 +158,7 @@ const $q = useQuasar();
 const taskStore = usePmTaskStore();
 const projectStore = useProjectStore();
 const orgStore = useOrgStore();
+const authStore = useAuthStore();
 
 const isOpen = ref(props.modelValue);
 const isEdit = ref(false);
@@ -183,12 +181,7 @@ const taskOptions = computed(() => {
     .map((t) => ({ label: t.title, value: t.id }));
 });
 
-const statusOptions = [
-  { label: 'Not Started', value: 'not-started' },
-  { label: 'In Progress', value: 'in-progress' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Blocked', value: 'blocked' },
-];
+
 
 const priorityOptions = [
   { label: 'Critical', value: 'critical' },
@@ -201,7 +194,6 @@ const form = ref({
   project_id: null as number | null,
   title: '',
   description: '',
-  status: 'not-started',
   priority: 'medium',
   progress: 0,
   expected_effort: null as number | null,
@@ -209,6 +201,7 @@ const form = ref({
   deadline: '',
   assignee_ids: [] as number[],
   depends_on_ids: [] as number[],
+  auto_assign: false,
 });
 
 watch(
@@ -226,18 +219,18 @@ watch(
           project_id: props.taskToEdit.project_id,
           title: props.taskToEdit.title,
           description: props.taskToEdit.description || '',
-          status: props.taskToEdit.status,
-          priority: props.taskToEdit.priority,
+          priority: props.taskToEdit.priority || 'medium',
           progress: props.taskToEdit.progress || 0,
           expected_effort: props.taskToEdit.expected_effort,
           resources_needed: props.taskToEdit.resources_needed || 1,
-          deadline: props.taskToEdit.deadline ? props.taskToEdit.deadline.split('T')[0] : '',
+          deadline: props.taskToEdit.deadline ? new Date(new Date(props.taskToEdit.deadline).getTime() - (new Date(props.taskToEdit.deadline).getTimezoneOffset() * 60000)).toISOString().split('T')[0] || '' : '',
           assignee_ids: props.taskToEdit.assignees
             ? props.taskToEdit.assignees.map((a: any) => a.id)
             : [],
           depends_on_ids: props.taskToEdit.dependsOn
             ? props.taskToEdit.dependsOn.map((d: any) => d.depends_on_id)
             : [],
+          auto_assign: false,
         };
       } else {
         isEdit.value = false;
@@ -249,7 +242,6 @@ watch(
               : null,
           title: '',
           description: '',
-          status: 'not-started',
           priority: 'medium',
           progress: 0,
           expected_effort: null,
@@ -257,11 +249,44 @@ watch(
           deadline: '',
           assignee_ids: [],
           depends_on_ids: [],
+          auto_assign: false,
         };
       }
     }
   },
 );
+
+watch(() => form.value.assignee_ids, (newVal) => {
+  if (!form.value.auto_assign) {
+    form.value.resources_needed = newVal.length > 0 ? newVal.length : 1;
+  }
+}, { deep: true });
+
+watch([() => form.value.auto_assign, () => form.value.resources_needed], async ([autoAssign, numResources]) => {
+  if (autoAssign) {
+    const n = Number(numResources) || 1;
+    try {
+      const response = await fetch('http://localhost:3007/api/pm/schedule/recommend-preview', {
+        method: 'POST',
+        headers: taskStore.getHeaders(),
+        body: JSON.stringify({
+          project_id: form.value.project_id,
+          title: form.value.title,
+          description: form.value.description,
+        }),
+      });
+      const data = await response.json();
+      if (data.success && data.recommendations) {
+        form.value.assignee_ids = data.recommendations.slice(0, n).map((r: any) => r.id);
+      } else {
+        form.value.assignee_ids = orgStore.members.slice(0, n).map((m: any) => m.id);
+      }
+    } catch (err) {
+      console.error('Error fetching recommendations:', err);
+      form.value.assignee_ids = orgStore.members.slice(0, n).map((m: any) => m.id);
+    }
+  }
+});
 
 watch(isOpen, (val) => {
   emit('update:modelValue', val);
@@ -271,6 +296,7 @@ const onSubmit = async () => {
   loading.value = true;
   try {
     const payload = { ...form.value };
+    delete (payload as any).auto_assign;
     if (!payload.deadline) {
       (payload as any).deadline = null;
     }

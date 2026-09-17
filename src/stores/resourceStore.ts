@@ -1,4 +1,19 @@
 import { defineStore } from 'pinia';
+import { readApiResponse } from '@/services/api';
+
+interface ResourceAvailability {
+  id: number;
+  first_name: string;
+  last_name: string;
+  avatar: string | null;
+  role_name: string;
+  remaining: number;
+}
+
+interface ResourceAvailabilityCounts {
+  available: number;
+  unavailable: number;
+}
 
 export const useResourceStore = defineStore('resource', {
   state: () => ({
@@ -6,9 +21,9 @@ export const useResourceStore = defineStore('resource', {
     currentResource: null as any | null,
     conflicts: [] as any[],
     availability: {
-      available: [],
-      unavailable: [],
-      counts: { available: 0, unavailable: 0 },
+      available: [] as ResourceAvailability[],
+      unavailable: [] as ResourceAvailability[],
+      counts: { available: 0, unavailable: 0 } as ResourceAvailabilityCounts,
     },
     stats: {
       totalResources: 0,
@@ -26,8 +41,11 @@ export const useResourceStore = defineStore('resource', {
 
   actions: {
     getHeaders() {
-      // Authentication removed for testing
-      return { 'Content-Type': 'application/json' };
+      const token = sessionStorage.getItem('tasky_token');
+      return {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      };
     },
 
     async fetchResources(search = '') {
@@ -41,13 +59,13 @@ export const useResourceStore = defineStore('resource', {
         const response = await fetch(`http://localhost:3007/api/pm/resources${query}`, {
           headers: headers,
         });
-        const data = await response.json();
+        const data = await readApiResponse<{ success: boolean; resources: any[]; error?: string }>(response);
         console.log('Resources API response:', data);
         if (data.success) {
           this.resources = data.resources;
           console.log('Resources set in store:', this.resources.length, 'items');
         } else {
-          this.error = data.error;
+          this.error = data.error ?? null;
           console.error('Resources API error:', data.error);
         }
       } catch (err: any) {
@@ -65,13 +83,13 @@ export const useResourceStore = defineStore('resource', {
         const response = await fetch('http://localhost:3007/api/pm/resources/stats', {
           headers: this.getHeaders(),
         });
-        const data = await response.json();
+        const data = await readApiResponse<{ success: boolean; stats: any; error?: string }>(response);
         console.log('Resources stats API response:', data);
         if (data.success) {
           this.stats = data.stats;
           console.log('Stats set in store:', this.stats);
         } else {
-          this.error = data.error;
+          this.error = data.error ?? null;
           console.error('Resources stats API error:', data.error);
         }
       } catch (err: any) {
@@ -90,12 +108,12 @@ export const useResourceStore = defineStore('resource', {
         const response = await fetch(`http://localhost:3007/api/pm/resources/${id}`, {
           headers: this.getHeaders(),
         });
-        const data = await response.json();
+        const data = await readApiResponse<{ success: boolean; resource: any; error?: string }>(response);
         console.log('Resource by ID response:', data);
         if (data.success) {
           this.currentResource = data.resource;
         } else {
-          this.error = data.error;
+          this.error = data.error ?? null;
           console.error('Resource by ID error:', data.error);
         }
       } catch (err: any) {
@@ -114,12 +132,12 @@ export const useResourceStore = defineStore('resource', {
         const response = await fetch('http://localhost:3007/api/pm/resources/conflicts', {
           headers: this.getHeaders(),
         });
-        const data = await response.json();
+        const data = await readApiResponse<{ success: boolean; conflicts: any[]; error?: string }>(response);
         console.log('Conflicts API response:', data);
         if (data.success) {
           this.conflicts = data.conflicts;
         } else {
-          this.error = data.error;
+          this.error = data.error ?? null;
           console.error('Conflicts API error:', data.error);
         }
       } catch (err: any) {
@@ -138,7 +156,13 @@ export const useResourceStore = defineStore('resource', {
         const response = await fetch('http://localhost:3007/api/pm/resources/availability', {
           headers: this.getHeaders(),
         });
-        const data = await response.json();
+        const data = await readApiResponse<{
+          success: boolean;
+          available: ResourceAvailability[];
+          unavailable: ResourceAvailability[];
+          counts: ResourceAvailabilityCounts;
+          error?: string;
+        }>(response);
         console.log('Availability API response:', data);
         if (data.success) {
           this.availability = {
@@ -147,7 +171,7 @@ export const useResourceStore = defineStore('resource', {
             counts: data.counts,
           };
         } else {
-          this.error = data.error;
+          this.error = data.error ?? null;
           console.error('Availability API error:', data.error);
         }
       } catch (err: any) {

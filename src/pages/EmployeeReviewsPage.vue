@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="text-h5 text-weight-bold q-mb-md">Reviews</div>
+    <div class="text-h5 text-weight-bold q-mb-md"></div>
 
     <q-tabs
       v-model="activeTab"
@@ -387,9 +387,8 @@ onMounted(async () => {
   await fetchTasks();
   await fetchProjects();
   await fetchEmployees();
-  await fetchTaskReviews();
-  await fetchAssignedReviews();
   await fetchReviewHistory();
+  await fetchAssignedReviews();
   await fetchLeaderboard();
 });
 
@@ -411,7 +410,9 @@ async function fetchTasks() {
 
 async function fetchProjects() {
   try {
-    const response = await fetch('http://localhost:3007/api/pm/projects');
+    const response = await fetch(`http://localhost:3007/api/employee/${authStore.user?.id}/projects`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
     const data = await response.json();
     if (data.success) {
       projects.value = data.projects;
@@ -423,7 +424,9 @@ async function fetchProjects() {
 
 async function fetchEmployees() {
   try {
-    const response = await fetch('http://localhost:3007/api/users');
+    const response = await fetch('http://localhost:3007/api/users', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
     const data = await response.json();
     if (data.success) {
       employees.value = data.users;
@@ -434,23 +437,7 @@ async function fetchEmployees() {
 }
 
 async function fetchTaskReviews() {
-  if (!authStore.user?.id) return;
-
-  try {
-    const headers: Record<string, string> = {};
-    if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
-      headers['Authorization'] = `Bearer ${authStore.token}`;
-    }
-    const connection = await fetch('http://localhost:3007/api/employee/reviews/history?user_id=' + authStore.user.id, {
-      headers,
-    });
-    const data = await connection.json();
-    if (data.success) {
-      taskReviews.value = data.reviews;
-    }
-  } catch (error) {
-    console.error('Error fetching task reviews:', error);
-  }
+  // Delegated to fetchReviewHistory — taskReviews is populated there
 }
 
 async function fetchAssignedReviews() {
@@ -488,6 +475,9 @@ async function fetchReviewHistory() {
     const data = await response.json();
     if (data.success) {
       reviewHistory.value = data.reviews;
+      // taskReviews: only rows where current user is the task owner (for status badges)
+      const myId = Number(authStore.user?.id);
+      taskReviews.value = data.reviews.filter((r: any) => Number(r.task_owner_id) === myId || r.task_owner_id === undefined);
     }
   } catch (error) {
     console.error('Error fetching review history:', error);
@@ -496,7 +486,9 @@ async function fetchReviewHistory() {
 
 async function fetchLeaderboard() {
   try {
-    const response = await fetch('http://localhost:3007/api/users');
+    const response = await fetch('http://localhost:3007/api/users', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
     const data = await response.json();
     if (data.success) {
       // Filter to only show employees (not PMs) and sort by points descending
@@ -561,9 +553,8 @@ async function submitForReview() {
       showSubmitReviewDialog.value = false;
       Notify.create({ type: 'positive', message: 'Task submitted for review' });
       await fetchTasks();
-      await fetchTaskReviews();
-      await fetchAssignedReviews();
       await fetchReviewHistory();
+      await fetchAssignedReviews();
       await fetchLeaderboard();
     }
   } catch (error: any) {
@@ -598,7 +589,9 @@ async function approveReview() {
 
       // Show success notification with points earned
       if (data.reviewerPoints) {
-        alert(`Congratulations! You earned ${data.reviewerPoints} points for reviewing this task!`);
+        Notify.create({ type: 'positive', message: `Congratulations! You earned ${data.reviewerPoints} points for reviewing this task!` });
+      } else {
+        Notify.create({ type: 'positive', message: 'Review submitted successfully!' });
       }
     }
   } catch (error) {

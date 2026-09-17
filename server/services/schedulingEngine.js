@@ -23,7 +23,7 @@ export async function calculateResourceWorkload(pool, userId) {
       COUNT(DISTINCT t.project_id) AS project_count
     FROM user u
     LEFT JOIN task_assignment ta ON ta.user_id = u.id AND ta.is_active = 1
-    LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started', 'in-progress', 'blocked')
+    LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started', 'in-progress', 'blocked', 'in-review', 'on-hold')
     LEFT JOIN (
       SELECT task_id, COUNT(*) AS active_assignee_count
       FROM task_assignment WHERE is_active = 1 GROUP BY task_id
@@ -37,9 +37,10 @@ export async function calculateResourceWorkload(pool, userId) {
   if (rows.length === 0) return null;
 
   const workload = rows[0];
+  const maxHours = workload.max_hours_per_week || 40;
   const utilization =
-    workload.max_hours_per_week > 0
-      ? (workload.weekly_required_hours / workload.max_hours_per_week) * 100
+    maxHours > 0
+      ? (workload.weekly_required_hours / maxHours) * 100
       : 0;
 
   return {
@@ -80,7 +81,7 @@ export async function getOrgResourceWorkloads(pool, orgId) {
     FROM user u
     JOIN role r ON r.id = u.role_id
     LEFT JOIN task_assignment ta ON ta.user_id = u.id AND ta.is_active = 1
-    LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started', 'in-progress', 'blocked')
+    LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started', 'in-progress', 'blocked', 'in-review', 'on-hold')
     LEFT JOIN (
       SELECT task_id, COUNT(*) AS active_assignee_count
       FROM task_assignment WHERE is_active = 1 GROUP BY task_id
@@ -93,8 +94,9 @@ export async function getOrgResourceWorkloads(pool, orgId) {
   );
 
   return rows.map((r) => {
+    const maxHours = r.max_hours_per_week || 40;
     const utilization =
-      r.max_hours_per_week > 0 ? (r.weekly_required_hours / r.max_hours_per_week) * 100 : 0;
+      maxHours > 0 ? (r.weekly_required_hours / maxHours) * 100 : 0;
     return {
       ...r,
       utilization: Math.round(utilization * 100) / 100,
@@ -108,11 +110,10 @@ export async function getOrgResourceWorkloads(pool, orgId) {
  * Auto-assign: Score and rank resources for a task.
  * Scoring factors:
  *   - Available capacity (lower workload = higher score)
- *   - Skill match (matching skills = bonus)
  *   - Project involvement (already on project = bonus for context)
  *   - Task load (fewer active tasks = higher score)
  */
-export async function recommendResources(pool, orgId, taskId) {
+export async function recommendResources(pool, orgId, taskId, excludeUserIds = []) {
   // Get task details
   const [taskRows] = await pool.execute('SELECT * FROM task WHERE id = ?', [taskId]);
   if (taskRows.length === 0) return [];
@@ -128,9 +129,23 @@ export async function recommendResources(pool, orgId, taskId) {
   );
   const assignedIds = new Set(existingAssignments.map((a) => a.user_id));
 
+  // Get project involvement: find users currently active on this project
+  const [projectAssignments] = await pool.execute(
+    `SELECT DISTINCT ta.user_id 
+     FROM task_assignment ta 
+     JOIN task t ON t.id = ta.task_id 
+     WHERE t.project_id = ? AND ta.is_active = 1`,
+    [task.project_id]
+  );
+  const projectUserIds = new Set(projectAssignments.map((a) => a.user_id));
+
+  // Build keyword set from task title + description for skill matching
+  const taskText = `${task.title || ''} ${task.description || ''}`.toLowerCase();
+
   // Score each resource
+  const excludeSet = new Set(excludeUserIds);
   const scored = resources
-    .filter((r) => !assignedIds.has(r.user_id))
+    .filter((r) => !assignedIds.has(r.user_id) && !excludeSet.has(r.user_id))
     .map((r) => {
       let score = 0;
 
@@ -138,24 +153,25 @@ export async function recommendResources(pool, orgId, taskId) {
       const capacityScore = Math.max(0, 40 - r.utilization * 0.4);
       score += capacityScore;
 
-      // Skill match score (0-30 points)
-      let skills = [];
-      try {
-        skills = typeof r.skills === 'string' ? JSON.parse(r.skills) : r.skills || [];
-      } catch (e) {
-        skills = [];
-      }
-      const taskTitle = (task.title + ' ' + (task.description || '')).toLowerCase();
-      const matchingSkills = skills.filter((s) => taskTitle.includes(s.toLowerCase()));
-      score += Math.min(30, matchingSkills.length * 10);
-
       // Project involvement score (0-15 points)
-      // Check if resource is already on this project's other tasks
-      score += r.project_count > 0 ? 15 : 0;
+      const isOnProject = projectUserIds.has(r.user_id);
+      score += isOnProject ? 15 : 0;
 
       // Task load score (0-15 points): fewer tasks = higher score
       const taskLoadScore = Math.max(0, 15 - r.active_task_count * 2.5);
       score += taskLoadScore;
+
+      // Skill match score (0-20 points): match user skills against task title/description
+      let skillScore = 0;
+      if (r.skills && taskText.length > 0) {
+        const userSkills = (typeof r.skills === 'string'
+          ? r.skills.split(',')
+          : Array.isArray(r.skills) ? r.skills : []
+        ).map((s) => s.trim().toLowerCase());
+        const matches = userSkills.filter((skill) => skill && taskText.includes(skill));
+        skillScore = Math.min(20, matches.length * 7);
+      }
+      score += skillScore;
 
       return {
         user_id: r.user_id,
@@ -163,21 +179,25 @@ export async function recommendResources(pool, orgId, taskId) {
         employee_code: r.employee_code,
         role_name: r.role_name,
         avatar: r.avatar,
-        skills,
         utilization: r.utilization,
         active_task_count: r.active_task_count,
         workload_status: r.workload_status,
         score: Math.round(score * 100) / 100,
+
         reasons: [
           `Capacity: ${Math.round(100 - r.utilization)}% available`,
-          matchingSkills.length > 0
-            ? `Skills: ${matchingSkills.join(', ')}`
-            : 'No direct skill match',
           `Current tasks: ${r.active_task_count}`,
+          ...(isOnProject ? ['Already involved in this project'] : []),
+          ...(skillScore > 0 ? [`Skill match score: ${skillScore}`] : []),
         ],
       };
     })
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => {
+      // Primary: lowest utilization (least worked) always wins
+      if (a.utilization !== b.utilization) return a.utilization - b.utilization;
+      // Secondary: higher composite score (skills/project fit)
+      return b.score - a.score;
+    });
 
   return scored;
 }
@@ -245,7 +265,8 @@ export async function detectOverloadedResources(pool, orgId, threshold = 40) {
  * Global Auto-Scheduler: Dynamically assigns unassigned tasks to available resources.
  * Triggered when a resource finishes a task early or task priorities change, freeing up capacity.
  */
-export async function runGlobalAutoScheduler(pool, orgId) {
+export async function runGlobalAutoScheduler(pool, orgId, excludeMap = {}) {
+  // excludeMap: { [taskId]: [userId, ...] } — users to never reassign these tasks to
   // Fetch all unassigned active tasks for the org
   // A task is considered needing assignment if active_assignees < resources_needed
   const [unassignedTasks] = await pool.execute(
@@ -262,15 +283,18 @@ export async function runGlobalAutoScheduler(pool, orgId) {
   );
 
   let assignedCount = 0;
+  const changes = [];
 
   for (const task of unassignedTasks) {
     let needed = task.resources_needed - task.active_assignees;
 
     // Score all resources for this task (using fresh current state of workloads)
-    const recommendations = await recommendResources(pool, orgId, task.id);
+    // excludeFromUserIds: prevent re-assigning to the overloaded user that was just unassigned
+    const excludeUserIds = excludeMap[task.id] || [];
+    const recommendations = await recommendResources(pool, orgId, task.id, excludeUserIds);
 
-    // We only assign if we find a resource with capacity to take this entire task without exceeding 100%
     if (recommendations.length > 0) {
+      let assigned = false;
       for (const best of recommendations) {
         if (needed <= 0) break;
 
@@ -280,7 +304,7 @@ export async function runGlobalAutoScheduler(pool, orgId) {
           (task.expected_effort * (100 - task.progress)) / 100 / newAssigneeCount;
         const weeksRemaining = Math.max(
           1,
-          (new Date(task.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 7),
+          (new Date(task.deadline || new Date()).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 7),
         );
         const weeklyRequiredForTask = taskRemainingHours / weeksRemaining;
 
@@ -293,15 +317,40 @@ export async function runGlobalAutoScheduler(pool, orgId) {
             'INSERT INTO task_assignment (task_id, user_id, assigned_by) VALUES (?, ?, ?)',
             [task.id, best.user_id, task.created_by],
           );
+          changes.push({
+            task_id: task.id,
+            title: task.title,
+            to_user_id: best.user_id,
+            to_user_name: best.name
+          });
           assignedCount++;
           needed--;
           task.active_assignees++;
+          assigned = true;
         }
+      }
+
+      // Fallback: If no one has capacity <= 100%, assign to the top recommendation to prevent unassigned tasks
+      if (!assigned && needed > 0) {
+        const best = recommendations[0];
+        await pool.execute(
+          'INSERT INTO task_assignment (task_id, user_id, assigned_by) VALUES (?, ?, ?)',
+          [task.id, best.user_id, task.created_by],
+        );
+        changes.push({
+          task_id: task.id,
+          title: task.title,
+          to_user_id: best.user_id,
+          to_user_name: best.name
+        });
+        assignedCount++;
+        needed--;
+        task.active_assignees++;
       }
     }
   }
 
-  return { success: true, assignedCount };
+  return { success: true, assignedCount, changes };
 }
 
 /**
@@ -310,68 +359,111 @@ export async function runGlobalAutoScheduler(pool, orgId) {
  * 2. Unassign their lowest priority or not-started tasks until they are under 100%
  * 3. Trigger runGlobalAutoScheduler to reassign these tasks to free resources
  */
-export async function rebalanceWorkloads(pool, orgId) {
-  let tasksUnassigned = 0;
+export async function rebalanceWorkloads(pool, orgId, dryRun = false) {
+  const connection = await pool.getConnection();
+  await connection.beginTransaction();
 
-  // 1. Get overloaded resources (utilization > 100%)
-  const resources = await getOrgResourceWorkloads(pool, orgId);
-  const overloaded = resources.filter((r) => r.utilization > 100);
+  try {
+    let tasksUnassigned = 0;
+    const changes = [];
 
-  for (const resource of overloaded) {
-    // Current hours for this resource
-    let currentHours = resource.weekly_required_hours;
-    const maxHours = resource.max_hours_per_week || 40;
+    // 1. Get overloaded resources (utilization > 100%)
+    const resources = await getOrgResourceWorkloads(connection, orgId);
+    const overloaded = resources.filter((r) => r.utilization > 100);
 
-    // Get their active tasks, sorted by priority (low first) and progress (low first)
-    const [tasks] = await pool.execute(
-      `
-      SELECT t.id, t.expected_effort, t.progress, ta.id as assignment_id,
-             (SELECT COUNT(*) FROM task_assignment WHERE task_id = t.id AND is_active = 1) as active_assignee_count
-      FROM task t
-      JOIN task_assignment ta ON ta.task_id = t.id AND ta.user_id = ? AND ta.is_active = 1
-      WHERE t.status IN ('not-started', 'in-progress', 'blocked')
-      ORDER BY FIELD(t.priority, 'low', 'medium', 'high', 'critical'), t.progress ASC
-    `,
-      [resource.user_id],
-    );
+    for (const resource of overloaded) {
+      // Current hours for this resource
+      let currentHours = resource.weekly_required_hours;
+      const maxHours = resource.max_hours_per_week || 40;
 
-    // Unassign tasks until under capacity
-    for (const task of tasks) {
-      if (currentHours <= maxHours) break;
-
-      const assignees = task.active_assignee_count || 1;
-      const taskRemainingHours = (task.expected_effort * (100 - task.progress)) / 100 / assignees;
-      const weeksRemaining = Math.max(
-        1,
-        (new Date(task.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 7),
-      );
-      const weeklyRequiredForTask = taskRemainingHours / weeksRemaining;
-
-      // Prevent ER_DUP_ENTRY by deleting any existing inactive assignment for this task and user
-      await pool.execute(
-        'DELETE FROM task_assignment WHERE task_id = ? AND user_id = ? AND is_active = 0',
-        [task.id, resource.user_id],
+      // Get their active tasks, sorted by priority (low first) and progress (low first)
+      const [tasks] = await connection.execute(
+        `
+        SELECT t.id, t.title, t.expected_effort, t.progress, t.deadline, ta.id as assignment_id,
+               (SELECT COUNT(*) FROM task_assignment WHERE task_id = t.id AND is_active = 1) as active_assignee_count
+        FROM task t
+        JOIN task_assignment ta ON ta.task_id = t.id AND ta.user_id = ? AND ta.is_active = 1
+        WHERE t.status IN ('not-started', 'in-progress', 'blocked', 'in-review', 'on-hold')
+        ORDER BY FIELD(t.priority, 'low', 'medium', 'high', 'critical'), t.progress ASC
+      `,
+        [resource.user_id],
       );
 
-      // Unassign this task
-      await pool.execute(
-        'UPDATE task_assignment SET is_active = 0, unassigned_at = NOW() WHERE id = ?',
-        [task.assignment_id],
-      );
+      // Unassign tasks until under capacity
+      for (const task of tasks) {
+        if (currentHours <= maxHours) break;
 
-      currentHours -= weeklyRequiredForTask;
-      tasksUnassigned++;
+        const assignees = task.active_assignee_count || 1;
+        const effort = task.expected_effort || 0;
+        const progress = task.progress || 0;
+        const taskRemainingHours = (effort * (100 - progress)) / 100 / assignees;
+        const weeksRemaining = task.deadline
+          ? Math.max(1, (new Date(task.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 7))
+          : 1;
+        // weeklyRequiredForTask matches SQL: if no deadline, SQL contributes 0; use 0 here too
+        const weeklyRequiredForTask = task.deadline ? taskRemainingHours / weeksRemaining : 0;
+
+        // Prevent ER_DUP_ENTRY by deleting any existing inactive assignment for this task and user
+        await connection.execute(
+          'DELETE FROM task_assignment WHERE task_id = ? AND user_id = ? AND is_active = 0',
+          [task.id, resource.user_id],
+        );
+
+        // Unassign this task
+        await connection.execute(
+          'UPDATE task_assignment SET is_active = 0, unassigned_at = NOW() WHERE id = ?',
+          [task.assignment_id],
+        );
+
+        changes.push({
+          task_id: task.id,
+          title: task.title,
+          from_user_id: resource.user_id,
+          from_user_name: `${resource.first_name} ${resource.last_name}`,
+        });
+
+        currentHours -= weeklyRequiredForTask;
+        tasksUnassigned++;
+      }
     }
-  }
 
-  // 3. Re-allocate unassigned tasks globally
-  let assignedCount = 0;
-  if (tasksUnassigned > 0) {
-    const result = await runGlobalAutoScheduler(pool, orgId);
-    assignedCount = result.assignedCount;
-  }
+    // 3. Re-allocate unassigned tasks globally
+    let assignedCount = 0;
+    if (tasksUnassigned > 0) {
+      // Build excludeMap: each unassigned task must not go back to the same overloaded user
+      const excludeMap = {};
+      for (const change of changes) {
+        if (!excludeMap[change.task_id]) excludeMap[change.task_id] = [];
+        excludeMap[change.task_id].push(change.from_user_id);
+      }
+      const result = await runGlobalAutoScheduler(connection, orgId, excludeMap);
+      assignedCount = result.assignedCount;
 
-  return { success: true, tasksUnassigned, assignedCount };
+      for (const change of changes) {
+        const reassigned = result.changes.find(c => c.task_id === change.task_id);
+        if (reassigned) {
+          change.to_user_id = reassigned.to_user_id;
+          change.to_user_name = reassigned.to_user_name;
+        } else {
+          change.to_user_id = null;
+          change.to_user_name = 'Unassigned';
+        }
+      }
+    }
+
+    if (dryRun) {
+      await connection.rollback();
+    } else {
+      await connection.commit();
+    }
+
+    return { success: true, tasksUnassigned, assignedCount, changes };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 // --- NEW SCHEDULING ENGINE FUNCTIONS ---
 

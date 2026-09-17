@@ -10,7 +10,8 @@ const pool = mysql.createPool(dbConfig);
 // 2. Add or update manual/automatic work log
 router.post('/work-log', async (req, res) => {
   try {
-    const { task_id, user_id, log_date, work_completed, hours_spent, status } = req.body;
+    const { task_id, log_date, work_completed, hours_spent, status } = req.body;
+    const user_id = req.user.id;
     // Use NULL for task_id if not provided (manual entries not tied to a task)
     const taskIdValue = task_id || null;
     
@@ -24,6 +25,15 @@ router.post('/work-log', async (req, res) => {
        status = VALUES(status)`,
       [taskIdValue, user_id, log_date, work_completed, hours_spent || 0, status || 'in-progress']
     );
+
+    if (taskIdValue) {
+      await pool.query(
+        `UPDATE task SET actual_effort = (
+           SELECT COALESCE(SUM(hours_spent), 0) FROM daily_work_log WHERE task_id = ?
+         ) WHERE id = ?`,
+        [taskIdValue, taskIdValue],
+      );
+    }
     
     res.json({ success: true, message: 'Log added successfully' });
   } catch (error) {
@@ -83,12 +93,16 @@ router.post('/submit', async (req, res) => {
 // 4. Get pending reviews for PM
 router.get('/pm/pending', async (req, res) => {
   try {
+    if (!req.user || !req.user.org_id) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
     const [rows] = await pool.query(
       `SELECT c.*, DATE_FORMAT(c.log_date, '%Y-%m-%d') as log_date, u.first_name, u.last_name, u.avatar
        FROM daily_log_compliance c
        JOIN user u ON c.user_id = u.id
-       WHERE c.status = 'submitted'
-       ORDER BY c.log_date DESC`
+       WHERE c.status = 'submitted' AND u.org_id = ?
+       ORDER BY c.log_date DESC`,
+       [req.user.org_id]
     );
     
     // Fetch the logs for these submissions
@@ -116,6 +130,9 @@ router.get('/pm/pending', async (req, res) => {
 // 5. PM reviews the day
 router.post('/review', async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
     const { compliance_id, pm_comment, reviewer_id, user_id, log_date } = req.body;
     
     await pool.query(

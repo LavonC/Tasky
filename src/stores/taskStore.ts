@@ -127,10 +127,11 @@ export const useTaskStore = defineStore('taskStore', {
   actions: {
     async fetchEmployees() {
       try {
-        // Authentication removed for testing
+        const authStore = useAuthStore();
         const response = await fetch('http://localhost:3007/api/users', {
           headers: {
             'Content-Type': 'application/json',
+            ...(authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null' ? { Authorization: `Bearer ${authStore.token}` } : {})
           },
         });
         const data = await response.json();
@@ -144,10 +145,15 @@ export const useTaskStore = defineStore('taskStore', {
 
     async fetchProjects() {
       try {
-        // Authentication removed for testing
-        const response = await fetch('http://localhost:3007/api/pm/projects', {
+        const authStore = useAuthStore();
+        const endpoint = authStore.user?.role === 'employee' 
+          ? `http://localhost:3007/api/employee/${authStore.user?.id}/projects`
+          : 'http://localhost:3007/api/pm/projects';
+          
+        const response = await fetch(endpoint, {
           headers: {
             'Content-Type': 'application/json',
+            ...(authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null' ? { Authorization: `Bearer ${authStore.token}` } : {})
           },
         });
         const data = await response.json();
@@ -165,33 +171,34 @@ export const useTaskStore = defineStore('taskStore', {
       if (!userId) return;
 
       try {
-        // Fetch employee data including max_hours_per_week - authentication removed
+        // Fetch employee data including max_hours_per_week
+        const responseHeaders: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
+          responseHeaders['Authorization'] = `Bearer ${authStore.token}`;
+        }
+        
         const empResponse = await fetch(`http://localhost:3007/api/users/${userId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: responseHeaders,
         });
         const empData = await empResponse.json();
         if (empData.success) {
           this.currentEmployeeData = empData.user;
         }
 
-        // Fetch tasks - authentication removed
+        // Fetch tasks
         const response = await fetch(`http://localhost:3007/api/tasks/employee/${userId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: responseHeaders,
         });
         const data = await response.json();
         if (data.success) {
           this.tasks = data.tasks;
         }
 
-        // Fetch work logs - authentication removed
+        // Fetch work logs
         const logsResponse = await fetch(`http://localhost:3007/api/employee/work-logs/${userId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: responseHeaders,
         });
         const logsData = await logsResponse.json();
         if (logsData.success) {
@@ -352,6 +359,7 @@ export const useTaskStore = defineStore('taskStore', {
             body: JSON.stringify({
               completion_comment: completionComment,
               reviewer_id: reviewerId,
+              task_owner_id: authStore.user?.id,
             }),
           },
         );

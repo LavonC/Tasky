@@ -5,7 +5,9 @@
       height: 100vh;
       max-height: 100vh;
       min-height: 0 !important;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: #f5f6fa;
       display: flex;
       flex-direction: column;
     "
@@ -20,10 +22,6 @@
         <q-btn v-if="pendingDailyLogsCount > 0" color="positive" icon="assignment_turned_in" outline round @click="showDailyLogReview = true">
           <q-badge color="red" floating>{{ pendingDailyLogsCount }}</q-badge>
           <q-tooltip>Review Daily Logs</q-tooltip>
-        </q-btn>
-        <q-btn v-if="pendingRescheduleCount > 0" color="orange" icon="event" outline round @click="showScheduleReview = true">
-          <q-badge color="red" floating>{{ pendingRescheduleCount }}</q-badge>
-          <q-tooltip>Pending Reschedule Reviews</q-tooltip>
         </q-btn>
         <q-avatar size="36px" class="cursor-pointer">
           <img :src="authStore.currentUser?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
@@ -43,44 +41,109 @@
         </q-avatar>
       </div>
     </div>
+    <!-- Graphs Section -->
+    <section class="graphs-section">
+      <div class="row items-center justify-between" style="flex: 0 0 auto">
+        <q-tabs
+          v-model="graphsTab"
+          dense
+          class="text-grey-7"
+          active-color="primary"
+          indicator-color="primary"
+          align="left"
+        >
+          <q-tab name="performance" label="Performance" icon="trending_up" />
+          <q-tab name="resources" label="Resources" icon="groups" />
+          <q-tab name="delivery" label="Delivery Risk" icon="event" />
+        </q-tabs>
 
-<div class="row q-col-gutter-lg">
-      <!-- Left Column -->
-      <div class="col-6 column">
-        <ProjectPerformanceTable />
+        <q-btn
+          flat
+          round
+          dense
+          :icon="isGraphsSectionCollapsed ? 'expand_more' : 'expand_less'"
+          color="grey-7"
+          @click="isGraphsSectionCollapsed = !isGraphsSectionCollapsed"
+        >
+          <q-tooltip>
+            {{ isGraphsSectionCollapsed ? 'Expand' : 'Collapse' }}
+          </q-tooltip>
+        </q-btn>
       </div>
 
-<div class="col-3 column">
-        <TaskCompletionTrend />
-      </div>
+      <q-tab-panels
+        v-show="!isGraphsSectionCollapsed"
+        v-model="graphsTab"
+        animated
+        class="transparent graph-tab-panels"
+      >
+        <q-tab-panel name="performance" class="q-pa-none">
+          <div class="row q-col-gutter-md">
+            <div class="col-12 col-md-6 graph-card"><ProjectPerformanceTable /></div>
+            <div class="col-12 col-md-3 graph-card"><TaskCompletionTrend :data="analyticsStore.completionTrend" /></div>
+            <div class="col-12 col-md-3 graph-card"><TaskPriorityDonut /></div>
+          </div>
+        </q-tab-panel>
 
-      <!-- Right Column -->
-      <div class="col-3 column">
-        <TaskPriorityDonut />
-      </div>
-    </div>
+        <q-tab-panel name="resources" class="q-pa-none">
+          <div class="row q-col-gutter-md">
+            <div class="col-12 col-md-4 graph-card"><ResourceUtilizationChart :resources="resources" /></div>
+            <div class="col-12 col-md-4 graph-card"><ActiveTasksChart :resources="resources" /></div>
+            <div class="col-12 col-md-4 graph-card"><WorkloadScatterChart :resources="resources" /></div>
+          </div>
+        </q-tab-panel>
 
-    <!-- Tabs -->
-    <q-tabs
-      v-model="activeTab"
-      dense
-      class="text-grey-7 q-mb-md"
-      active-color="primary"
-      indicator-color="primary"
-      align="left"
-      style="flex: 0 0 auto"
-    >
-      <q-tab name="overview" label="Overview" icon="dashboard" />
-      <q-tab name="insights" label="Insights" icon="insights" />
-      <q-tab name="completed" label="Completed" icon="check_circle" />
-    </q-tabs>
+        <q-tab-panel name="delivery" class="q-pa-none">
+          <div class="row q-col-gutter-md">
+            <div class="col-12 col-md-4 graph-card"><UpcomingDeadlineRisks /></div>
+            <div class="col-12 col-md-4 graph-card"><ProjectHealthBars :projects="analyticsStore.projectProgress" /></div>
+            <div class="col-12 col-md-4 graph-card"><TaskStatusDistribution /></div>
+          </div>
+        </q-tab-panel>
+      </q-tab-panels>
+    </section>
 
-    <q-tab-panels
-      v-model="activeTab"
-      animated
-      class="transparent"
-      style="flex: 1 1 0; min-height: 0"
-    >
+    <!-- Original Section Tabs + Collapse -->
+<div
+  class="bottom-section"
+>
+  <div
+    class="row items-center justify-between"
+    style="flex: 0 0 auto"
+  >
+  <q-tabs
+    v-model="activeTab"
+    dense
+    class="text-grey-7"
+    active-color="primary"
+    indicator-color="primary"
+    align="left"
+  >
+    <q-tab name="overview" label="Overview" icon="dashboard" />
+    <q-tab name="insights" label="Insights" icon="insights" />
+    <q-tab name="completed" label="Completed" icon="check_circle" />
+  </q-tabs>
+
+  <q-btn
+    flat
+    round
+    dense
+    :icon="isBottomSectionCollapsed ? 'expand_more' : 'expand_less'"
+    color="grey-7"
+    @click="isBottomSectionCollapsed = !isBottomSectionCollapsed"
+  >
+    <q-tooltip>
+      {{ isBottomSectionCollapsed ? 'Expand' : 'Collapse' }}
+    </q-tooltip>
+  </q-btn>
+  </div>
+
+  <q-tab-panels
+    v-show="!isBottomSectionCollapsed"
+    v-model="activeTab"
+    animated
+    class="bottom-tab-panels transparent"
+  >
       <!-- Overview Tab -->
       <q-tab-panel name="overview" class="q-pa-none">
         <div class="row q-col-gutter-md" style="height: 100%; min-height: 0">
@@ -321,12 +384,6 @@
         </div>
       </div>
 
-      <q-chip
-        color="indigo-1"
-        text-color="indigo-9"
-        icon="auto_awesome"
-        label="Live Dashboard"
-      />
     </div>
 
     <!-- KPI Cards -->
@@ -1051,21 +1108,13 @@
         </q-card>
       </q-tab-panel>
     </q-tab-panels>
+</div>
 
     <!-- Employee Performance Dialog -->
     <EmployeePerformanceReport v-model="showPerformanceDialog" :employee="selectedEmployee" />
 
     <!-- Daily Log Review Dialog -->
     <DailyLogReviewDialog v-model="showDailyLogReview" @reviewed="fetchPendingDailyLogs" />
-
-    <!-- Schedule Review Dialog -->
-    <ScheduleReviewDialog 
-      v-if="pendingScheduleEvent" 
-      v-model="showScheduleReview" 
-      :event="pendingScheduleEvent" 
-      @confirmed="fetchPendingReschedules" 
-      @rejected="fetchPendingReschedules" 
-    />
 
     <!-- Task Detail Dialog -->
     <q-dialog v-model="showTaskDetailDialog">
@@ -1115,21 +1164,29 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
 import { useAuthStore } from '../stores/authStore';
+import { getAuthHeaders, readApiResponse } from '../services/api';
 import { useDashboardStore } from '../stores/dashboardStore';
 import { useAnalyticsStore } from '../stores/analyticsStore';
 import EmployeePerformanceReport from '../components/EmployeePerformanceReport.vue';
-import ScheduleReviewDialog from '../components/ScheduleReviewDialog.vue';
 import DailyLogReviewDialog from '../components/DailyLogReviewDialog.vue';
 import ProjectPerformanceTable from '../components/ProjectPerformanceTable.vue';
 import TaskPriorityDonut from '../components/TaskPriorityDonut.vue';
 import TaskCompletionTrend from '../components/TaskCompletionTrend.vue';
+import ResourceUtilizationChart from '../components/ResourceUtilizationChart.vue';
+import ActiveTasksChart from '../components/ActiveTasksChart.vue';
+import WorkloadScatterChart from '../components/WorkloadScatterChart.vue';
+import TaskStatusDistribution from '../components/TaskStatusDistribution.vue';
+import UpcomingDeadlineRisks from '../components/UpcomingDeadlineRisks.vue';
+import ProjectHealthBars from '../components/ProjectHealthBars.vue';
 
 const showDailyLogReview = ref(false);
 const pendingDailyLogsCount = ref(0);
 const fetchPendingDailyLogs = async () => {
   try {
-    const response = await fetch('http://localhost:3007/api/daily-logs/pm/pending');
-    const result = await response.json();
+    const response = await fetch('http://localhost:3007/api/daily-logs/pm/pending', {
+      headers: getAuthHeaders(),
+    });
+    const result = await readApiResponse<{ success: boolean; pending: any[] }>(response);
     if (result.success) {
       pendingDailyLogsCount.value = result.pending.length;
     }
@@ -1148,6 +1205,10 @@ const teamSearchQuery = ref('');
 const selectedEmployee = ref<any>(null);
 const showPerformanceDialog = ref(false);
 const activeTab = ref('overview');
+const graphsTab = ref('performance');
+const resources = ref<any[]>([]);
+const isGraphsSectionCollapsed = ref(false);
+const isBottomSectionCollapsed = ref(false);
 const attentionTab = ref('all');
 const completedTasks = ref<any[]>([]);
 const loadingCompleted = ref(false);
@@ -1165,33 +1226,20 @@ analyticsStore.loadAll();
   // Pre-load completed reviews
   fetchCompletedReviews();
   fetchPendingDailyLogs();
-  fetchPendingReschedules();
+  fetchResources();
 });
 
-const showScheduleReview = ref(false);
-const pendingScheduleEvent = ref(null);
-const pendingRescheduleCount = ref(0);
-
-async function fetchPendingReschedules() {
+async function fetchResources() {
   try {
-    const res = await fetch('http://localhost:3007/api/pm/schedule/queue', {
-      headers: { Authorization: `Bearer ${authStore.token}` }
+    const response = await fetch('http://localhost:3007/api/pm/resources', {
+      headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    if (data.success && data.events.length > 0) {
-      pendingRescheduleCount.value = data.events.length;
-      pendingScheduleEvent.value = data.events[0]; // get oldest
-    } else {
-      pendingRescheduleCount.value = 0;
-      pendingScheduleEvent.value = null;
-      showScheduleReview.value = false;
-    }
-  } catch (err) {
-    console.error('Failed to fetch reschedules', err);
+    const data = await readApiResponse<{ success: boolean; resources?: any[] }>(response);
+    if (data.success) resources.value = data.resources || [];
+  } catch (error) {
+    console.error('Failed to load resources for graphs', error);
   }
 }
-
-
 
 const filteredUsers = computed(() => {
   const query = teamSearchQuery.value.toLowerCase().trim();
@@ -1248,27 +1296,12 @@ const delayedProjects = computed(
 );
 
 const healthyProjects = computed(() => {
-  const total =
-    atRiskProjects.value +
-    delayedProjects.value;
-
-  // If the backend doesn't expose total project count,
-  // use the number of projects we can currently identify.
-  const identifiableProjects =
-    total + delayedProjects.value;
-
-  return Math.max(0, identifiableProjects - total);
+  const total = dashboardStore.stats?.totalProjects ?? 0;
+  return Math.max(0, total - atRiskProjects.value - delayedProjects.value);
 });
 
 const inProgressTasks = computed(() => {
-  const totalUsers = dashboardStore.users?.length ?? 0;
-
-  // Keep this useful even when the backend doesn't expose
-  // a dedicated in-progress statistic.
-  return Math.max(
-    0,
-    totalUsers - overdueTasks.value,
-  );
+  return dashboardStore.stats?.inProgressTasks ?? 0;
 });
 
 const projectHealthMessage = computed(() => {
@@ -1304,10 +1337,7 @@ const reviewMessage = computed(() => {
 });
 
 function projectHealthPercentage(value: number) {
-  const total =
-    healthyProjects.value +
-    atRiskProjects.value +
-    delayedProjects.value;
+  const total = dashboardStore.stats?.totalProjects ?? 0;
 
   if (total === 0) return 0;
 
@@ -1324,16 +1354,20 @@ async function fetchCompletedReviews() {
   loadingCompleted.value = true;
   try {
     // Fetch all completed tasks with review info
-    const response = await fetch('http://localhost:3007/api/pm/tasks/completed');
-    const data = await response.json();
+    const response = await fetch('http://localhost:3007/api/pm/tasks/completed', {
+      headers: getAuthHeaders(),
+    });
+    const data = await readApiResponse<{ success: boolean; tasks: any[] }>(response);
     console.log('Completed tasks API response:', data);
     if (data.success) {
       // Fetch review status for each completed task
       const tasksWithReviews = await Promise.all(
         data.tasks.map(async (task: any) => {
           try {
-            const reviewResponse = await fetch(`http://localhost:3007/api/pm/tasks/${task.id}/review-status`);
-            const reviewData = await reviewResponse.json();
+            const reviewResponse = await fetch(`http://localhost:3007/api/pm/tasks/${task.id}/review-status`, {
+              headers: getAuthHeaders(),
+            });
+            const reviewData = await readApiResponse<{ success: boolean; review_status?: string; reviewer_name?: string }>(reviewResponse);
             return {
               ...task,
               review_status: reviewData.success ? reviewData.review_status : null,
@@ -1374,6 +1408,49 @@ function showEmployeePerformance(user: any) {
 </script>
 
 <style scoped>
+.graphs-section {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.graph-tab-panels {
+  margin-top: 0;
+}
+
+.graph-card {
+  display: flex;
+  height: 250px;
+  min-height: 200px;
+}
+
+.graph-card > * {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+.bottom-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom-tab-panels {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.bottom-tab-panels :deep(.q-tab-panel) {
+  height: 100%;
+  min-height: 0;
+}
+
+.bottom-tab-panels :deep(.q-tab-panel > .row) {
+  min-height: 0;
+}
+
 .z-top {
   z-index: 10;
 }

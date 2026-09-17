@@ -195,6 +195,7 @@
       @view="openTaskDetail"
       @assign-reviewer="openAssignReviewerDialog"
       @finalize-review="openFinalizeReviewDialog"
+      @send-comment="openSendCommentDialog"
     />
     </div>
 
@@ -205,12 +206,18 @@
       </div>
 
       <!-- Right Column -->
-      <div class="col-4 column">
+      <div class="col-3 column">
         <TaskStatusDistribution />
       </div>
 
-      <div class="col-3 column">
-        <ProjectSummary />
+      <div class="col-4 column">
+        <ProjectSummary
+          :projects="analyticsStore.projectProgress"
+          :deadline-risks="analyticsStore.deadlineRisks"
+          :in-progress-tasks="analyticsStore.taskDistribution?.status?.['in-progress'] || 0"
+          :team-utilization="analyticsStore.overview?.avgUtilization || null"
+          @view-report="exportReport"
+        />
       </div>
     </div>
 
@@ -222,6 +229,10 @@
       :task-id="selectedTaskId"
       @edit="openEditDialog"
       @deleted="onTaskDeleted"
+    />
+    <SendCommentDialog
+      v-model="showSendCommentDialog"
+      :prefilled-task="selectedTaskForComment"
     />
 
     <!-- Assign Reviewer Dialog -->
@@ -302,7 +313,11 @@ import TaskDetailDialog from '../components/TaskDetailDialog.vue';
 import ProjectProgressWidget from '../components/ProjectProgressWidget.vue';
 import TaskStatusDistribution from '../components/TaskStatusDistribution.vue';
 import ProjectSummary from '../components/ProjectSummary.vue';
+import SendCommentDialog from '../components/SendCommentDialog.vue';
 import { useOrgStore } from '../stores/orgStore';
+import { useAnalyticsStore } from '../stores/analyticsStore';
+
+import { exportFile } from 'quasar';
 
 const router = useRouter();
 const route = useRoute();
@@ -312,6 +327,43 @@ const projectStore = useProjectStore();
 const taskStoreCommon = useTaskStore();
 const $q = useQuasar();
 const orgStore = useOrgStore();
+const analyticsStore = useAnalyticsStore();
+
+const exportReport = () => {
+  const projects = analyticsStore.projectProgress || [];
+  
+  let content = 'Project Name,Status,Progress\n';
+  projects.forEach((p: any) => {
+    const name = p.project_name || p.name || 'Unknown';
+    const status = p.status || 'Unknown';
+    const progress = p.progress || 0;
+    content += `"${name}","${status}",${progress}\n`;
+  });
+
+  content += '\nDeadline Risks\nTask,Risk,Days Remaining\n';
+  const risks = analyticsStore.deadlineRisks || [];
+  risks.forEach((r: any) => {
+    const taskTitle = r.task_title || r.title || 'Unknown';
+    const riskLevel = r.risk_level || 'Unknown';
+    const days = r.days_until !== undefined ? r.days_until : 0;
+    content += `"${taskTitle}","${riskLevel}",${days}\n`;
+  });
+
+  const status = exportFile('project-report.csv', content, 'text/csv');
+  if (status !== true) {
+    $q.notify({
+      message: 'Browser denied file download',
+      color: 'negative',
+      icon: 'warning'
+    });
+  } else {
+    $q.notify({
+      message: 'Report downloaded successfully',
+      color: 'positive',
+      icon: 'check'
+    });
+  }
+};
 
 const filters = ref({
   search: (route.query.search as string) || '',
@@ -389,7 +441,10 @@ onMounted(async () => {
   if (orgStore.members.length === 0) {
   await orgStore.fetchMembers();
 }
-  await applyFilters();
+  await Promise.all([
+    applyFilters(),
+    analyticsStore.loadAll()
+  ]);
   console.log('Tasks loaded:', taskStore.tasks.length);
   console.log('Tasks stats:', taskStore.stats);
 
@@ -425,12 +480,19 @@ const logout = () => {
 // Dialogs
 const showCreateDialog = ref(false);
 const showDetailDialog = ref(false);
+const showSendCommentDialog = ref(false);
 const taskToEdit = ref(null);
 const selectedTaskId = ref('');
+const selectedTaskForComment = ref<any>(null);
 
 const openCreateDialog = () => {
   taskToEdit.value = null;
   showCreateDialog.value = true;
+};
+
+const openSendCommentDialog = (task: any) => {
+  selectedTaskForComment.value = task;
+  showSendCommentDialog.value = true;
 };
 
 const openEditDialog = (task: any) => {

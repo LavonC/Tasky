@@ -7,6 +7,8 @@ export const useDashboardStore = defineStore('dashboard', {
       overloadedResources: 0,
       overdueTasks: 0,
       pendingReviews: 0,
+      totalProjects: 0,
+      inProgressTasks: 0,
     },
     attentionItems: {
       delayedProjects: [] as any[],
@@ -21,9 +23,10 @@ export const useDashboardStore = defineStore('dashboard', {
 
   actions: {
     getHeaders() {
-      // Authentication removed for testing
+      const token = sessionStorage.getItem('tasky_token');
       return {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
       };
     },
 

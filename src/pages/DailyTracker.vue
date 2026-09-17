@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <div class="row items-center justify-between q-mb-md">
-      <div class="text-h4 text-weight-bold">Daily Tracker</div>
+      <div class="text-h4 text-weight-bold"></div>
       <q-btn color="primary" icon="add" label="Add Daily Task" @click="showAddDialog = true" />
     </div>
 
@@ -204,6 +204,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
+import { getAuthHeaders, readApiResponse } from '@/services/api';
 
 interface DailyTask {
   id: number;
@@ -243,8 +244,10 @@ const pageEnd = computed(() => Math.min(currentPage.value * rowsPerPage.value, d
 // Fetch projects for selection
 const fetchProjects = async () => {
   try {
-    const response = await fetch('http://localhost:3007/api/projects');
-    const result = await response.json();
+    const response = await fetch('http://localhost:3007/api/projects', {
+      headers: getAuthHeaders(),
+    });
+    const result = await readApiResponse<{ success: boolean; projects?: any[] }>(response);
     console.log('Projects API response:', result);
     if (result.success && result.projects) {
       projects.value = result.projects;
@@ -279,7 +282,7 @@ const fetchDailyTasks = async () => {
         id: entry.id,
         title: entry.title || 'Untitled',
         description: entry.description || '',
-        date: entry.date ? entry.date.split('T')[0] : new Date().toISOString().split('T')[0],
+        date: entry.date ? new Date(new Date(entry.date).getTime() - (new Date(entry.date).getTimezoneOffset() * 60000)).toISOString().split('T')[0] : new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
         progress: parseFloat(entry.progress) || 0,
         status: entry.status || 'not-started',
         project_name: entry.project_id ? `Project ${entry.project_id}` : '',
