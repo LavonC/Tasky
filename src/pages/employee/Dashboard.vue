@@ -1148,12 +1148,6 @@ async function submitForReview() {
     return;
   }
 
-  if (!selectedReviewer.value) {
-    console.log('❌ No reviewer selected');
-    console.log('selectedReviewer.value is:', selectedReviewer.value);
-    return;
-  }
-
   submitting.value = true;
   try {
     const headers: Record<string, string> = {
@@ -1163,16 +1157,22 @@ async function submitForReview() {
       headers['Authorization'] = `Bearer ${authStore.token}`;
     }
 
+    const requestBody: any = {
+      completion_comment: completionComment.value,
+      task_owner_id: authStore.user?.id,
+    };
+
+    // Only include reviewer_id if a reviewer is selected
+    if (selectedReviewer.value !== null && selectedReviewer.value !== undefined) {
+      requestBody.reviewer_id = selectedReviewer.value;
+    }
+
     const response = await fetch(
       `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}/submit-review`,
       {
         method: 'POST',
         headers,
-        body: JSON.stringify({
-          completion_comment: completionComment.value,
-          reviewer_id: selectedReviewer.value,
-          task_owner_id: authStore.user?.id,
-        }),
+        body: JSON.stringify(requestBody),
       },
     );
 

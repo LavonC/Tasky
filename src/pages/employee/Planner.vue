@@ -456,10 +456,20 @@ function openSubmitReviewDialog(task: any) {
 }
 
 async function submitForReview() {
-  if (!selectedTask.value || !selectedReviewer.value) return;
+  if (!selectedTask.value) return;
 
   submitting.value = true;
   try {
+    const requestBody: any = {
+      completion_comment: completionComment.value,
+      task_owner_id: authStore.user?.id,
+    };
+
+    // Only include reviewer_id if a reviewer is selected
+    if (selectedReviewer.value !== null && selectedReviewer.value !== undefined) {
+      requestBody.reviewer_id = selectedReviewer.value;
+    }
+
     const response = await fetch(
       `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}/submit-review`,
       {
@@ -468,10 +478,7 @@ async function submitForReview() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authStore.token}`,
         },
-        body: JSON.stringify({
-          completion_comment: completionComment.value,
-          reviewer_id: selectedReviewer.value,
-        }),
+        body: JSON.stringify(requestBody),
       },
     );
 
