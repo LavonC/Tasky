@@ -1217,6 +1217,13 @@
         <q-separator />
 
         <q-card-section class="q-gutter-md">
+          <q-input
+            v-model="reviewComment"
+            label="Completion Comment"
+            type="textarea"
+            outlined
+            rows="3"
+          />
           <q-select
             v-model="selectedReviewer"
             :options="colleagues"
@@ -1622,6 +1629,7 @@ const submitComment = async () => {
 // Review dialog state
 const showReviewDialog = ref(false);
 const selectedReviewer = ref<number | null>(null);
+const reviewComment = ref('');
 const colleagues = ref<{ id: number; name: string }[]>([]);
 
 // Fetch colleagues for review selection
@@ -1647,6 +1655,7 @@ const fetchColleagues = async () => {
 // Open review dialog
 const openReviewDialog = () => {
   selectedReviewer.value = null;
+  reviewComment.value = '';
   showReviewDialog.value = true;
   fetchColleagues();
 };
@@ -1663,14 +1672,16 @@ const submitForReview = async () => {
   }
 
   try {
-    const response = await fetch('http://localhost:3007/api/employee/reviews', {
+    const response = await fetch(`http://localhost:3007/api/employee/tasks/${selectedTask.value.id}/submit-review`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
+      },
       body: JSON.stringify({
-        task_id: selectedTask.value.id,
         reviewer_id: selectedReviewer.value,
         task_owner_id: authStore.user?.id,
-        completion_comment: 'Task completed, please review',
+        completion_comment: reviewComment.value || 'Task completed, please review',
       }),
     });
 
