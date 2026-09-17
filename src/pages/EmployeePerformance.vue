@@ -55,9 +55,16 @@
       <q-card flat bordered class="q-pa-lg">
         <div class="text-h6 text-weight-bold q-mb-md">Priority Performance</div>
         <div class="text-body2 text-grey-6 q-mb-lg">Completion rate by priority level</div>
-        <div v-if="priorityPerformance.length" class="column q-gutter-sm">
-          <div v-for="priority in priorityPerformance" :key="priority.priority" class="row items-center q-gutter-md">
-            <div class="col-2"><q-icon :name="getPriorityIcon(priority.priority)" :color="getPriorityColor(priority.priority)" size="16px" /> <span class="text-capitalize text-weight-medium">{{ priority.priority }}</span></div>
+        <div v-if="priorityPerformance.length" class="column q-gutter-y-sm">
+          <div class="row items-center q-col-gutter-sm text-weight-bold text-grey-7 q-pb-xs">
+            <div class="col-2">Priority</div>
+            <div class="col-2 text-right">Completed</div>
+            <div class="col-2 text-right">Delayed</div>
+            <div class="col-4 text-center">Completion Rate</div>
+            <div class="col-2 text-right">Avg Time</div>
+          </div>
+          <div v-for="priority in priorityPerformance" :key="priority.priority" class="row items-center q-col-gutter-sm">
+            <div class="col-2"><q-icon :name="getPriorityIcon(priority.priority)" :color="getPriorityColor(priority.priority)" size="16px" /> <span class="text-capitalize text-weight-medium q-ml-xs">{{ priority.priority }}</span></div>
             <div class="col-2 text-right">{{ priority.completed }}</div>
             <div class="col-2 text-right">{{ priority.delayed }}</div>
             <div class="col-4"><q-linear-progress :value="priority.completionRate / 100" :color="getPriorityColor(priority.priority)" rounded size="6px" track-color="grey-3" /></div>
