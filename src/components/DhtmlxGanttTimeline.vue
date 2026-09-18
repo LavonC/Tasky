@@ -1890,8 +1890,9 @@ body.body--dark {
         color: #ffffff;
       }
       .task-count-pill {
-        background: #ffffff;
-        color: #ffffff;
+        background: #34434c;
+        color: #edf2f7;
+        border: 1px solid #52636e;
       }
     }
 
@@ -2081,5 +2082,147 @@ body.body--dark .dhtmlx-roadmap-card .gantt_grid_head_cell,
 body.body--dark .dhtmlx-roadmap-card .gantt_scale_cell {
   color: #edf2f7;
   border-color: #34434c;
+}
+
+/* =========================================================
+   FINAL TASKY DARK-MODE OVERRIDES
+   These are intentionally placed after the light-theme rules
+   so DHTMLX/light component CSS cannot paint white surfaces
+   back over the dark timeline.
+   ========================================================= */
+body.body--dark .timeline-card,
+body.body--dark .dhtmlx-roadmap-card {
+  background: #1d2930 !important;
+  border-color: #34434c !important;
+  color: #edf2f7 !important;
+}
+
+body.body--dark .timeline-card .timeline-chart-surface,
+body.body--dark .timeline-card .gantt-canvas-wrapper,
+body.body--dark .timeline-card .gantt-chart-viewport,
+body.body--dark .timeline-card .gantt_container,
+body.body--dark .timeline-card .gantt_data_area,
+body.body--dark .timeline-card .gantt_task_bg,
+body.body--dark .timeline-card .gantt_grid {
+  background: #1d2930 !important;
+  background-color: #1d2930 !important;
+}
+
+body.body--dark .timeline-card .gantt_grid_scale,
+body.body--dark .timeline-card .gantt_task_scale {
+  background: #1d2930 !important;
+  color: #cbd5e1 !important;
+  border-color: #34434c !important;
+}
+
+body.body--dark .timeline-card .gantt_grid_head_cell {
+  background: #1d2930 !important;
+  color: #f1f5f9 !important;
+  border-color: #34434c !important;
+}
+
+body.body--dark .timeline-card .gantt_scale_cell {
+  background: #1d2930 !important;
+  color: #94a3b8 !important;
+  border-color: #34434c !important;
+}
+
+body.body--dark .timeline-card .gantt_row,
+body.body--dark .timeline-card .gantt_task_row,
+body.body--dark .timeline-card .dhtmlx-grid-row-task {
+  background: #181f26 !important;
+  border-color: #2b3942 !important;
+}
+
+body.body--dark .timeline-card .gantt_row:hover,
+body.body--dark .timeline-card .gantt_task_row:hover {
+  background: #232d35 !important;
+}
+
+body.body--dark .timeline-card .dhtmlx-grid-row-project {
+  background: #202a32 !important;
+  border-color: #34434c !important;
+}
+
+body.body--dark .timeline-card .gantt_cell {
+  color: #cbd5e1 !important;
+  border-color: #2b3942 !important;
+}
+
+body.body--dark .timeline-card .gantt_task_cell {
+  border-color: #26343c !important;
+}
+
+body.body--dark .timeline-card .project-title {
+  color: #ffffff !important;
+}
+
+body.body--dark .timeline-card .task-title {
+  color: #cbd5e1 !important;
+}
+
+body.body--dark .timeline-card .task-count-pill {
+  background: #34434c !important;
+  color: #edf2f7 !important;
+  border: 1px solid #52636e !important;
+}
+
+body.body--dark .timeline-card .gantt-footer-row {
+  background: #1d2930 !important;
+  border-color: #34434c !important;
+  color: #b8c7d1 !important;
+}
+
+body.body--dark .timeline-card .gantt-footer-row .text-grey-6 {
+  color: #b8c7d1 !important;
+}
+
+/* External/masked work should not become a white block in dark mode. */
+body.body--dark .timeline-card .dhtmlx-bar-external,
+body.body--dark .timeline-card .bar-external-pill {
+  background: #46545d !important;
+  border-color: #5b6b75 !important;
+  color: #e1e8ec !important;
+}
+
+body.body--dark .timeline-card .is-external-row {
+  background: #202a32 !important;
+}
+
+/* Dependency lines need contrast against the dark grid. */
+body.body--dark .timeline-card .gantt_line_wrapper div {
+  background-color: #71808a !important;
+}
+
+body.body--dark .timeline-card .gantt_link_arrow {
+  border-left-color: #71808a !important;
+}
+
+body.body--dark .timeline-card .gantt_link_point {
+  background: #71808a !important;
+  border-color: #1d2930 !important;
+}
+
+/* Empty state and chart viewport. */
+body.body--dark .timeline-card .gantt-no-data-overlay {
+  background: rgba(18, 26, 31, 0.96) !important;
+}
+
+body.body--dark .timeline-card .gantt-no-data-overlay .text-dark {
+  color: #edf2f7 !important;
+}
+
+body.body--dark .timeline-card .gantt-no-data-overlay .text-grey-6 {
+  color: #b8c7d1 !important;
+}
+
+/* The component already exposes is-dark; keep the same palette available
+   without depending on the body selector when the component is embedded. */
+.timeline-chart-surface.is-dark {
+  background: #1d2930 !important;
+}
+
+.timeline-chart-surface.is-dark .gantt-chart-viewport {
+  background: #1d2930 !important;
 }
 </style>

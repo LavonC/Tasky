@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white q-pa-md shadow-1 q-mb-md" style="border-radius: 12px">
+  <div class="analytics-table bg-white q-pa-md shadow-1 q-mb-md" style="border-radius: 12px">
     <div class="row items-center justify-between q-mb-sm">
       <div class="text-subtitle1 text-weight-bold">Project Performance Summary</div>
       <q-btn
@@ -135,18 +135,28 @@ const getBarColor = (progress: number) => {
 <style scoped>
 :deep(th) {
   font-weight: 600 !important;
-  color: #757575 !important;
+  color: var(--analytics-table-header-text, #757575) !important;
   font-size: 10px !important;
-  border-bottom: 1px solid #f0f0f0 !important;
+  border-bottom: 1px solid var(--analytics-table-border, #f0f0f0) !important;
 }
 :deep(td) {
   font-size: 12px !important;
-  color: #555;
-  border-bottom: 1px solid #f9f9f9 !important;
+  color: var(--analytics-table-body-text, #555);
+  border-bottom: 1px solid var(--analytics-table-border, #f9f9f9) !important;
 }
 .text-truncate {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+:global(body.body--dark) .analytics-table {
+  --analytics-table-border: #34434c;
+  --analytics-table-header-text: #b8c7d1;
+  --analytics-table-body-text: #edf2f7;
+}
+:global(body.body--dark) .analytics-table .text-grey-9,
+:global(body.body--dark) .analytics-table .text-grey-8 {
+  color: #edf2f7 !important;
 }
 </style>

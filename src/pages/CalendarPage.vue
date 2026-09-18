@@ -1,5 +1,5 @@
 <template>
-  <q-page class="q-pa-md calendar-page">
+  <q-page class="q-pa-md calendar-page" :class="{ 'is-dark': $q.dark.isActive }">
     <div class="row items-center justify-between q-mb-md">
       <div class="row items-center">
         <q-avatar
@@ -24,7 +24,7 @@
           outlined
           dense
           rounded
-          bg-color="white"
+          :bg-color="$q.dark.isActive ? 'grey-9' : 'white'"
           placeholder="Search tasks..."
           style="width: 260px"
         >
@@ -64,8 +64,8 @@
             unelevated
             no-caps
             toggle-color="indigo-5"
-            color="white"
-            text-color="grey-8"
+            :color="$q.dark.isActive ? 'grey-9' : 'white'"
+             :text-color="$q.dark.isActive ? 'grey-3' : 'grey-8'"
             :options="scaleOptions"
           />
           <q-btn-toggle
@@ -73,8 +73,8 @@
             unelevated
             no-caps
             toggle-color="indigo-5"
-            color="white"
-            text-color="grey-8"
+            :color="$q.dark.isActive ? 'grey-9' : 'white'"
+             :text-color="$q.dark.isActive ? 'grey-3' : 'grey-8'"
             :options="hierarchyOptions"
           />
         </div>
@@ -99,6 +99,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useQuasar } from 'quasar';
 import { useAuthStore } from '../stores/authStore';
 import DhtmlxGanttTimeline from '../components/DhtmlxGanttTimeline.vue';
 import { usePmTaskStore } from '../stores/pmTaskStore';
@@ -106,6 +107,7 @@ import { useProjectStore } from '../stores/projectStore';
 import { useResourceStore } from '../stores/resourceStore';
 
 const router = useRouter();
+const $q = useQuasar();
 const authStore = useAuthStore();
 const pmTaskStore = usePmTaskStore();
 const projectStore = useProjectStore();
@@ -168,6 +170,7 @@ const openTask = (task: any) => {
   min-height: 100%;
   background-color: #f8f9fa;
   overflow: auto;
+  color: #111827;
 }
 
 .priority-card,
@@ -185,5 +188,65 @@ const openTask = (task: any) => {
   overflow: hidden;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
+}
+
+/* Keep this page in sync with Quasar's dark mode instead of relying on
+   light-theme utility classes such as bg-white/f8f9ff. */
+.calendar-page.is-dark {
+  background-color: #121a1f;
+  color: #edf2f7;
+}
+
+.calendar-page.is-dark .priority-card,
+.calendar-page.is-dark .filter-card {
+  background-color: #1d2930 !important;
+  border-color: #34434c !important;
+  color: #edf2f7;
+}
+
+.calendar-page.is-dark .timeline-toolbar-card {
+  background-color: #1d2930 !important;
+  border-color: #34434c !important;
+}
+
+.calendar-page.is-dark :deep(.text-grey-7) {
+  color: #b8c7d1 !important;
+}
+
+.calendar-page.is-dark :deep(.q-field--outlined .q-field__control) {
+  background-color: #26343c !important;
+  border-color: #52636e !important;
+  color: #edf2f7 !important;
+}
+
+.calendar-page.is-dark :deep(.q-field__native),
+.calendar-page.is-dark :deep(.q-field__input),
+.calendar-page.is-dark :deep(.q-field__marginal) {
+  color: #edf2f7 !important;
+}
+
+.calendar-page.is-dark :deep(.q-field__native::placeholder),
+.calendar-page.is-dark :deep(.q-field__input::placeholder) {
+  color: #91a2ad !important;
+}
+
+.calendar-page.is-dark .timeline-toolbar-card :deep(.q-btn-group) {
+  border-color: #52636e;
+}
+
+.calendar-page.is-dark .timeline-toolbar-card :deep(.q-btn) {
+  color: #d9e2e8;
+}
+
+.calendar-page.is-dark .timeline-toolbar-card :deep(.q-btn:not(.bg-indigo-5)) {
+  background-color: #26343c;
+}
+
+.calendar-page.is-dark .timeline-toolbar-card :deep(.q-btn.bg-indigo-5) {
+  color: #ffffff !important;
+}
+
+.calendar-page.is-dark .priority-card :deep(.text-grey-7) {
+  color: #b8c7d1 !important;
 }
 </style>

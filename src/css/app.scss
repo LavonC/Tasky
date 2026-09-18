@@ -367,3 +367,107 @@ body.body--dark .pm-sidebar .q-item.nav-active:hover {
   background-color: #E1FF6B !important;
   color: #000000 !important;
 }
+
+
+/* =========================================================
+   TASKY DARK MODE — ANALYTICS / DASHBOARD READABILITY
+   ========================================================= */
+
+body.body--dark {
+  --tasky-dark-bg: #121a1f;
+  --tasky-dark-surface: #1d2930;
+  --tasky-dark-surface-2: #26343c;
+  --tasky-dark-border: #34434c;
+  --tasky-dark-text: #edf2f7;
+  --tasky-dark-muted: #b8c7d1;
+}
+
+/* Quasar grey text utilities used by Analytics components */
+body.body--dark .text-grey-9,
+body.body--dark .text-grey-8,
+body.body--dark .text-grey-7,
+body.body--dark .text-grey-6,
+body.body--dark .text-grey-5 {
+  color: var(--tasky-dark-muted) !important;
+}
+
+/* Strong text must remain bright enough on dark surfaces. */
+body.body--dark .text-weight-bold.text-grey-9,
+body.body--dark .text-weight-bold.text-grey-8 {
+  color: var(--tasky-dark-text) !important;
+}
+
+/* Inline light-theme colors in Analytics components. */
+body.body--dark [style*="color: #333"],
+body.body--dark [style*="color:#333"],
+body.body--dark [style*="color: #555"],
+body.body--dark [style*="color:#555"],
+body.body--dark [style*="color: #757575"],
+body.body--dark [style*="color:#757575"] {
+  color: var(--tasky-dark-text) !important;
+}
+
+/* Inline light borders used by tables/charts. */
+body.body--dark [style*="border-bottom: 1px solid #f0f0f0"],
+body.body--dark [style*="border-bottom:1px solid #f0f0f0"],
+body.body--dark [style*="border-bottom: 1px solid #f9f9f9"],
+body.body--dark [style*="border-bottom:1px solid #f9f9f9"],
+body.body--dark [style*="border-left: 1px solid #e0e0e0"],
+body.body--dark [style*="border-bottom: 1px solid #e0e0e0"] {
+  border-color: var(--tasky-dark-border) !important;
+}
+
+/* Native/Quasar table headers and cells. */
+body.body--dark .q-table th,
+body.body--dark .q-table td,
+body.body--dark .q-markup-table th,
+body.body--dark .q-markup-table td {
+  color: var(--tasky-dark-text) !important;
+  border-color: var(--tasky-dark-border) !important;
+}
+
+/* Analytics cards use bg-white in light mode; keep them as dark surfaces. */
+body.body--dark .bg-white,
+body.body--dark .q-card,
+body.body--dark .table-container {
+  background-color: var(--tasky-dark-surface) !important;
+  color: var(--tasky-dark-text) !important;
+}
+
+/* Secondary buttons / controls */
+body.body--dark .bg-grey-2,
+body.body--dark .bg-grey-1,
+body.body--dark .bg-grey-3 {
+  background-color: var(--tasky-dark-surface-2) !important;
+  color: var(--tasky-dark-text) !important;
+}
+
+/* Donut holes must match the surrounding dark card. */
+body.body--dark .donut-hole {
+  background: var(--tasky-dark-surface) !important;
+}
+
+/* Dark-mode table header overrides for scoped component styles. */
+body.body--dark .full-height-table thead tr th {
+  background-color: var(--tasky-dark-surface) !important;
+  color: var(--tasky-dark-muted) !important;
+  border-bottom-color: var(--tasky-dark-border) !important;
+}
+
+/* Progress tracks need contrast without changing semantic bar colors. */
+body.body--dark .q-linear-progress__track {
+  background: #46555e !important;
+}
+
+
+/* =========================================================
+   TASKY DARK MODE — TIMELINE SHARED SURFACE TOKENS
+   ========================================================= */
+body.body--dark {
+  --tasky-dark-gantt-bg: #181f26;
+  --tasky-dark-gantt-surface: #1d2930;
+  --tasky-dark-gantt-surface-2: #202a32;
+  --tasky-dark-gantt-border: #34434c;
+  --tasky-dark-gantt-text: #edf2f7;
+  --tasky-dark-gantt-muted: #b8c7d1;
+}

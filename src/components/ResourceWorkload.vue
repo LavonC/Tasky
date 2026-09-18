@@ -1,7 +1,7 @@
 <template>
   <q-card
     flat
-    class="rounded-borders q-pa-sm shadow-1 flex column"
+    class="resource-workload rounded-borders q-pa-sm shadow-1 flex column"
     style="border-radius: 8px; height: 100%"
   >
     <div class="row justify-between items-center q-mb-xs" style="flex: 0 0 auto">
@@ -131,5 +131,18 @@
 }
 :deep(.stretch-table .q-table__middle) {
   overflow: hidden !important;
+}
+
+:global(body.body--dark) .resource-workload {
+  color: #edf2f7;
+}
+:global(body.body--dark) .resource-workload .text-grey-8,
+:global(body.body--dark) .resource-workload .text-grey-6 {
+  color: #b8c7d1 !important;
+}
+:global(body.body--dark) .resource-workload .q-markup-table th,
+:global(body.body--dark) .resource-workload .q-markup-table td {
+  color: #edf2f7 !important;
+  border-color: #34434c !important;
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white q-pa-md shadow-1 q-mb-md" style="border-radius: 12px">
+  <div class="analytics-card bg-white q-pa-md shadow-1 q-mb-md" style="border-radius: 12px">
     <div class="row items-center justify-between q-mb-lg">
       <div class="text-subtitle1 text-weight-bold">Project Progress</div>
       <q-btn
@@ -160,5 +160,14 @@ const getBarColor = (progress: number) => {
 
 .flex-1 {
   flex: 1 1 0;
+}
+</style>
+
+<style scoped>
+:global(body.body--dark) .analytics-card .text-grey-9 {
+  color: #edf2f7 !important;
+}
+:global(body.body--dark) .analytics-card .text-grey-6 {
+  color: #b8c7d1 !important;
 }
 </style>

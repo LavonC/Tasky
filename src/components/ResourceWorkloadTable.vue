@@ -63,7 +63,7 @@
               <img :src="props.row.avatar || props.row.avatar_url || `https://i.pravatar.cc/150?img=${props.row.user_id || props.row.id}`" />
             </q-avatar>
             <div class="column">
-              <div class="text-weight-bold" style="font-size: 13px; color: #333">
+              <div class="text-weight-bold" style="font-size: 13px">
                 {{ props.row.first_name }} {{ props.row.last_name }}
               </div>
               <div class="text-caption text-grey-7" style="font-size: 11px">
@@ -163,7 +163,7 @@
       <template v-slot:bottom v-if="!compact">
         <div
           class="row items-center justify-between text-grey-7 full-width q-py-sm"
-          style="font-size: 13px; border-top: 1px solid #f0f0f0"
+          style="font-size: 13px; border-top: 1px solid var(--analytics-table-border, #f0f0f0)"
         >
           <div>
             Showing {{ showingStart }} to {{ showingEnd }} of
@@ -351,12 +351,28 @@ const showingEnd = computed(() =>
 :deep(.full-height-table thead tr th) {
   position: sticky;
   z-index: 1;
-  background-color: #fff;
+  background-color: var(--analytics-table-header-bg, #fff);
   font-weight: 600;
-  color: #757575;
-  border-bottom: 1px solid #f0f0f0;
+  color: var(--analytics-table-header-text, #757575);
+  border-bottom: 1px solid var(--analytics-table-border, #f0f0f0);
 }
 :deep(.full-height-table thead tr:first-child th) {
   top: 0;
+}
+
+:global(body.body--dark) .table-container {
+  --analytics-table-border: #34434c;
+  --analytics-table-header-bg: #1d2930;
+  --analytics-table-header-text: #b8c7d1;
+}
+:global(body.body--dark) .table-container .text-grey-5,
+:global(body.body--dark) .table-container .text-grey-6,
+:global(body.body--dark) .table-container .text-grey-7,
+:global(body.body--dark) .table-container .text-grey-8 {
+  color: #b8c7d1 !important;
+}
+:global(body.body--dark) .table-container .q-table th,
+:global(body.body--dark) .table-container .q-table td {
+  border-color: #34434c !important;
 }
 </style>

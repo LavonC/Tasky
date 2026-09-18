@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white q-pa-md shadow-1 q-mb-md" style="border-radius: 12px">
+  <div class="analytics-card bg-white q-pa-md shadow-1 q-mb-md" style="border-radius: 12px">
     <div class="text-subtitle1 text-weight-bold q-mb-lg">Task Priority Distribution</div>
 
     <div v-if="analyticsStore.loading" class="flex flex-center q-pa-md">
@@ -70,3 +70,9 @@ const items = computed(() => {
   return result;
 });
 </script>
+
+<style scoped>
+:global(body.body--dark) .analytics-card .text-grey-9 {
+  color: #edf2f7 !important;
+}
+</style>
