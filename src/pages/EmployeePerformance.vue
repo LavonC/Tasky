@@ -36,16 +36,16 @@
 
       <div class="row q-col-gutter-md">
         <div class="col-12 col-md-6">
-          <WorkloadVsOutputCard title="Workload vs Output" subtitle="Estimated effort compared with logged effort" :workload-items="workloadItems" :efficiency="performanceStore.summary.efficiency" @period-change="handlePeriodChange" />
+          <WorkloadVsOutputCard title="Workload vs Output" subtitle="Estimated effort compared with logged effort" :workload-items="workloadItems" :efficiency="performanceStore.summary.efficiency" :selected-period="selectedPeriod" @period-change="handlePeriodChange" />
         </div>
         <div class="col-12 col-md-6">
-          <TimeAllocationDonut title="Time Allocation" subtitle="Logged hours by project" :data="performanceStore.summary.timeAllocation || []" :center-label="timeCenterLabel" @period-change="handlePeriodChange" />
+          <TimeAllocationDonut title="Time Allocation" subtitle="Logged hours by project" :data="performanceStore.summary.timeAllocation || []" :center-label="timeCenterLabel" :selected-period="selectedPeriod" @period-change="handlePeriodChange" />
         </div>
       </div>
 
       <div class="row q-col-gutter-md">
         <div class="col-12 col-md-6">
-          <DailyConsistencyHeatmap title="Daily Consistency" subtitle="Recorded logs, updates, and compliance activity" :data="performanceStore.summary.dailyActivity || []" @period-change="handlePeriodChange" />
+          <DailyConsistencyHeatmap title="Daily Consistency" subtitle="Recorded logs, updates, and compliance activity" :data="performanceStore.summary.dailyActivity || []" :selected-period="selectedPeriod" @period-change="handlePeriodChange" />
         </div>
         <div class="col-12 col-md-6">
           <TaskQualityMetrics title="Task Quality Metrics" subtitle="Quality signals available from the review history" :metrics="qualityMetrics" />

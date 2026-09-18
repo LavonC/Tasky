@@ -66,5 +66,15 @@ export default defineRouter((/* { store, ssrContext } */) => {
 
     return true;
   });
+
+  Router.afterEach((to, from) => {
+    const isAuthenticated = Boolean(sessionStorage.getItem('tasky_user') && sessionStorage.getItem('tasky_token'));
+    const leftProtectedRoute = from.matched.some((record) => record.meta.requiresAuth);
+
+    if (isAuthenticated && to.path === '/' && leftProtectedRoute) {
+      window.history.pushState(window.history.state, document.title, to.fullPath);
+    }
+  });
+
   return Router;
 });

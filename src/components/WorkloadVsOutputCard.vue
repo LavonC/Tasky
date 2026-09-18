@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 interface WorkloadItem {
   label: string;
@@ -75,6 +75,7 @@ interface Props {
   efficiencyMessage?: string;
   showPeriodSelector?: boolean;
   periodOptions?: string[];
+  selectedPeriod?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -85,7 +86,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits(['period-change']);
 
-const selectedPeriod = ref(props.periodOptions[1]);
+const selectedPeriod = ref(props.selectedPeriod || props.periodOptions[1]);
+
+watch(() => props.selectedPeriod, (value) => {
+  if (value) selectedPeriod.value = value;
+});
 
 function handlePeriodChange(value: string) {
   emit('period-change', value);

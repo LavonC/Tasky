@@ -61,8 +61,12 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits(['period-change']);
 
-const selectedPeriod = ref(props.periodOptions[1]);
+const selectedPeriod = ref(props.selectedPeriod || props.periodOptions[1]);
 const donutContainer = ref<HTMLElement | null>(null);
+
+watch(() => props.selectedPeriod, (value) => {
+  if (value) selectedPeriod.value = value;
+});
 
 const totalValue = computed(() => props.data.reduce((sum, item) => sum + item.value, 0));
 

@@ -7,8 +7,7 @@
       :width="260"
       :mini="sidebarCollapsed"
       class="text-black column pm-sidebar"
-      style="background-color: #ffffff !important; border-radius: 0 32px 32px 0; border-right: 1px solid #e6e5e5"
-      content-style="background-color: #ffffff !important"
+      style="border-radius: 0 32px 32px 0; border-right: 1px solid #e6e5e5"
     >
       <!-- Background decorative shapes -->
       <div class="sidebar-shape shape-top"></div>
@@ -264,6 +263,11 @@ function handleLogout() {
   border-radius: 24px !important;
   overflow: hidden !important;
   padding: 16px !important;
+}
+
+:global(body.body--dark) .pm-sidebar :deep(.q-drawer__content) {
+  background: #1d2930 !important;
+  border-color: #34434c !important;
 }
 
 /* ================= DECORATIVE SHAPES ================= */

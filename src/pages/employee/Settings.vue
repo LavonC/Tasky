@@ -123,14 +123,36 @@ function setDarkMode(value: boolean) {
   localStorage.setItem('tasky_dark_mode', String(value));
 }
 
-function saveProfile() {
-  // In production, this would update the user profile in the database
-  console.log('Saving profile:', {
-    firstName: firstName.value,
-    lastName: lastName.value,
-    email: email.value,
-    phone: phone.value,
+async function saveProfile() {
+  if (!authStore.user?.id) {
+    $q.notify({
+      type: 'negative',
+      message: 'User information not available',
+    });
+    return;
+  }
+
+  const result = await authStore.updateProfile(authStore.user.id, {
+    firstName: firstName.value.trim(),
+    surname: lastName.value.trim(),
+    email: email.value.trim(),
+    phone: phone.value.trim(),
+    avatar: authStore.user.avatar,
   });
+
+  if (result.success) {
+    $q.notify({
+      type: 'positive',
+      message: 'Profile updated successfully',
+      position: 'top',
+    });
+  } else {
+    $q.notify({
+      type: 'negative',
+      message: result.error || 'Failed to update profile',
+      position: 'top',
+    });
+  }
 }
 
 function logout() {
