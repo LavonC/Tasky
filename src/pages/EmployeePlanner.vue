@@ -2109,6 +2109,61 @@ async function automateDeadline() {
   color: #64748b;
 }
 
+:global(body.body--dark) .planner-page,
+:global(body.body--dark) .calendar-container,
+:global(body.body--dark) .calendar-card,
+:global(body.body--dark) .compact-info-card,
+:global(body.body--dark) .streak-card,
+:global(body.body--dark) .compact-task-card,
+:global(body.body--dark) .empty-card {
+  background: #1d2930;
+  border-color: #34434c;
+  color: #edf2f7;
+}
+
+:global(body.body--dark) .calendar-toolbar,
+:global(body.body--dark) .calendar-week-header,
+:global(body.body--dark) .compact-activity-row {
+  border-color: #34434c;
+}
+
+:global(body.body--dark) .calendar-cell {
+  background: #26343c;
+  border-color: #465761;
+}
+
+:global(body.body--dark) .calendar-cell.weekend-cell {
+  background: #222f36;
+}
+
+:global(body.body--dark) .calendar-cell.worked-cell {
+  background: #20372f;
+}
+
+:global(body.body--dark) .calendar-cell.leave-cell,
+:global(body.body--dark) .calendar-cell.holiday-cell {
+  background: #30343b;
+}
+
+:global(body.body--dark) .calendar-leave-impact,
+:global(body.body--dark) .calendar-missed-work {
+  background: #45222a;
+  border-color: #7f3b47;
+}
+
+:global(body.body--dark) .compact-status-option,
+:global(body.body--dark) .date-chip {
+  background: #26343c;
+  border-color: #465761;
+  color: #b8c7d1;
+}
+
+:global(body.body--dark) .compact-status-active {
+  background: #34305a;
+  border-color: #9b8cff;
+  color: #d7d0ff;
+}
+
 @media (max-width: 850px) {
   .calendar-cell {
     min-height: 75px;

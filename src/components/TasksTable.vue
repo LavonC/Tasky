@@ -422,4 +422,14 @@ const showingEnd = computed(() =>
 :deep(.full-height-table thead tr:first-child th) {
   top: 0;
 }
+
+:global(body.body--dark) :deep(.full-height-table thead tr th) {
+  background-color: #26343c;
+  color: #edf2f7;
+  border-color: #34434c;
+}
+
+:global(body.body--dark) :deep(.full-height-table tbody tr) {
+  background: #1d2930;
+}
 </style>

@@ -2056,4 +2056,30 @@ body.body--dark {
 .timeline-card .gantt_task_row:hover {
   background: #f8f9ff !important;
 }
+
+body.body--dark .dhtmlx-roadmap-card,
+body.body--dark .timeline-card {
+  background: #1d2930;
+  border-color: #34434c;
+}
+
+body.body--dark .dhtmlx-roadmap-card .gantt-canvas-wrapper,
+body.body--dark .dhtmlx-roadmap-card .timeline-chart-surface,
+body.body--dark .timeline-chart-surface .gantt-chart-viewport,
+body.body--dark .timeline-card .gantt-footer-row {
+  background: #1d2930;
+  border-color: #34434c;
+}
+
+body.body--dark .dhtmlx-roadmap-card .gantt_grid_scale,
+body.body--dark .dhtmlx-roadmap-card .gantt_task_scale {
+  color: #edf2f7;
+  border-bottom-color: #34434c;
+}
+
+body.body--dark .dhtmlx-roadmap-card .gantt_grid_head_cell,
+body.body--dark .dhtmlx-roadmap-card .gantt_scale_cell {
+  color: #edf2f7;
+  border-color: #34434c;
+}
 </style>

@@ -100,4 +100,9 @@ defineEmits(['view-change', 'tab-change']);
   height: 3px;
   border-radius: 3px 3px 0 0;
 }
+
+:global(body.body--dark) .task-tab.q-tab--active {
+  background: #26343c;
+  color: #a8c7ff !important;
+}
 </style>

@@ -143,7 +143,14 @@
 </template>
 
 <script setup lang="ts">
-// No additional logic needed for the layout
+import { onMounted } from 'vue';
+import { useQuasar } from 'quasar';
+
+const $q = useQuasar();
+
+onMounted(() => {
+  $q.dark.set(localStorage.getItem('tasky_dark_mode') === 'true');
+});
 </script>
 
 <style scoped>
@@ -307,6 +314,12 @@
   max-width: 480px;
   padding: 1rem;
   min-height: 0;
+}
+
+:global(body.body--dark) .auth-container,
+:global(body.body--dark) .auth-page,
+:global(body.body--dark) .auth-form-panel {
+  background: #121a1f;
 }
 
 /* Responsive Design */

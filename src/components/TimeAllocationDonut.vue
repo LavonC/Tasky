@@ -51,6 +51,7 @@ interface Props {
   centerLabel?: string;
   showPeriodSelector?: boolean;
   periodOptions?: string[];
+  selectedPeriod?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -138,7 +139,7 @@ function renderDonut() {
         .attr('text-anchor', 'middle')
         .attr('dy', '1em')
         .style('font-size', '12px')
-        .style('fill', '#666')
+        .style('fill', document.body.classList.contains('body--dark') ? '#b8c7d1' : '#666')
         .text('hours');
     }
   }

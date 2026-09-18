@@ -4,7 +4,7 @@
     <q-drawer
       v-model="leftDrawerOpen"
       show-if-above
-      :width="260"
+      :width="280"
       :mini="sidebarCollapsed"
       class="text-white column employee-sidebar"
       style="background-color: #01366e !important"
@@ -304,6 +304,21 @@
 
 .page-background {
   background: #ffffff;
+}
+
+:global(body.body--dark) .employee-header,
+:global(body.body--dark) .page-background {
+  background: #121a1f !important;
+  color: #edf2f7;
+}
+
+:global(body.body--dark) .employee-header :deep(.page-title) {
+  color: #edf2f7;
+}
+
+:global(body.body--dark) .employee-header :deep(.page-subtitle),
+:global(body.body--dark) .employee-header :deep(.notification-btn) {
+  color: #b8c7d1 !important;
 }
 </style>
 

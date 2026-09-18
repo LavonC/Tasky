@@ -32,6 +32,10 @@ function renderChart() {
 
   const width = Math.max(containerWidth, 300);
   const height = 135;
+  const isDark = document.body.classList.contains('body--dark');
+  const chartText = isDark ? '#cbd5e1' : '#555';
+  const axisText = isDark ? '#94a3b8' : '#777';
+  const gridStroke = isDark ? '#34434c' : '#eeeeee';
 
   const margin = {
     top: 25,
@@ -79,7 +83,7 @@ function renderChart() {
         .tickFormat(() => ''),
     )
     .selectAll('line')
-    .attr('stroke', '#eeeeee')
+    .attr('stroke', gridStroke)
     .attr('stroke-width', 1);
 
   svg.select('.grid .domain').remove();
@@ -100,7 +104,7 @@ function renderChart() {
       g.select('.domain').remove();
 
       g.selectAll('.tick text')
-        .attr('fill', '#8a8a8a')
+        .attr('fill', axisText)
         .attr('font-size', '10px')
         .attr('dx', '-8px');
     });
@@ -119,7 +123,7 @@ function renderChart() {
       g.select('.domain').remove();
 
       g.selectAll('.tick text')
-        .attr('fill', '#777')
+        .attr('fill', axisText)
         .attr('font-size', '10px')
         .attr('dy', '12px');
     });
@@ -201,7 +205,7 @@ function renderChart() {
     .attr('cy', (d) => y(d.completed))
     .attr('r', 2.5)
     .attr('fill', '#3949ab')
-    .attr('stroke', 'white')
+    .attr('stroke', isDark ? '#1d2930' : 'white')
     .attr('stroke-width', 1.5);
 
   /*
@@ -217,7 +221,7 @@ function renderChart() {
     .attr('text-anchor', 'middle')
     .attr('font-size', '9px')
     .attr('font-weight', '600')
-    .attr('fill', '#555')
+    .attr('fill', chartText)
     .text((d) => d.completed);
 }
 
@@ -268,5 +272,18 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 120px;
   overflow: hidden;
+}
+
+:global(body.body--dark) .trend-card {
+  background: #1d2930;
+  border: 1px solid #34434c;
+}
+
+:global(body.body--dark) .trend-title {
+  color: #edf2f7;
+}
+
+:global(body.body--dark) .trend-subtitle {
+  color: #b8c7d1;
 }
 </style>

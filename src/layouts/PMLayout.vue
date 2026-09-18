@@ -4,7 +4,7 @@
     <q-drawer
       v-model="leftDrawerOpen"
       show-if-above
-      :width="260"
+      :width="280"
       :mini="sidebarCollapsed"
       class="text-black column pm-sidebar"
       style="border-radius: 0 32px 32px 0; border-right: 1px solid #e6e5e5"
@@ -359,5 +359,9 @@ function handleLogout() {
 
 .page-background {
   background: #ffffff;
+}
+
+:global(body.body--dark) .page-background {
+  background: #121a1f !important;
 }
 </style>

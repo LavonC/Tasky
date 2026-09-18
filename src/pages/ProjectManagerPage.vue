@@ -39,7 +39,7 @@
         <q-tabs
           v-model="graphsTab"
           dense
-          class="text-grey-7"
+          class="text-grey-7 command-center-tabs"
           active-color="primary"
           indicator-color="primary"
           align="left"
@@ -106,7 +106,7 @@
   <q-tabs
     v-model="activeTab"
     dense
-    class="text-grey-7"
+    class="text-grey-7 command-center-tabs"
     active-color="primary"
     indicator-color="primary"
     align="left"
@@ -1409,6 +1409,15 @@ function showEmployeePerformance(user: any) {
   margin-top: 0;
 }
 
+.command-center-tabs {
+  width: min(100%, 560px);
+}
+
+.command-center-tabs :deep(.q-tab) {
+  min-width: 150px;
+  padding-inline: 22px;
+}
+
 .graph-card {
   display: flex;
   height: 250px;
@@ -1517,6 +1526,16 @@ function showEmployeePerformance(user: any) {
 .action-item {
   border-radius: 12px;
   min-height: 78px;
+}
+
+:global(body.body--dark) .bottom-tab-panels :deep(.bg-red-1),
+:global(body.body--dark) .bottom-tab-panels :deep(.text-red-9) {
+  background-color: #45222a !important;
+  color: #ffb4b4 !important;
+}
+
+:global(body.body--dark) .attention-search :deep(.q-field__control) {
+  background: #26343c !important;
 }
 
 @media (max-width: 900px) {

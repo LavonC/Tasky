@@ -414,4 +414,19 @@ onBeforeUnmount(() => {
 .register-dialog {
   min-width: 500px;
 }
+
+:global(body.body--dark) .login-page {
+  background: #121a1f;
+}
+
+:global(body.body--dark) .login-card {
+  background: #1d2930;
+  border: 1px solid #34434c;
+  color: #edf2f7;
+}
+
+:global(body.body--dark) .login-subtitle,
+:global(body.body--dark) .login-card .text-grey-7 {
+  color: #b8c7d1 !important;
+}
 </style>

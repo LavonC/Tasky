@@ -3920,4 +3920,53 @@ async function submitInterrupt() {
 .edit-subtasks-footer {
   background: #ffffff;
 }
+
+:global(body.body--dark) .my-tasks-card,
+:global(body.body--dark) .manage-dialog,
+:global(body.body--dark) .manage-header,
+:global(body.body--dark) .manage-tabs,
+:global(body.body--dark) .manage-panels,
+:global(body.body--dark) .manage-progress-card,
+:global(body.body--dark) .manage-subtask,
+:global(body.body--dark) .timeline-card,
+:global(body.body--dark) .edit-subtasks-dialog,
+:global(body.body--dark) .edit-task-info,
+:global(body.body--dark) .edit-subtask-card,
+:global(body.body--dark) .edit-empty-subtasks,
+:global(body.body--dark) .edit-subtasks-footer,
+:global(body.body--dark) .empty-subtasks {
+  background: #1d2930;
+  border-color: #34434c;
+  color: #edf2f7;
+}
+
+:global(body.body--dark) .task-table :deep(th) {
+  background: #26343c;
+  color: #edf2f7;
+}
+
+:global(body.body--dark) .task-table :deep(td) {
+  border-color: #34434c;
+}
+
+:global(body.body--dark) .task-table :deep(tbody tr:hover) {
+  background: #26343c;
+}
+
+:global(body.body--dark) .manage-task-name,
+:global(body.body--dark) .section-title {
+  color: #a8c7ff;
+}
+
+:global(body.body--dark) .manage-subtask-title,
+:global(body.body--dark) .task-grid-title,
+:global(body.body--dark) .task-name {
+  color: #edf2f7;
+}
+
+:global(body.body--dark) .timeline-item,
+:global(body.body--dark) .impact-info {
+  background: #26343c;
+  border-color: #34434c;
+}
 </style>
