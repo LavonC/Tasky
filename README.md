@@ -21,11 +21,11 @@ Follow these steps to set up the project locally.
 2. Import the schema and seed data:
    - Import the table structures:
      ```bash
-     mysql -u yourusername -p tasky < database/schema.sql
+     mysql -u root -p tasky < database/schema.sql
      ```
    - Import the seed data (test users, projects, etc.):
      ```bash
-     mysql -u yourusername -p tasky < database/seed.sql
+     mysql -u root -p tasky < database/seed.sql
      ```
 
 ### 2. Backend (Server) Setup

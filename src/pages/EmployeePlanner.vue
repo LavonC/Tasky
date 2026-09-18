@@ -583,16 +583,6 @@ const dayStatusOptions: Array<{ label: string; value: DayStatus; icon: string }>
     value: 'leave',
     icon: 'event_busy',
   },
-  {
-    label: 'Holiday',
-    value: 'holiday',
-    icon: 'celebration',
-  },
-  {
-    label: 'Weekend',
-    value: 'weekend',
-    icon: 'weekend',
-  },
 ];
 
 /* ============================================================

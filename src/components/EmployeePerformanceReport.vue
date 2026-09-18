@@ -48,149 +48,128 @@
       <q-tab-panels v-model="activeTab" animated class="bg-transparent" style="flex: 1 1 0; overflow-y: auto;">
         <q-tab-panel name="performance" class="q-pa-none">
           <div class="row q-col-gutter-md q-pa-md">
-        <!-- Left Column: Stats & Charts -->
-        <div class="col-8 column q-gutter-y-md">
-          <!-- Overall Performance Meter -->
-          <q-card flat bordered class="bg-white">
-            <q-card-section>
-              <div class="text-subtitle1 text-weight-bold q-mb-md">Overall Performance</div>
-              <div class="row items-center justify-center">
-                <div ref="meterChart" style="width: 300px; height: 200px"></div>
-                <div class="column q-ml-xl">
-                  <div class="text-caption text-grey-7">Performance Score</div>
-                  <div class="text-h4 text-weight-bold" :class="`text-${performanceColor}`">
-                    {{ performanceData.overallScore || 0 }}%
+            <!-- Left Column: Stats & Charts -->
+            <div class="col-8 column q-gutter-y-md">
+              <!-- Task Status Distribution -->
+              <q-card flat bordered class="bg-white">
+                <q-card-section>
+                  <div class="text-subtitle1 text-weight-bold q-mb-md">Task Status Distribution</div>
+                  <div class="row items-center">
+                    <div ref="pieChart" style="width: 250px; height: 250px"></div>
+                    <div class="column q-ml-md flex-1">
+                      <div
+                        v-for="(item, index) in taskStatusData"
+                        :key="index"
+                        class="row items-center q-mb-sm"
+                      >
+                        <div
+                          class="legend-dot q-mr-sm"
+                          :style="`background-color: ${item.color};`"
+                        ></div>
+                        <div class="text-body2">{{ item.label }}</div>
+                        <q-space />
+                        <div class="text-weight-bold">{{ item.count }} ({{ item.percent }}%)</div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="text-caption text-grey-6 q-mt-sm">
-                    Based on task completion, timeliness, and quality
+                </q-card-section>
+              </q-card>
+
+              <!-- Weekly Progress Chart -->
+              <q-card flat bordered class="bg-white">
+                <q-card-section>
+                  <div class="text-subtitle1 text-weight-bold q-mb-md">
+                    Weekly Progress (Last 8 Weeks)
                   </div>
-                </div>
-              </div>
-            </q-card-section>
-          </q-card>
+                  <div ref="barChart" class="weekly-chart"></div>
+                </q-card-section>
+              </q-card>
+            </div>
 
-          <!-- Task Status Distribution -->
-          <q-card flat bordered class="bg-white">
-            <q-card-section>
-              <div class="text-subtitle1 text-weight-bold q-mb-md">Task Status Distribution</div>
-              <div class="row items-center">
-                <div ref="pieChart" style="width: 250px; height: 250px"></div>
-                <div class="column q-ml-md flex-1">
-                  <div
-                    v-for="(item, index) in taskStatusData"
-                    :key="index"
-                    class="row items-center q-mb-sm"
-                  >
-                    <div
-                      class="legend-dot q-mr-sm"
-                      :style="`background-color: ${item.color};`"
-                    ></div>
-                    <div class="text-body2">{{ item.label }}</div>
-                    <q-space />
-                    <div class="text-weight-bold">{{ item.count }} ({{ item.percent }}%)</div>
+            <!-- Right Column: Overall Performance + Details -->
+            <div class="col-4 column q-gutter-y-md">
+              <!-- Overall Performance Meter -->
+              <q-card flat bordered class="bg-white">
+                <q-card-section>
+                  <div class="text-subtitle1 text-weight-bold q-mb-md">Overall Performance</div>
+                  <div class="column items-center">
+                    <div ref="meterChart" class="performance-meter"></div>
+                    <div class="column items-center text-center">
+                      <div class="text-caption text-grey-7">Performance Score</div>
+                      <div class="text-h4 text-weight-bold" :class="`text-${performanceColor}`">
+                        {{ performanceData.overallScore || 0 }}%
+                      </div>
+                      <div class="text-caption text-grey-6 q-mt-sm">
+                        Based on task completion, timeliness, and quality
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </q-card-section>
-          </q-card>
+                </q-card-section>
+              </q-card>
 
-          <!-- Weekly Progress Chart -->
-          <q-card flat bordered class="bg-white">
-            <q-card-section>
-              <div class="text-subtitle1 text-weight-bold q-mb-md">
-                Weekly Progress (Last 8 Weeks)
-              </div>
-              <div ref="barChart" style="width: 100%; height: 250px"></div>
-            </q-card-section>
-          </q-card>
-        </div>
+              <!-- Summary Stats -->
+              <q-card flat bordered class="bg-white">
+                <q-card-section>
+                  <div class="text-subtitle1 text-weight-bold q-mb-md">Summary</div>
+                  <q-list dense>
+                    <q-item class="q-px-none">
+                      <q-item-section avatar><q-icon name="assignment" color="blue" size="xs" /></q-item-section>
+                      <q-item-section class="text-grey-7">Total Tasks</q-item-section>
+                      <q-item-section side class="text-weight-bold">{{ performanceData.totalTasks || 0 }}</q-item-section>
+                    </q-item>
+                    <q-item class="q-px-none">
+                      <q-item-section avatar><q-icon name="check_circle" color="green" size="xs" /></q-item-section>
+                      <q-item-section class="text-grey-7">Completed</q-item-section>
+                      <q-item-section side class="text-weight-bold text-green">{{ performanceData.completedTasks || 0 }}</q-item-section>
+                    </q-item>
+                    <q-item class="q-px-none">
+                      <q-item-section avatar><q-icon name="schedule" color="orange" size="xs" /></q-item-section>
+                      <q-item-section class="text-grey-7">Overdue</q-item-section>
+                      <q-item-section side class="text-weight-bold text-orange">{{ performanceData.overdueTasks || 0 }}</q-item-section>
+                    </q-item>
+                    <q-item class="q-px-none">
+                      <q-item-section avatar><q-icon name="access_time" color="purple" size="xs" /></q-item-section>
+                      <q-item-section class="text-grey-7">Hours Logged</q-item-section>
+                      <q-item-section side class="text-weight-bold">{{ performanceData.hoursLogged || 0 }}h</q-item-section>
+                    </q-item>
+                    <q-item class="q-px-none">
+                      <q-item-section avatar><q-icon name="trending_up" color="indigo" size="xs" /></q-item-section>
+                      <q-item-section class="text-grey-7">Utilization</q-item-section>
+                      <q-item-section side class="text-weight-bold">{{ performanceData.utilization || 0 }}%</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-card-section>
+              </q-card>
 
-        <!-- Right Column: Details -->
-        <div class="col-4 column q-gutter-y-md">
-          <!-- Summary Stats -->
-          <q-card flat bordered class="bg-white">
-            <q-card-section>
-              <div class="text-subtitle1 text-weight-bold q-mb-md">Summary</div>
-              <q-list dense>
-                <q-item class="q-px-none">
-                  <q-item-section avatar
-                    ><q-icon name="assignment" color="blue" size="xs"
-                  /></q-item-section>
-                  <q-item-section class="text-grey-7">Total Tasks</q-item-section>
-                  <q-item-section side class="text-weight-bold">{{ performanceData.totalTasks || 0 }}</q-item-section>
-                </q-item>
-                <q-item class="q-px-none">
-                  <q-item-section avatar
-                    ><q-icon name="check_circle" color="green" size="xs"
-                  /></q-item-section>
-                  <q-item-section class="text-grey-7">Completed</q-item-section>
-                  <q-item-section side class="text-weight-bold text-green">{{ performanceData.completedTasks || 0 }}</q-item-section>
-                </q-item>
-                <q-item class="q-px-none">
-                  <q-item-section avatar
-                    ><q-icon name="schedule" color="orange" size="xs"
-                  /></q-item-section>
-                  <q-item-section class="text-grey-7">Overdue</q-item-section>
-                  <q-item-section side class="text-weight-bold text-orange">{{ performanceData.overdueTasks || 0 }}</q-item-section>
-                </q-item>
-                <q-item class="q-px-none">
-                  <q-item-section avatar
-                    ><q-icon name="access_time" color="purple" size="xs"
-                  /></q-item-section>
-                  <q-item-section class="text-grey-7">Hours Logged</q-item-section>
-                  <q-item-section side class="text-weight-bold">{{ performanceData.hoursLogged || 0 }}h</q-item-section>
-                </q-item>
-                <q-item class="q-px-none">
-                  <q-item-section avatar
-                    ><q-icon name="trending_up" color="indigo" size="xs"
-                  /></q-item-section>
-                  <q-item-section class="text-grey-7">Utilization</q-item-section>
-                  <q-item-section side class="text-weight-bold">
-                    {{ performanceData.utilization || 0 }}%
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-card-section>
-          </q-card>
-
-          <!-- Recent Tasks -->
-          <q-card flat bordered class="bg-white">
-            <q-card-section>
-              <div class="text-subtitle1 text-weight-bold q-mb-sm">Recent Tasks</div>
-              <q-list v-if="performanceData.recentTasks && performanceData.recentTasks.length > 0" separator dense>
-                <q-item
-                  v-for="task in performanceData.recentTasks.slice(0, 5)"
-                  :key="task.id"
-                  class="q-py-sm"
-                >
-                  <q-item-section>
-                    <q-item-label class="text-weight-medium" style="font-size: 12px">{{
-                      task.title
-                    }}</q-item-label>
-                    <q-item-label caption>{{ task.project_name }}</q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-badge
-                      :color="
-                        task.status === 'completed'
-                          ? 'green'
-                          : task.status === 'in-progress'
-                            ? 'blue'
-                            : 'grey'
-                      "
-                      :label="task.status"
-                      style="font-size: 9px"
-                    />
-                  </q-item-section>
-                </q-item>
-              </q-list>
-              <div v-else class="text-caption text-grey-6 q-pa-md text-center">No recent tasks</div>
-            </q-card-section>
-          </q-card>
-
-        </div>
-        </div>
-      </q-tab-panel>
+              <!-- Recent Tasks -->
+              <q-card flat bordered class="bg-white">
+                <q-card-section>
+                  <div class="text-subtitle1 text-weight-bold q-mb-sm">Recent Tasks</div>
+                  <q-list v-if="performanceData.recentTasks && performanceData.recentTasks.length > 0" separator dense>
+                    <q-item
+                      v-for="task in performanceData.recentTasks.slice(0, 5)"
+                      :key="task.id"
+                      class="q-py-sm"
+                    >
+                      <q-item-section>
+                        <q-item-label class="text-weight-medium" style="font-size: 12px">{{ task.title }}</q-item-label>
+                        <q-item-label caption>{{ task.project_name }}</q-item-label>
+                      </q-item-section>
+                      <q-item-section side>
+                        <q-badge
+                          :color="task.status === 'completed' ? 'green' : task.status === 'in-progress' ? 'blue' : 'grey'"
+                          :label="task.status"
+                          style="font-size: 9px"
+                        />
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                  <div v-else class="text-caption text-grey-6 q-pa-md text-center">No recent tasks</div>
+                </q-card-section>
+              </q-card>
+            </div>
+          </div>
+        </q-tab-panel>
 
       <q-tab-panel name="daily_logs" class="q-pa-md">
         <div class="column q-gutter-y-md" style="max-width: 800px; margin: 0 auto;">
@@ -364,7 +343,7 @@ function renderMeterChart() {
   const container = meterChart.value;
   container.innerHTML = '';
 
-  const width = 300;
+  const width = Math.min(container.clientWidth || 300, 300);
   const height = 200;
   const score = performanceData.value.overallScore || 0;
 
@@ -509,5 +488,23 @@ function renderBarChart() {
   width: 12px;
   height: 12px;
   border-radius: 50%;
+}
+
+.performance-meter {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.performance-meter :deep(svg) {
+  max-width: 100%;
+}
+
+.weekly-chart {
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
 }
 </style>

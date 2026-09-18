@@ -700,91 +700,236 @@
     </q-dialog>
 
     <!-- ========================================================= -->
-    <!-- EDIT SUBTASKS DIALOG -->
-    <!-- ========================================================= -->
+<!-- EDIT SUBTASKS DIALOG -->
+<!-- ========================================================= -->
 
-    <q-dialog v-model="showEditDialog">
-      <q-card class="task-dialog" v-if="selectedTask" style="width: 600px; max-width: 90vw">
-        <!-- HEADER -->
-        <q-card-section class="q-pb-md">
-          <div class="text-h6 text-weight-bold">Edit Subtasks</div>
+<q-dialog v-model="showEditDialog">
+  <q-card class="edit-subtasks-dialog" v-if="selectedTask">
 
-          <div class="text-body2 text-grey-6 q-mt-xs">
+    <!-- HEADER -->
+    <q-card-section class="edit-subtasks-header">
+      <div class="row items-center no-wrap">
+
+        <q-avatar
+          color="white"
+          text-color="indigo"
+          icon="edit_note"
+          size="46px"
+          class="q-mr-md"
+        />
+
+        <div class="col">
+          <div class="text-h6 text-weight-bold">
+            Edit Subtasks
+          </div>
+
+          <div class="text-caption text-indigo-1 q-mt-xs">
+            Update the subtasks and estimated time for this task
+          </div>
+        </div>
+
+        <q-btn
+          icon="close"
+          flat
+          round
+          dense
+          color="white"
+          @click="showEditDialog = false"
+        />
+      </div>
+    </q-card-section>
+
+    <!-- TASK INFO -->
+    <q-card-section class="edit-task-info">
+      <div class="row items-center no-wrap">
+
+        <q-avatar
+          color="blue-1"
+          text-color="primary"
+          icon="assignment"
+          size="38px"
+          class="q-mr-md"
+        />
+
+        <div class="col">
+          <div class="text-subtitle1 text-weight-bold text-grey-9">
             {{ selectedTask.name }}
           </div>
-        </q-card-section>
 
-        <q-separator />
+          <div class="text-caption text-grey-6 q-mt-xs">
+            {{ editSubtasks.length }} subtask{{ editSubtasks.length === 1 ? '' : 's' }}
+          </div>
+        </div>
 
-        <!-- SUBTASKS -->
-        <q-card-section class="q-pa-lg">
-          <div
-            v-for="(subtask, index) in editSubtasks"
-            :key="subtask.id"
-            class="edit-subtask-row row items-center q-mt-md"
-          >
-            <!-- SUBTASK TITLE -->
+      </div>
+    </q-card-section>
+
+    <q-separator />
+
+    <!-- SUBTASKS -->
+    <q-card-section class="q-pa-lg">
+
+      <div class="row items-center justify-between q-mb-md">
+
+        <div>
+          <div class="text-subtitle1 text-weight-bold">
+            Subtask List
+          </div>
+
+          <div class="text-caption text-grey-6">
+            Define what needs to be completed and how long it should take.
+          </div>
+        </div>
+
+        <q-badge
+          color="indigo-1"
+          text-color="indigo-9"
+          :label="`${editSubtasks.length} items`"
+          class="q-px-sm q-py-xs"
+        />
+
+      </div>
+
+      <!-- SUBTASK ROWS -->
+      <div
+        v-for="(subtask, index) in editSubtasks"
+        :key="subtask.id"
+        class="edit-subtask-card q-mb-md"
+      >
+
+        <div class="row items-center no-wrap">
+
+          <!-- NUMBER -->
+          <div class="subtask-number">
+            {{ index + 1 }}
+          </div>
+
+          <!-- TITLE -->
+          <div class="col q-ml-md">
+
+            <div class="text-caption text-grey-6 q-mb-xs">
+              Subtask name
+            </div>
+
             <q-input
               v-model="subtask.title"
               outlined
               dense
-              :placeholder="`Subtask ${index + 1}`"
-              class="col"
+              placeholder="Enter subtask name"
+              bg-color="white"
+              class="subtask-title-input"
             />
 
-            <!-- HOURS -->
+          </div>
+
+          <!-- HOURS -->
+          <div class="hours-field q-ml-md">
+
+            <div class="text-caption text-grey-6 q-mb-xs">
+              Estimated time
+            </div>
+
             <q-input
               v-model.number="subtask.estimated_hours"
               type="number"
               outlined
               dense
-              placeholder="Hours"
               min="0"
               step="0.5"
-              style="width: 100px"
-              class="q-ml-md"
-            />
+              bg-color="white"
+              class="hours-input"
+              placeholder="0"
+            >
+              <template #prepend>
+                <q-icon name="schedule" color="orange-7" />
+              </template>
 
-            <!-- DELETE -->
-            <q-btn
-              flat
-              round
-              dense
-              icon="delete_outline"
-              color="negative"
-              class="q-ml-sm"
-              @click="removeEditSubtask(subtask.id)"
-            />
+              <template #append>
+                <span class="hours-label">hours</span>
+              </template>
+            </q-input>
+
           </div>
 
-          <!-- ADD SUBTASK -->
+          <!-- DELETE -->
           <q-btn
-            outline
-            no-caps
-            color="primary"
-            icon="add"
-            label="Add Subtask"
-            class="full-width q-mt-lg"
-            @click="addEditSubtask"
-          />
-        </q-card-section>
+            flat
+            round
+            dense
+            icon="delete_outline"
+            color="negative"
+            class="q-ml-md delete-subtask-btn"
+            @click="removeEditSubtask(subtask.id)"
+          >
+            <q-tooltip>Remove subtask</q-tooltip>
+          </q-btn>
 
-        <q-separator />
+        </div>
 
-        <!-- ACTIONS -->
-        <q-card-actions align="right" class="q-pa-md">
-          <q-btn flat no-caps label="Cancel" @click="showEditDialog = false" />
+      </div>
 
-          <q-btn
-            unelevated
-            no-caps
-            color="primary"
-            label="Save Changes"
-            @click="saveEditedSubtasks"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+      <!-- EMPTY -->
+      <div
+        v-if="editSubtasks.length === 0"
+        class="edit-empty-subtasks"
+      >
+        <q-icon
+          name="playlist_add"
+          size="42px"
+          color="indigo-3"
+        />
+
+        <div class="text-subtitle2 text-weight-bold q-mt-sm">
+          No subtasks yet
+        </div>
+
+        <div class="text-caption text-grey-6 q-mt-xs">
+          Add your first subtask to break this task into smaller steps.
+        </div>
+      </div>
+
+      <!-- ADD -->
+      <q-btn
+        outline
+        no-caps
+        color="primary"
+        icon="add"
+        label="Add Subtask"
+        class="full-width q-mt-md add-subtask-btn"
+        @click="addEditSubtask"
+      />
+
+    </q-card-section>
+
+    <!-- FOOTER -->
+    <q-separator />
+
+    <q-card-actions
+      align="right"
+      class="edit-subtasks-footer q-pa-md"
+    >
+
+      <q-btn
+        flat
+        no-caps
+        label="Cancel"
+        color="grey-7"
+        @click="showEditDialog = false"
+      />
+
+      <q-btn
+        unelevated
+        no-caps
+        color="primary"
+        icon="save"
+        label="Save Changes"
+        @click="saveEditedSubtasks"
+      />
+
+    </q-card-actions>
+
+  </q-card>
+</q-dialog>
 
     <!-- ========================================================= -->
     <!-- MANAGE DRAWER -->
@@ -3644,5 +3789,135 @@ async function submitInterrupt() {
 .completed-subtask {
   color: #94a3b8;
   text-decoration: line-through;
+}
+
+/* =========================================================
+   EDIT SUBTASKS DIALOG
+   ========================================================= */
+
+.edit-subtasks-dialog {
+  width: 680px;
+  max-width: 94vw;
+  max-height: 90vh;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #f7f9fc;
+}
+
+/* HEADER */
+
+.edit-subtasks-header {
+  color: white;
+  background: linear-gradient(135deg, #3949ab 0%, #5c6bc0 100%);
+  padding: 20px 24px;
+}
+
+/* TASK INFO */
+
+.edit-task-info {
+  background: #ffffff;
+  padding: 16px 24px;
+}
+
+/* SUBTASK CARD */
+
+.edit-subtask-card {
+  padding: 14px;
+  background: #ffffff;
+  border: 1px solid #e1e7f0;
+  border-radius: 14px;
+  transition: all 0.2s ease;
+}
+
+.edit-subtask-card:hover {
+  border-color: #9fa8da;
+  box-shadow: 0 4px 14px rgba(63, 81, 181, 0.10);
+  transform: translateY(-1px);
+}
+
+/* NUMBER */
+
+.subtask-number {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #eef0ff;
+  color: #3949ab;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* TITLE */
+
+.subtask-title-input :deep(.q-field__control) {
+  border-radius: 9px;
+}
+
+/* HOURS */
+
+.hours-field {
+  width: 155px;
+  min-width: 155px;
+}
+
+.hours-input :deep(.q-field__control) {
+  border-radius: 9px;
+}
+
+.hours-input :deep(.q-field__native) {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.hours-input :deep(.q-field__prepend) {
+  padding-right: 4px;
+}
+
+.hours-label {
+  color: #e67e22;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* DELETE */
+
+.delete-subtask-btn {
+  background: #fff5f5;
+}
+
+.delete-subtask-btn:hover {
+  background: #ffebee;
+}
+
+/* EMPTY */
+
+.edit-empty-subtasks {
+  padding: 35px 20px;
+  text-align: center;
+
+  background: #ffffff;
+  border: 1px dashed #c5cae9;
+  border-radius: 14px;
+}
+
+/* ADD BUTTON */
+
+.add-subtask-btn {
+  border-radius: 10px;
+  border-style: dashed;
+  min-height: 44px;
+}
+
+/* FOOTER */
+
+.edit-subtasks-footer {
+  background: #ffffff;
 }
 </style>

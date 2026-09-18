@@ -60,7 +60,7 @@
             <div class="col-2">Priority</div>
             <div class="col-2 text-right">Completed</div>
             <div class="col-2 text-right">Delayed</div>
-            <div class="col-4 text-center">Completion Rate</div>
+            <div class="col-4 text-center">Task Completion Rate</div>
             <div class="col-2 text-right">Avg Time</div>
           </div>
           <div v-for="priority in priorityPerformance" :key="priority.priority" class="row items-center q-col-gutter-sm">
@@ -107,7 +107,7 @@ const statCards = computed(() => {
   const summary = performanceStore.summary || {};
   return [
     { label: 'Productivity Score', value: summary.productivityScore, suffix: '%', description: 'Completion and on-time delivery', icon: 'trending_up', color: 'primary', background: '#e3f2fd', sparklineData: [] },
-    { label: 'Completion Rate', value: summary.completionRate, suffix: '%', description: 'Of assigned tasks', icon: 'check_circle', color: 'positive', background: '#e8f5e9', sparklineData: [] },
+    { label: 'Task Completion Rate', value: summary.completionRate, suffix: '%', description: 'Of assigned tasks', icon: 'check_circle', color: 'positive', background: '#e8f5e9', sparklineData: [] },
     { label: 'On-Time Rate', value: summary.onTimeRate, suffix: '%', description: 'Completed on schedule', icon: 'schedule', color: 'info', background: '#e3f2fd', sparklineData: [] },
     { label: 'Focus Score', value: summary.focusScore, suffix: '%', description: 'Weekdays with recorded activity', icon: 'local_fire_department', color: 'warning', background: '#fff3e0', sparklineData: [] },
   ];

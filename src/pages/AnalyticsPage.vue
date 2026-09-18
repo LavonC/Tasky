@@ -22,22 +22,14 @@
       <div class="column items-end">
         <div class="row items-center q-gutter-md q-mb-md">
           
-          <q-avatar size="36px" class="cursor-pointer">
-            <img :src="authStore.currentUser?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
-            <q-menu anchor="bottom right" self="top right">
-              <q-list style="min-width: 150px">
-                <q-item clickable v-close-popup to="/dashboard/profile">
-                  <q-item-section avatar><q-icon name="person" /></q-item-section>
-                  <q-item-section>Profile</q-item-section>
-                </q-item>
-                <q-separator />
-                <q-item clickable v-close-popup @click="logout">
-                  <q-item-section avatar><q-icon name="logout" color="red" /></q-item-section>
-                  <q-item-section class="text-red">Logout</q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
-          </q-avatar>
+          <q-avatar
+  size="36px"
+  class="cursor-pointer"
+  clickable
+  @click="$router.push('/dashboard/profile')"
+>
+  <img :src="authStore.currentUser?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
+</q-avatar>
         </div></div>
         <div class="row items-center q-mb-md" style="flex: 0 0 auto">
         
