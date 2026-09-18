@@ -25,7 +25,7 @@
           "
         ></div>
         <div
-          class="absolute-center bg-white flex flex-center column"
+          class="absolute-center donut-hole bg-white flex flex-center column"
           style="width: 44px; height: 44px; border-radius: 50%"
         >
           <div class="text-weight-bold" style="line-height: 1; font-size: 14px">31</div>

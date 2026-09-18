@@ -1,7 +1,7 @@
 <template>
   <q-card
     flat
-    class="rounded-borders q-pa-sm shadow-1 flex column"
+    class="upcoming-deadlines rounded-borders q-pa-sm shadow-1 flex column"
     style="border-radius: 8px; height: 100%"
   >
     <div class="row justify-between items-center q-mb-xs q-px-xs" style="flex: 0 0 auto">

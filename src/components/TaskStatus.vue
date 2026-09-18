@@ -1,7 +1,7 @@
 <template>
   <q-card
     flat
-    class="rounded-borders q-pa-sm shadow-1 flex column"
+    class="task-status rounded-borders q-pa-sm shadow-1 flex column"
     style="border-radius: 8px; height: 100%"
   >
     <div class="text-caption text-weight-bold q-mb-xs q-px-xs" style="flex: 0 0 auto">
@@ -14,8 +14,8 @@
           class="row items-end justify-around q-px-xs q-ml-sm"
           style="
             height: 100%;
-            border-left: 1px solid #e0e0e0;
-            border-bottom: 1px solid #e0e0e0;
+            border-left: 1px solid var(--task-status-axis, #e0e0e0);
+            border-bottom: 1px solid var(--task-status-axis, #e0e0e0);
             position: relative;
           "
         >
@@ -75,3 +75,9 @@
     </div>
   </q-card>
 </template>
+
+<style scoped>
+:global(body.body--dark) .task-status {
+  --task-status-axis: #34434c;
+}
+</style>

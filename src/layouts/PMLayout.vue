@@ -6,7 +6,7 @@
       show-if-above
       :width="280"
       :mini="sidebarCollapsed"
-      class="text-black column pm-sidebar"
+      class="column pm-sidebar"
       style="border-radius: 0 32px 32px 0; border-right: 1px solid #e6e5e5"
     >
       <!-- Background decorative shapes -->
@@ -48,7 +48,7 @@
           </q-item-section>
 
           <q-item-section v-if="!sidebarCollapsed">
-            <q-item-label class="text-body2 text-weight-medium text-black">
+            <q-item-label class="text-body2 text-weight-medium sidebar-primary-text">
               {{ authStore.user?.firstName }}
               {{ authStore.user?.surname }}
             </q-item-label>
@@ -73,7 +73,7 @@
             :to="link.link"
             :active="link.link === $route.path"
             active-class="nav-active"
-            class="nav-item q-py-sm text-black"
+            class="nav-item q-py-sm sidebar-primary-text"
             :class="sidebarCollapsed ? 'justify-center' : ''"
           >
             <q-item-section avatar>
@@ -99,7 +99,7 @@
             to="/dashboard/notifications"
             :active="$route.path === '/dashboard/notifications'"
             active-class="nav-active"
-            class="nav-item q-py-sm text-blue-black"
+            class="nav-item q-py-sm sidebar-primary-text"
             :class="sidebarCollapsed ? 'justify-center' : ''"
           >
             <q-item-section avatar>
@@ -126,7 +126,7 @@
             clickable
             v-ripple
             @click="handleLogout"
-            class="nav-item q-py-sm text-blue-black"
+            class="nav-item q-py-sm sidebar-primary-text"
             :class="sidebarCollapsed ? 'justify-center' : ''"
           >
             <q-item-section avatar>
@@ -364,4 +364,39 @@ function handleLogout() {
 :global(body.body--dark) .page-background {
   background: #121a1f !important;
 }
+
+/* ================= DARK MODE ================= */
+:global(body.body--dark) .pm-sidebar {
+  color: #edf2f7 !important;
+  border-right-color: #34434c !important;
+}
+
+:global(body.body--dark) .pm-sidebar :deep(.q-drawer__content) {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .sidebar-primary-text,
+:global(body.body--dark) .pm-sidebar .q-item,
+:global(body.body--dark) .pm-sidebar .q-item__label {
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .pm-sidebar .q-item__label--caption {
+  color: #b8c7d1 !important;
+}
+
+:global(body.body--dark) .pm-sidebar .profile-item {
+  background: rgba(255, 255, 255, 0.035) !important;
+  border-color: #34434c !important;
+}
+
+:global(body.body--dark) .pm-sidebar .nav-item:not(.nav-active):hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+
+:global(body.body--dark) .pm-sidebar .collapse-btn {
+  color: #000 !important;
+}
+
 </style>

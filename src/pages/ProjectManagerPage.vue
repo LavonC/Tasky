@@ -1,13 +1,12 @@
 <template>
   <q-page
-    class="q-pa-md text-black"
+    class="q-pa-md pm-dashboard-page"
     style="
       height: 100vh;
       max-height: 100vh;
       min-height: 0 !important;
       overflow-y: auto;
       overflow-x: hidden;
-      background: #f5f6fa;
       display: flex;
       flex-direction: column;
     "
@@ -1543,4 +1542,133 @@ function showEmployeePerformance(user: any) {
     min-height: auto;
   }
 }
+
+/* =========================================================
+   DARK MODE
+   ========================================================= */
+
+:global(body.body--dark) .pm-dashboard-page {
+  background: #121a1f !important;
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .pm-dashboard-page .q-card {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+  border-color: #34434c !important;
+}
+
+:global(body.body--dark) .pm-dashboard-page .q-card__section,
+:global(body.body--dark) .pm-dashboard-page .q-item,
+:global(body.body--dark) .pm-dashboard-page .q-item__label {
+  color: #edf2f7;
+}
+
+:global(body.body--dark) .pm-dashboard-page .text-grey-6,
+:global(body.body--dark) .pm-dashboard-page .text-grey-7,
+:global(body.body--dark) .pm-dashboard-page .q-item__label--caption {
+  color: #b8c7d1 !important;
+}
+
+/* Header + tabs */
+:global(body.body--dark) .pm-dashboard-page .command-center-tabs {
+  color: #b8c7d1 !important;
+}
+
+:global(body.body--dark) .pm-dashboard-page .command-center-tabs .q-tab {
+  color: #94a3b8 !important;
+}
+
+:global(body.body--dark) .pm-dashboard-page .command-center-tabs .q-tab--active {
+  color: #edf2f7 !important;
+}
+
+/* Search boxes explicitly use bg-color="white" in the template. */
+:global(body.body--dark) .pm-dashboard-page .attention-search :deep(.q-field__control),
+:global(body.body--dark) .pm-dashboard-page .team-search :deep(.q-field__control) {
+  background: #26343c !important;
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .pm-dashboard-page .attention-search :deep(.q-field__native),
+:global(body.body--dark) .pm-dashboard-page .team-search :deep(.q-field__native),
+:global(body.body--dark) .pm-dashboard-page .attention-search :deep(.q-field__marginal),
+:global(body.body--dark) .pm-dashboard-page .team-search :deep(.q-field__marginal) {
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .pm-dashboard-page .attention-search :deep(input::placeholder),
+:global(body.body--dark) .pm-dashboard-page .team-search :deep(input::placeholder) {
+  color: #91a2ad !important;
+}
+
+/* Needs Attention */
+:global(body.body--dark) .pm-dashboard-page .bg-red-1 {
+  background: #45222a !important;
+}
+:global(body.body--dark) .pm-dashboard-page .text-red-9 {
+  color: #ffb4b4 !important;
+}
+
+/* Team Members / completed header */
+:global(body.body--dark) .pm-dashboard-page .bg-green-1 {
+  background: #203d2b !important;
+}
+:global(body.body--dark) .pm-dashboard-page .text-green-9 {
+  color: #a9e6b9 !important;
+}
+
+/* Other status panels */
+:global(body.body--dark) .pm-dashboard-page .bg-orange-1,
+:global(body.body--dark) .pm-dashboard-page .bg-amber-1 {
+  background: #47351f !important;
+}
+:global(body.body--dark) .pm-dashboard-page .bg-blue-1 {
+  background: #20374a !important;
+}
+:global(body.body--dark) .pm-dashboard-page .bg-indigo-1 {
+  background: #2a3150 !important;
+}
+:global(body.body--dark) .pm-dashboard-page .bg-purple-1 {
+  background: #38294b !important;
+}
+
+:global(body.body--dark) .pm-dashboard-page .text-orange-9,
+:global(body.body--dark) .pm-dashboard-page .text-amber-9 {
+  color: #ffd18a !important;
+}
+:global(body.body--dark) .pm-dashboard-page .text-blue-9 {
+  color: #9fd2ff !important;
+}
+:global(body.body--dark) .pm-dashboard-page .text-purple-9 {
+  color: #dfbaff !important;
+}
+
+/* Lists, separators and progress tracks */
+:global(body.body--dark) .pm-dashboard-page .q-separator {
+  background: #34434c !important;
+}
+:global(body.body--dark) .pm-dashboard-page .q-linear-progress__track {
+  background: #46555e !important;
+}
+
+/* Insight cards have hard-coded light borders in the base stylesheet. */
+:global(body.body--dark) .pm-dashboard-page .insight-kpi-card,
+:global(body.body--dark) .pm-dashboard-page .insight-large-card {
+  background: #1d2930 !important;
+  border-color: #34434c !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+
+:global(body.body--dark) .pm-dashboard-page .capacity-row + .capacity-row {
+  border-top-color: #34434c !important;
+}
+
+/* Dialogs */
+:global(body.body--dark) .pm-dashboard-page .q-dialog-plugin,
+:global(body.body--dark) .q-dialog .q-card {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+}
+
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white q-pa-md shadow-1 q-mb-md" style="border-radius: 12px">
+  <div class="analytics-card bg-white q-pa-md shadow-1 q-mb-md" style="border-radius: 12px">
     <div class="text-subtitle1 text-weight-bold q-mb-lg">
       Task Status Distribution
     </div>
@@ -28,7 +28,7 @@
 
             <div
               class="text-weight-bold"
-              style="font-size: 16px; color: #333; line-height: 1.2"
+              style="font-size: 16px; line-height: 1.2"
             >
               {{ analyticsStore.taskDistribution.total || 0 }}
             </div>
@@ -173,7 +173,7 @@ const donutGradient = computed(() => {
   width: 75px;
   height: 75px;
   border-radius: 50%;
-  background: white;
+  background: var(--donut-hole-bg, white);
 
   display: flex;
   flex-direction: column;
@@ -188,5 +188,9 @@ const donutGradient = computed(() => {
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+:global(body.body--dark) .analytics-card {
+  --donut-hole-bg: #1d2930;
 }
 </style>

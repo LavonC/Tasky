@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white q-pa-md shadow-1" style="border-radius: 12px">
+  <div class="analytics-card bg-white q-pa-md shadow-1" style="border-radius: 12px">
     <div class="row items-center justify-between q-mb-md">
       <div class="text-subtitle1 text-weight-bold">Upcoming Deadline Risks</div>
       <q-btn
@@ -150,5 +150,11 @@ const getBadgeTextColor = (level: string) => {
 }
 .flex-1 {
   flex: 1 1 0;
+}
+</style>
+
+<style scoped>
+:global(body.body--dark) .analytics-card .text-grey-9 {
+  color: #edf2f7 !important;
 }
 </style>

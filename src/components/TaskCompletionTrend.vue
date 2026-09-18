@@ -1,5 +1,8 @@
 <template>
-  <div class="trend-card q-mb-md">
+  <div
+      class="trend-card q-mb-md"
+      :class="{ 'trend-card--dark': $q.dark.isActive }"
+    >
     <div class="trend-title">Task Completion Trend</div>
 
     <div class="trend-subtitle">Tasks completed over the last 7 days</div>
@@ -10,7 +13,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick, onBeforeUnmount, watch } from 'vue';
+import { useQuasar } from 'quasar';
 import * as d3 from 'd3';
+
+const $q = useQuasar();
 
 const props = withDefaults(defineProps<{ data?: Array<{ day?: string; date?: string; completed?: number }> }>(), {
   data: () => [],
@@ -32,9 +38,9 @@ function renderChart() {
 
   const width = Math.max(containerWidth, 300);
   const height = 135;
-  const isDark = document.body.classList.contains('body--dark');
-  const chartText = isDark ? '#cbd5e1' : '#555';
-  const axisText = isDark ? '#94a3b8' : '#777';
+  const isDark = $q.dark.isActive;
+  const chartText = isDark ? '#edf2f7' : '#555';
+  const axisText = isDark ? '#b8c7d1' : '#777';
   const gridStroke = isDark ? '#34434c' : '#eeeeee';
 
   const margin = {
@@ -237,6 +243,11 @@ onMounted(async () => {
 
 watch(() => props.data, renderChart, { deep: true });
 
+watch(() => $q.dark.isActive, async () => {
+  await nextTick();
+  renderChart();
+});
+
 /*
  * CLEANUP
  */
@@ -248,11 +259,24 @@ onBeforeUnmount(() => {
 <style scoped>
 .trend-card {
   background: #ffffff;
+  color: #111111;
   padding: 20px 18px 14px;
   border-radius: 12px;
+  border: 1px solid #e5eaf0;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
   width: 100%;
   box-sizing: border-box;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.trend-card--dark {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+  border-color: #34434c !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 .trend-title {
@@ -262,28 +286,23 @@ onBeforeUnmount(() => {
   margin-bottom: 7px;
 }
 
+.trend-card--dark .trend-title {
+  color: #edf2f7 !important;
+}
+
 .trend-subtitle {
   font-size: 13px;
   color: #999999;
   margin-bottom: 8px;
 }
 
+.trend-card--dark .trend-subtitle {
+  color: #b8c7d1 !important;
+}
+
 .chart-container {
   width: 100%;
   height: 120px;
   overflow: hidden;
-}
-
-:global(body.body--dark) .trend-card {
-  background: #1d2930;
-  border: 1px solid #34434c;
-}
-
-:global(body.body--dark) .trend-title {
-  color: #edf2f7;
-}
-
-:global(body.body--dark) .trend-subtitle {
-  color: #b8c7d1;
 }
 </style>

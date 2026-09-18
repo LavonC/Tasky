@@ -176,3 +176,194 @@ body.body--dark .q-table td {
     font-size: 26px;
   }
 }
+
+
+/* =========================================================
+   TASKY DARK MODE — GLOBAL COMPONENT OVERRIDES
+   Keep explicit light utility classes from leaking into dark UI.
+   ========================================================= */
+
+body.body--dark {
+  --tasky-dark-bg: #121a1f;
+  --tasky-dark-surface: #1d2930;
+  --tasky-dark-surface-2: #26343c;
+  --tasky-dark-border: #34434c;
+  --tasky-dark-text: #edf2f7;
+  --tasky-dark-muted: #b8c7d1;
+}
+
+/* Main Quasar surfaces */
+body.body--dark,
+body.body--dark .q-layout,
+body.body--dark .q-page-container,
+body.body--dark .q-page {
+  background-color: var(--tasky-dark-bg) !important;
+  color: var(--tasky-dark-text) !important;
+}
+
+body.body--dark .q-card,
+body.body--dark .q-card__section,
+body.body--dark .q-tab-panels,
+body.body--dark .q-table__container,
+body.body--dark .q-table__middle {
+  color: var(--tasky-dark-text);
+}
+
+body.body--dark .q-card {
+  background-color: var(--tasky-dark-surface) !important;
+  border-color: var(--tasky-dark-border) !important;
+}
+
+/* Explicit light Quasar utility classes used in dashboard templates */
+body.body--dark .bg-white {
+  background-color: var(--tasky-dark-surface-2) !important;
+}
+
+body.body--dark .bg-grey-1,
+body.body--dark .bg-grey-2,
+body.body--dark .bg-grey-3 {
+  background-color: var(--tasky-dark-surface-2) !important;
+}
+
+body.body--dark .text-black,
+body.body--dark .text-dark {
+  color: var(--tasky-dark-text) !important;
+}
+
+body.body--dark .text-grey-6,
+body.body--dark .text-grey-7,
+body.body--dark .text-grey-8 {
+  color: var(--tasky-dark-muted) !important;
+}
+
+/* Tabs / buttons */
+body.body--dark .q-tab {
+  color: var(--tasky-dark-muted) !important;
+}
+
+body.body--dark .q-tab--active {
+  color: #edf2f7 !important;
+}
+
+body.body--dark .q-btn.text-grey-7,
+body.body--dark .q-btn.text-grey-6 {
+  color: var(--tasky-dark-muted) !important;
+}
+
+/* Form controls with explicit white backgrounds */
+body.body--dark .q-field--outlined .q-field__control,
+body.body--dark .q-field--filled .q-field__control,
+body.body--dark .q-field .bg-white {
+  background-color: var(--tasky-dark-surface-2) !important;
+  color: var(--tasky-dark-text) !important;
+}
+
+body.body--dark .q-field__native,
+body.body--dark .q-field__input,
+body.body--dark .q-field__label,
+body.body--dark .q-field__marginal,
+body.body--dark .q-field__control {
+  color: var(--tasky-dark-text) !important;
+}
+
+body.body--dark .q-field__native::placeholder,
+body.body--dark .q-field__input::placeholder {
+  color: #91a2ad !important;
+}
+
+/* Tables */
+body.body--dark .q-table,
+body.body--dark .q-table thead,
+body.body--dark .q-table tbody,
+body.body--dark .q-table tr,
+body.body--dark .q-table th,
+body.body--dark .q-table td {
+  background-color: var(--tasky-dark-surface) !important;
+  color: var(--tasky-dark-text) !important;
+  border-color: var(--tasky-dark-border) !important;
+}
+
+/* Separators and list dividers */
+body.body--dark .q-separator {
+  background: var(--tasky-dark-border) !important;
+}
+
+body.body--dark .q-item {
+  color: var(--tasky-dark-text);
+}
+
+body.body--dark .q-item__label--caption {
+  color: var(--tasky-dark-muted) !important;
+}
+
+/* Common pale status backgrounds: retain the semantic color, but darken the surface. */
+body.body--dark .bg-red-1 {
+  background-color: #45222a !important;
+}
+body.body--dark .bg-orange-1,
+body.body--dark .bg-amber-1 {
+  background-color: #47351f !important;
+}
+body.body--dark .bg-green-1 {
+  background-color: #203d2b !important;
+}
+body.body--dark .bg-blue-1 {
+  background-color: #20374a !important;
+}
+body.body--dark .bg-indigo-1 {
+  background-color: #2a3150 !important;
+}
+body.body--dark .bg-purple-1 {
+  background-color: #38294b !important;
+}
+
+/* Pale status text must stay readable on those darkened surfaces. */
+body.body--dark .text-red-9 { color: #ffb4b4 !important; }
+body.body--dark .text-orange-9,
+body.body--dark .text-amber-9 { color: #ffd18a !important; }
+body.body--dark .text-green-9 { color: #a9e6b9 !important; }
+body.body--dark .text-blue-9 { color: #9fd2ff !important; }
+body.body--dark .text-indigo-9 { color: #c3c9ff !important; }
+body.body--dark .text-purple-9 { color: #dfbaff !important; }
+
+/* Progress tracks that are explicitly set to grey-3 */
+body.body--dark .q-linear-progress__track {
+  background: #46555e !important;
+}
+
+/* =========================================================
+   TASKY DARK MODE — ACTIVE SIDEBAR NAVIGATION
+   Quasar adds q-item--active/q-router-link--active to the
+   active q-item. Keep the lime active background with black
+   text/icons, even though the dark-mode rules above make
+   generic q-items light.
+   ========================================================= */
+
+body.body--dark .pm-sidebar .q-item.q-item--active,
+body.body--dark .pm-sidebar .q-item.q-router-link--active,
+body.body--dark .pm-sidebar .q-item.nav-active {
+  background-color: #E1FF6B !important;
+  color: #000000 !important;
+}
+
+body.body--dark .pm-sidebar .q-item.q-item--active .q-item__section,
+body.body--dark .pm-sidebar .q-item.q-router-link--active .q-item__section,
+body.body--dark .pm-sidebar .q-item.nav-active .q-item__section,
+body.body--dark .pm-sidebar .q-item.q-item--active .q-item__label,
+body.body--dark .pm-sidebar .q-item.q-router-link--active .q-item__label {
+  color: #000000 !important;
+}
+
+body.body--dark .pm-sidebar .q-item.q-item--active .q-icon,
+body.body--dark .pm-sidebar .q-item.q-router-link--active .q-icon,
+body.body--dark .pm-sidebar .q-item.nav-active .q-icon {
+  color: #000000 !important;
+}
+
+/* Keep the active item from being recolored by generic hover rules. */
+body.body--dark .pm-sidebar .q-item.q-item--active:hover,
+body.body--dark .pm-sidebar .q-item.q-router-link--active:hover,
+body.body--dark .pm-sidebar .q-item.nav-active:hover {
+  background-color: #E1FF6B !important;
+  color: #000000 !important;
+}
