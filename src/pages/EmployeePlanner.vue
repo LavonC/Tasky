@@ -1545,6 +1545,7 @@ async function saveNewDeadline() {
         },
         body: JSON.stringify({
           deadline: newDeadline.value,
+          is_leave_conflict: true,
         }),
       },
     );

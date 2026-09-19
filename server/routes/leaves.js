@@ -310,6 +310,32 @@ export default function leavesRoutes(pool) {
         [finalDateStr, taskId]
       );
 
+      // Create notification for PM
+      const [taskInfo] = await pool.execute(
+        `SELECT t.title, p.created_by as pm_id, u.first_name, u.last_name
+         FROM task t
+         JOIN project p ON t.project_id = p.id
+         JOIN user u ON u.id = ?
+         WHERE t.id = ?`,
+        [userId, taskId]
+      );
+
+      if (taskInfo.length > 0) {
+        const { title, pm_id, first_name, last_name } = taskInfo[0];
+        const employeeName = `${first_name} ${last_name}`;
+        
+        await pool.execute(
+          `INSERT INTO notification (user_id, type, title, message, reference_type, reference_id, is_read, created_at)
+           VALUES (?, 'general', ?, ?, 'task', ?, 0, NOW())`,
+          [
+            pm_id,
+            `Task Deadline Automated`,
+            `Employee ${employeeName} has automated the deadline for task "${title}" to ${finalDateStr} due to a leave conflict.`,
+            taskId
+          ]
+        );
+      }
+
       res.json({
         success: true,
         new_deadline: finalDateStr

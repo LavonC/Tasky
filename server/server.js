@@ -1702,7 +1702,7 @@ app.get('/api/employee/daily-logs/:userId', async (req, res) => {
 app.put('/api/employee/tasks/:id', async (req, res) => {
   try {
     const taskId = req.params.id;
-    const { progress, status, actual_effort, hours_spent, todayNote, deadline } = req.body;
+    const { progress, status, actual_effort, hours_spent, todayNote, deadline, is_leave_conflict } = req.body;
 
     const connection = await pool.getConnection();
     try {
@@ -1779,6 +1779,36 @@ app.put('/api/employee/tasks/:id', async (req, res) => {
              status = VALUES(status)`,
           [userId, taskId, hSpent, logMsg, logStatus]
         );
+      }
+
+      if (is_leave_conflict && deadline !== undefined) {
+        const userId = req.body.user_id || req.user?.id || 1;
+        const [taskInfo] = await connection.execute(
+          `SELECT t.title, p.created_by as pm_id, u.first_name, u.last_name
+           FROM task t
+           JOIN project p ON t.project_id = p.id
+           JOIN user u ON u.id = ?
+           WHERE t.id = ?`,
+          [userId, taskId]
+        );
+
+        if (taskInfo.length > 0) {
+          const { title, pm_id, first_name, last_name } = taskInfo[0];
+          const employeeName = `${first_name} ${last_name}`;
+          const newDate = new Date(deadline);
+          const deadlineStr = newDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          
+          await connection.execute(
+            `INSERT INTO notification (user_id, type, title, message, reference_type, reference_id, is_read, created_at)
+             VALUES (?, 'general', ?, ?, 'task', ?, 0, NOW())`,
+            [
+              pm_id,
+              `Task Deadline Manually Updated`,
+              `Employee ${employeeName} has manually updated the deadline for task "${title}" to ${deadlineStr} due to a leave conflict.`,
+              taskId
+            ]
+          );
+        }
       }
 
       res.json({ success: true });
