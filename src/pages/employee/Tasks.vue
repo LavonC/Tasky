@@ -170,6 +170,7 @@
                   icon="rate_review"
                   color="purple"
                   size="sm"
+                  @click="openSubmitReviewDialog(props.row)"
                 />
               </div>
             </q-td>
@@ -358,6 +359,8 @@ const selectedReviewer = ref<number | null>(null);
 const updating = ref(false);
 const submitting = ref(false);
 
+type ReviewerOption = { label: string; value: number | null };
+
 const statusOptions = ['not-started', 'in-progress', 'completed', 'blocked', 'in-review'];
 const priorityOptions = ['critical', 'high', 'medium', 'low'];
 
@@ -402,15 +405,14 @@ const projectOptions = computed(() =>
 const reviewerOptions = computed(() => {
   if (!employees.value || employees.value.length === 0) {
     console.log('❌ Tasks: No employees loaded');
-    return [{ label: 'No reviewer (auto-assign)', value: null }];
+    return [{ label: 'No reviewer (auto-assign)', value: null } satisfies ReviewerOption];
   }
 
-  const options = employees.value
+  const options: ReviewerOption[] = employees.value
     .filter((e: any) => e.id !== authStore.user?.id)
     .map((e: any) => ({
       label: `${e.first_name} ${e.last_name} — ${e.email}`,
       value: e.id,
-      id: e.id
     }));
 
   // Add "No reviewer" option at the top

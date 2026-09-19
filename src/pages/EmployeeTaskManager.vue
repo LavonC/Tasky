@@ -1444,6 +1444,16 @@
         </q-card-section>
 
         <q-card-section class="q-pt-none">
+          <div class="row q-col-gutter-md q-mb-md" v-if="taskInsightStats.total">
+            <div class="col-5">
+              <div class="employee-insight-donut" :style="employeeInsightDonutStyle"><div>{{ taskInsightStats.total }}</div></div>
+            </div>
+            <div class="col-7">
+              <div v-for="item in taskInsightStats.breakdown" :key="item.label" class="row justify-between text-caption q-mb-sm">
+                <span><q-icon name="circle" :color="item.color" size="9px" class="q-mr-xs" />{{ item.label }}</span><strong>{{ item.count }}</strong>
+              </div>
+            </div>
+          </div>
           <q-list separator v-if="insights.length > 0">
             <q-item v-for="(insight, index) in insights" :key="index">
               <q-item-section avatar>
@@ -2400,6 +2410,29 @@ const insights = computed(() => {
   }
 
   return insightsList;
+});
+
+const taskInsightStats = computed(() => {
+  const breakdown = [
+    { label: 'Completed', count: tasks.value.filter((task) => task.status === 'completed').length, color: 'positive' },
+    { label: 'In progress', count: tasks.value.filter((task) => task.status === 'in-progress').length, color: 'primary' },
+    { label: 'Blocked', count: tasks.value.filter((task) => task.status === 'blocked').length, color: 'negative' },
+    { label: 'Not started', count: tasks.value.filter((task) => task.status === 'not-started').length, color: 'grey-6' },
+  ];
+  return { total: tasks.value.length, breakdown };
+});
+
+const employeeInsightDonutStyle = computed(() => {
+  const total = Math.max(taskInsightStats.value.total, 1);
+  let start = 0;
+  const colors = ['#21ba45', '#1976d2', '#c10015', '#9e9e9e'];
+  const stops = taskInsightStats.value.breakdown.map((item, index) => {
+    const end = start + (item.count / total) * 360;
+    const stop = `${colors[index]} ${start}deg ${end}deg`;
+    start = end;
+    return stop;
+  });
+  return { background: `conic-gradient(${stops.join(', ')})` };
 });
 
 // Update task progress/status to backend
@@ -3375,6 +3408,24 @@ async function submitInterrupt() {
 </script>
 
 <style scoped>
+.employee-insight-donut {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.employee-insight-donut > div {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
 .stat-card {
   border-radius: var(--radius-lg);
   background: #ffffff;

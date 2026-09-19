@@ -502,6 +502,37 @@
 
     </div>
 
+    <div class="row q-col-gutter-md q-mb-md">
+      <div class="col-12 col-md-5">
+        <q-card class="insight-large-card analytics-summary-card">
+          <q-card-section>
+            <div class="text-subtitle1 text-weight-bold">Portfolio health mix</div>
+            <div class="text-caption text-grey-7">Healthy, at-risk and delayed projects</div>
+            <div class="row items-center q-mt-md">
+              <div class="pm-health-donut" :style="pmHealthDonutStyle"><div><strong>{{ totalProjects }}</strong><span>projects</span></div></div>
+              <div class="col q-ml-lg">
+                <div v-for="item in projectHealthSummary" :key="item.label" class="row justify-between text-caption q-mb-sm">
+                  <span><q-icon name="circle" :color="item.color" size="9px" class="q-mr-xs" />{{ item.label }}</span><strong>{{ item.count }}</strong>
+                </div>
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+      <div class="col-12 col-md-7">
+        <q-card class="insight-large-card analytics-summary-card">
+          <q-card-section>
+            <div class="text-subtitle1 text-weight-bold">Delivery workload</div>
+            <div class="text-caption text-grey-7">The current task pressure points</div>
+            <div v-for="item in deliverySummary" :key="item.label" class="q-mt-md">
+              <div class="row justify-between text-caption q-mb-xs"><span>{{ item.label }}</span><strong>{{ item.count }}</strong></div>
+              <q-linear-progress :value="item.count / Math.max(item.total, 1)" :color="item.color" track-color="grey-3" rounded size="10px" />
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+    </div>
+
     <!-- Main Analytics Row -->
     <div class="row q-col-gutter-md q-mb-md">
 
@@ -1282,6 +1313,30 @@ const pendingReviews = computed(
   () => dashboardStore.stats?.pendingReviews ?? 0,
 );
 
+const totalProjects = computed(() => dashboardStore.stats?.totalProjects ?? 0);
+const projectHealthSummary = computed(() => [
+  { label: 'Healthy', count: healthyProjects.value, color: 'positive' },
+  { label: 'At risk', count: atRiskProjects.value, color: 'warning' },
+  { label: 'Delayed', count: delayedProjects.value, color: 'negative' },
+]);
+const pmHealthDonutStyle = computed(() => {
+  const total = Math.max(totalProjects.value, 1);
+  let start = 0;
+  const colors = ['#21ba45', '#f2c037', '#c10015'];
+  const stops = projectHealthSummary.value.map((item, index) => {
+    const end = start + (item.count / total) * 360;
+    const stop = `${colors[index]} ${start}deg ${end}deg`;
+    start = end;
+    return stop;
+  });
+  return { background: `conic-gradient(${stops.join(', ')})` };
+});
+const deliverySummary = computed(() => [
+  { label: 'Completed tasks', count: completedTasks.value.length, total: Math.max(completedTasks.value.length + inProgressTasks.value + overdueTasks.value, 1), color: 'positive' },
+  { label: 'In progress', count: inProgressTasks.value, total: Math.max(completedTasks.value.length + inProgressTasks.value + overdueTasks.value, 1), color: 'primary' },
+  { label: 'Overdue', count: overdueTasks.value, total: Math.max(completedTasks.value.length + inProgressTasks.value + overdueTasks.value, 1), color: 'negative' },
+]);
+
 const delayedProjects = computed(
   () => dashboardStore.attentionItems.delayedProjects.length,
 );
@@ -1495,6 +1550,12 @@ function showEmployeePerformance(user: any) {
   border: 1px solid #e5eaf0;
   box-shadow: 0 6px 18px rgba(32, 54, 83, 0.05);
 }
+
+.analytics-summary-card { min-height: 235px; }
+.pm-health-donut { width: 124px; height: 124px; border-radius: 50%; display: grid; place-items: center; }
+.pm-health-donut > div { width: 78px; height: 78px; border-radius: 50%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.pm-health-donut strong { font-size: 22px; line-height: 1; }
+.pm-health-donut span { font-size: 11px; color: #718096; margin-top: 4px; }
 
 .insight-icon {
   width: 46px;

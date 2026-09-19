@@ -27,6 +27,38 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+// Allow an employee to leave the organization without deleting historical work.
+app.post('/api/employee/resign', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, error: 'Authentication required' });
+
+    const connection = await pool.getConnection();
+    try {
+      const [users] = await connection.execute(
+        `SELECT u.id, r.access_level FROM user u JOIN role r ON r.id = u.role_id WHERE u.id = ? AND u.is_active = 1`,
+        [userId],
+      );
+      if (users.length === 0) return res.status(404).json({ success: false, error: 'Active employee not found' });
+      if (users[0].access_level !== 'employee') {
+        return res.status(403).json({ success: false, error: 'Only employees can resign' });
+      }
+
+      await connection.beginTransaction();
+      await connection.execute('UPDATE user SET is_active = 0 WHERE id = ?', [userId]);
+      await connection.commit();
+      res.json({ success: true });
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Employee resignation error:', error);
+    res.status(500).json({ success: false, error: 'Unable to leave organization' });
+  }
+});
 // Protect every PM endpoint, including legacy handlers declared below.
 app.use('/api/pm', authenticateToken, requireRole('pm'));
 

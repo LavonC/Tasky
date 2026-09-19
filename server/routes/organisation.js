@@ -101,6 +101,7 @@ export default function organisationRoutes(pool) {
           FROM user u
           JOIN role r ON r.id = u.role_id
           WHERE u.org_id = ?
+            AND u.is_active = 1
           ORDER BY r.access_level DESC, u.first_name ASC
         `,
           [orgId],
@@ -117,6 +118,7 @@ export default function organisationRoutes(pool) {
             FROM user u
             JOIN role r ON r.id = u.role_id
             WHERE u.org_id = ?
+              AND u.is_active = 1
             ORDER BY r.access_level DESC, u.first_name ASC
           `,
             [orgId],
@@ -137,6 +139,7 @@ export default function organisationRoutes(pool) {
               u.created_at
             FROM user u
             JOIN role r ON r.id = u.role_id
+            WHERE u.is_active = 1
             ORDER BY r.access_level DESC, u.first_name ASC
           `
           );

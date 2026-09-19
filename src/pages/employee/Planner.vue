@@ -48,6 +48,40 @@
       </div>
     </div>
 
+    <div class="row q-col-gutter-md q-mb-md planner-analytics">
+      <div class="col-12 col-md-5">
+        <q-card flat bordered class="analytics-card full-height">
+          <q-card-section>
+            <div class="text-subtitle1 text-weight-bold">Task mix</div>
+            <div class="text-caption text-grey-7">Current status distribution</div>
+            <div class="row items-center q-mt-md">
+              <div class="status-donut" :style="statusDonutStyle" aria-label="Task status distribution">
+                <div class="status-donut-hole"><strong>{{ myTasks.length }}</strong><span>tasks</span></div>
+              </div>
+              <div class="col q-ml-lg">
+                <div v-for="item in statusSummary" :key="item.label" class="row items-center justify-between q-mb-sm">
+                  <span class="text-caption"><q-icon name="circle" :color="item.color" size="9px" class="q-mr-xs" />{{ item.label }}</span>
+                  <strong class="text-caption">{{ item.count }}</strong>
+                </div>
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+      <div class="col-12 col-md-7">
+        <q-card flat bordered class="analytics-card full-height">
+          <q-card-section>
+            <div class="text-subtitle1 text-weight-bold">Priority workload</div>
+            <div class="text-caption text-grey-7">Tasks grouped by delivery priority</div>
+            <div v-for="item in prioritySummary" :key="item.label" class="q-mt-md">
+              <div class="row justify-between text-caption q-mb-xs"><span>{{ item.label }}</span><strong>{{ item.count }}</strong></div>
+              <q-linear-progress :value="item.count / Math.max(myTasks.length, 1)" :color="item.color" track-color="grey-3" rounded size="10px" />
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+    </div>
+
     <!-- Tasks Timeline -->
     <q-card class="q-mb-md">
       <q-card-section>
@@ -307,6 +341,32 @@ const activeTasks = computed(() => {
   return myTasks.value.filter((t: any) => t.status === 'in-progress').length;
 });
 
+const statusSummary = computed(() => [
+  { label: 'Completed', count: myTasks.value.filter((task) => task.status === 'completed').length, color: 'positive' },
+  { label: 'In progress', count: myTasks.value.filter((task) => task.status === 'in-progress').length, color: 'primary' },
+  { label: 'Not started', count: myTasks.value.filter((task) => task.status === 'not-started').length, color: 'grey-6' },
+  { label: 'Blocked', count: myTasks.value.filter((task) => task.status === 'blocked').length, color: 'negative' },
+]);
+
+const prioritySummary = computed(() => [
+  { label: 'High', count: myTasks.value.filter((task) => task.priority === 'high' || task.priority === 'critical').length, color: 'negative' },
+  { label: 'Medium', count: myTasks.value.filter((task) => task.priority === 'medium').length, color: 'warning' },
+  { label: 'Low', count: myTasks.value.filter((task) => task.priority === 'low').length, color: 'positive' },
+]);
+
+const statusDonutStyle = computed(() => {
+  const total = Math.max(myTasks.value.length, 1);
+  let start = 0;
+  const colors = ['#21ba45', '#1976d2', '#9e9e9e', '#c10015'];
+  const stops = statusSummary.value.map((item, index) => {
+    const end = start + (item.count / total) * 360;
+    const stop = `${colors[index]} ${start}deg ${end}deg`;
+    start = end;
+    return stop;
+  });
+  return { background: `conic-gradient(${stops.join(', ')})` };
+});
+
 onMounted(async () => {
   await fetchFromDatabase();
 });
@@ -496,6 +556,11 @@ async function submitForReview() {
 </script>
 
 <style scoped>
+.analytics-card { border-radius: 12px; border-color: #e5eaf0; }
+.status-donut { width: 132px; height: 132px; border-radius: 50%; display: grid; place-items: center; }
+.status-donut-hole { width: 82px; height: 82px; border-radius: 50%; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.status-donut-hole strong { font-size: 22px; line-height: 1; }
+.status-donut-hole span { font-size: 11px; color: #718096; margin-top: 4px; }
 
 :global(body.body--dark) .planner-page {
   background: #121a1f !important;

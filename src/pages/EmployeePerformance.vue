@@ -26,7 +26,7 @@
 
     <div v-else class="column q-gutter-lg">
       <div class="row q-col-gutter-md">
-        <div v-for="card in statCards" :key="card.label" class="col-12 col-sm-6 col-md-3">
+        <div v-for="card in statCards" :key="card.label" class="col-12 col-sm-6 col-md-4">
           <PerformanceStatCard v-bind="card" :value="formatMetric(card.value, card.suffix)" trend="" :positive="true" />
         </div>
       </div>
@@ -106,7 +106,6 @@ const hasPerformanceData = computed(() => {
 const statCards = computed(() => {
   const summary = performanceStore.summary || {};
   return [
-    { label: 'Productivity Score', value: summary.productivityScore, suffix: '%', description: 'Completion and on-time delivery', icon: 'trending_up', color: 'primary', background: '#e3f2fd', sparklineData: [] },
     { label: 'Task Completion Rate', value: summary.completionRate, suffix: '%', description: 'Of assigned tasks', icon: 'check_circle', color: 'positive', background: '#e8f5e9', sparklineData: [] },
     { label: 'On-Time Rate', value: summary.onTimeRate, suffix: '%', description: 'Completed on schedule', icon: 'schedule', color: 'info', background: '#e3f2fd', sparklineData: [] },
     { label: 'Focus Score', value: summary.focusScore, suffix: '%', description: 'Weekdays with recorded activity', icon: 'local_fire_department', color: 'warning', background: '#fff3e0', sparklineData: [] },
@@ -133,10 +132,8 @@ const priorityPerformance = computed(() => performanceStore.priorityReport || []
 const qualityMetrics = computed(() => {
   const quality = performanceStore.summary?.qualityMetrics || {};
   return [
-    { label: 'Reopened Tasks', value: formatMetric(quality.reopenedTasks), icon: 'refresh', color: 'warning', trend: 'Unavailable from current history', trendPositive: false },
     { label: 'Revision Requests', value: quality.revisionRequests, icon: 'edit', color: 'orange', trend: 'Recorded review requests', trendPositive: false },
     { label: 'First-Time Completion', value: formatMetric(quality.firstTimeCompletionRate, '%'), icon: 'check_circle', color: 'positive', trend: 'Based on review lifecycle', trendPositive: true },
-    { label: 'Avg Subtask Accuracy', value: formatMetric(quality.avgSubtaskAccuracy, '%'), icon: 'done_all', color: 'info', trend: 'Unavailable from current schema', trendPositive: false },
   ];
 });
 

@@ -17,7 +17,8 @@
     <div class="gantt-footer-row row items-center justify-between q-px-md q-py-sm">
 
       <div class="footer-right row items-center no-wrap text-caption text-grey-6 q-gutter-x-sm">
-        <span> {{ visibleCount }} of {{ totalCount }} tasks</span>
+        <span>{{ visibleCount }} of {{ totalCount }} tasks</span>
+        <q-badge v-if="showDependencies" color="indigo-1" text-color="indigo-8" label="Dependencies on" />
       </div>
     </div>
   </q-card>
@@ -1070,14 +1071,31 @@ function buildGanttDataset() {
   // Predecessor Dependency Links (connecting task to task)
   if (showDependencies.value) {
     let linkCounter = 1;
+    const taskIds = new Set(
+      filteredTasks
+        .map((task) => Number(task.task_id))
+        .filter((id) => Number.isInteger(id) && id > 0),
+    );
+    const linkKeys = new Set<string>();
+
     filteredTasks.forEach((t) => {
       if (t.predecessor_task_ids && t.predecessor_task_ids.length > 0) {
         t.predecessor_task_ids.forEach((predId) => {
-          if (filteredTasks.some((other) => other.task_id === predId)) {
+          const sourceId = Number(predId);
+          const targetId = Number(t.task_id);
+          const linkKey = `${sourceId}->${targetId}`;
+
+          if (
+            sourceId !== targetId &&
+            taskIds.has(sourceId) &&
+            taskIds.has(targetId) &&
+            !linkKeys.has(linkKey)
+          ) {
+            linkKeys.add(linkKey);
             links.push({
               id: linkCounter++,
-              source: predId,
-              target: t.task_id,
+              source: sourceId,
+              target: targetId,
               type: '0', // Finish-to-Start
             });
           }
@@ -1249,7 +1267,7 @@ onBeforeUnmount(() => {
 });
 
 watch(
-  [() => props.tasks, () => props.projects, internalSearchQuery, () => props.groupByProject],
+  [() => props.tasks, () => props.projects, internalSearchQuery, () => props.groupByProject, showDependencies],
   () => {
     refreshGantt();
   },

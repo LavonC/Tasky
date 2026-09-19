@@ -79,6 +79,26 @@
             <q-btn color="red" label="Logout" @click="logout" class="full-width" />
           </q-card-section>
         </q-card>
+
+        <q-card class="settings-card q-mt-md" bordered>
+          <q-card-section>
+            <div class="text-h6 text-weight-bold text-negative">Leave organization</div>
+            <div class="text-caption text-grey-7 q-mt-xs">
+              Your access and active membership will be removed. Your completed work history is retained.
+            </div>
+          </q-card-section>
+          <q-card-section>
+            <q-btn
+              color="negative"
+              outline
+              icon="logout"
+              label="Resign from organization"
+              class="full-width"
+              :loading="resigning"
+              @click="confirmResignation"
+            />
+          </q-card-section>
+        </q-card>
       </div>
     </div>
   </q-page>
@@ -105,6 +125,7 @@ const phone = ref('');
 const darkMode = ref(false);
 const emailNotifications = ref(true);
 const taskReminders = ref(true);
+const resigning = ref(false);
 
 onMounted(() => {
   darkMode.value = localStorage.getItem('tasky_dark_mode') === 'true';
@@ -116,6 +137,34 @@ onMounted(() => {
     phone.value = authStore.user.phone || '';
   }
 });
+
+function confirmResignation() {
+  $q.dialog({
+    title: 'Resign from organization?',
+    message: 'You will be signed out immediately and will no longer appear in your organization.',
+    cancel: true,
+    ok: { label: 'Resign', color: 'negative' },
+  }).onOk(() => resign());
+}
+
+async function resign() {
+  if (!authStore.user?.id) return;
+  resigning.value = true;
+  try {
+    const response = await fetch('http://localhost:3007/api/employee/resign', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) throw new Error(result.error || 'Unable to resign');
+    $q.notify({ type: 'positive', message: 'You have left the organization.' });
+    logout();
+  } catch (error) {
+    $q.notify({ type: 'negative', message: error instanceof Error ? error.message : 'Unable to resign' });
+  } finally {
+    resigning.value = false;
+  }
+}
 
 function setDarkMode(value: boolean) {
   darkMode.value = value;
@@ -132,13 +181,15 @@ async function saveProfile() {
     return;
   }
 
-  const result = await authStore.updateProfile(authStore.user.id, {
+  const profileData = {
     firstName: firstName.value.trim(),
     surname: lastName.value.trim(),
     email: email.value.trim(),
     phone: phone.value.trim(),
-    avatar: authStore.user.avatar,
-  });
+    ...(authStore.user.avatar !== undefined ? { avatar: authStore.user.avatar } : {}),
+  };
+
+  const result = await authStore.updateProfile(authStore.user.id, profileData);
 
   if (result.success) {
     $q.notify({

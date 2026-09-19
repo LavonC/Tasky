@@ -77,6 +77,13 @@
              :text-color="$q.dark.isActive ? 'grey-3' : 'grey-8'"
             :options="hierarchyOptions"
           />
+          <q-toggle
+            v-model="showDependencies"
+            color="indigo-5"
+            icon="account_tree"
+            label="Dependencies"
+            dense
+          />
         </div>
       </div>
     </q-card>
@@ -141,6 +148,18 @@ const timelineTasks = computed(() => pmTaskStore.tasks.map((task: any) => ({
   ...task,
   task_id: task.task_id ?? task.id,
   project_id: task.project_id ?? task.projectId,
+  predecessor_task_ids: Array.from(
+    new Set(
+      [
+        ...(Array.isArray(task.predecessor_task_ids) ? task.predecessor_task_ids : []),
+        ...(Array.isArray(task.dependsOn)
+          ? task.dependsOn.map((dependency: any) => dependency.depends_on_id)
+          : []),
+      ]
+        .map((id) => Number(id))
+        .filter((id) => Number.isInteger(id) && id > 0),
+    ),
+  ),
 })));
 const timelineProjects = computed(() => projectStore.projects.map((project: any) => ({
   ...project,
