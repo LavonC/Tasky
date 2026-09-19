@@ -30,7 +30,6 @@
     v-model="form.id"
     outlined
     :label="form.role === 'Project Manager' ? 'Manager ID' : 'Employee ID'"
-    placeholder="001"
     class="col"
   />
 </div>
@@ -82,6 +81,7 @@
             flat
             no-caps
             color="primary"
+            class="auth-link-btn forgot-password-btn"
             label="Forgot Password?"
             @click="router.push('/auth/forgot-password')"
           />
@@ -102,6 +102,7 @@
             flat
             no-caps
             color="primary"
+            class="auth-link-btn create-account-btn"
             label="Create Account"
             @click="showRegisterDialog = true"
           />
@@ -440,6 +441,35 @@ onBeforeUnmount(() => {
 
 :global(body.body--dark) .login-card .q-banner {
   border: 1px solid #6b4d1f;
+}
+
+/* Auth navigation links */
+.auth-link-btn {
+  font-weight: 500;
+}
+
+/*
+ * Quasar's q-btn applies its color through the generated q-btn
+ * color classes/CSS variables. Set the actual button and its
+ * content explicitly so global dark-mode rules cannot turn these
+ * links into the old dark-purple color.
+ */
+:global(body.body--dark) .login-card .forgot-password-btn,
+:global(body.body--dark) .login-card .create-account-btn {
+  --q-primary: #c4f64f !important;
+  color: #c4f64f !important;
+}
+
+:global(body.body--dark) .login-card .forgot-password-btn .q-btn__content,
+:global(body.body--dark) .login-card .create-account-btn .q-btn__content {
+  color: #c4f64f !important;
+}
+
+:global(body.body--dark) .login-card .forgot-password-btn:hover,
+:global(body.body--dark) .login-card .create-account-btn:hover,
+:global(body.body--dark) .login-card .forgot-password-btn:hover .q-btn__content,
+:global(body.body--dark) .login-card .create-account-btn:hover .q-btn__content {
+  color: #d8ff7a !important;
 }
 
 :global(body.body--dark) .register-dialog {

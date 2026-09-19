@@ -75,7 +75,6 @@ body.body--dark .q-table__container {
 
 body.body--dark .pm-sidebar,
 body.body--dark .pm-sidebar .q-drawer__content,
-body.body--dark .q-list,
 body.body--dark .q-table__container,
 body.body--dark .q-table__middle,
 body.body--dark .q-table thead,
@@ -370,6 +369,43 @@ body.body--dark .pm-sidebar .q-item.nav-active:hover {
 
 
 /* =========================================================
+   TASKY DARK MODE — EMPLOYEE SIDEBAR ACTIVE NAVIGATION
+   Employee MainLayout uses .employee-sidebar. The generic
+   text-blue-grey-4 dark rule otherwise overrides the active
+   Planner/Task Manager/etc. label and makes it unreadable.
+   ========================================================= */
+
+body.body--dark .employee-sidebar .q-item.nav-active,
+body.body--dark .employee-sidebar .q-item.q-item--active,
+body.body--dark .employee-sidebar .q-item.q-router-link--active {
+  background: #ffffff !important;
+  color: #2196f3 !important;
+}
+
+body.body--dark .employee-sidebar .q-item.nav-active .q-item__section,
+body.body--dark .employee-sidebar .q-item.nav-active .q-item__label,
+body.body--dark .employee-sidebar .q-item.q-item--active .q-item__section,
+body.body--dark .employee-sidebar .q-item.q-item--active .q-item__label,
+body.body--dark .employee-sidebar .q-item.q-router-link--active .q-item__section,
+body.body--dark .employee-sidebar .q-item.q-router-link--active .q-item__label {
+  color: #2196f3 !important;
+}
+
+body.body--dark .employee-sidebar .q-item.nav-active .q-icon,
+body.body--dark .employee-sidebar .q-item.q-item--active .q-icon,
+body.body--dark .employee-sidebar .q-item.q-router-link--active .q-icon {
+  color: #2196f3 !important;
+}
+
+body.body--dark .employee-sidebar .q-item.nav-active:hover,
+body.body--dark .employee-sidebar .q-item.q-item--active:hover,
+body.body--dark .employee-sidebar .q-item.q-router-link--active:hover {
+  background: #ffffff !important;
+  color: #2196f3 !important;
+}
+
+
+/* =========================================================
    TASKY DARK MODE — ANALYTICS / DASHBOARD READABILITY
    ========================================================= */
 
@@ -640,4 +676,271 @@ body.body--dark .terms-link {
 body.body--dark .register-button,
 body.body--dark .submit-button {
   color: #1a1a2e !important;
+}
+
+
+/* =========================================================
+   TASKY DARK MODE — EMPLOYEE TASK MANAGER / LAYOUT
+   These rules intentionally use body.body--dark so they
+   override component-scoped light-theme declarations.
+   ========================================================= */
+
+body.body--dark .employee-header {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+  border-bottom: 1px solid #34434c !important;
+}
+
+body.body--dark .employee-header .page-title,
+body.body--dark .employee-header .text-h5,
+body.body--dark .employee-header .text-h6 {
+  color: #edf2f7 !important;
+}
+
+body.body--dark .employee-header .page-subtitle,
+body.body--dark .employee-header .notification-btn {
+  color: #b8c7d1 !important;
+}
+
+body.body--dark .app-page {
+  background: #121a1f !important;
+  color: #edf2f7 !important;
+}
+
+body.body--dark .my-tasks-card {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+  border-color: #34434c !important;
+}
+
+body.body--dark .task-name,
+body.body--dark .task-grid-title {
+  color: #edf2f7 !important;
+}
+
+body.body--dark .task-description,
+body.body--dark .subtask-count {
+  color: #b8c7d1 !important;
+}
+
+body.body--dark .task-table,
+body.body--dark .task-table .q-table__container,
+body.body--dark .task-table .q-table__middle,
+body.body--dark .task-table table,
+body.body--dark .task-table thead,
+body.body--dark .task-table tbody,
+body.body--dark .task-table tbody tr,
+body.body--dark .task-table tbody td {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+  border-color: #34434c !important;
+}
+
+body.body--dark .task-table thead th {
+  background: #26343c !important;
+  color: #b8c7d1 !important;
+  border-color: #34434c !important;
+}
+
+body.body--dark .task-table tbody tr:hover {
+  background: #26343c !important;
+}
+
+body.body--dark .task-table .q-table__top,
+body.body--dark .task-table .q-table__bottom {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+}
+
+body.body--dark .search-wrapper,
+body.body--dark .task-type-toggle {
+  background: #26343c !important;
+  border-color: #34434c !important;
+}
+
+body.body--dark .search-wrapper .q-field__native,
+body.body--dark .search-wrapper .q-field__input,
+body.body--dark .search-wrapper .q-field__label,
+body.body--dark .search-wrapper .q-field__marginal,
+body.body--dark .search-type,
+body.body--dark .inside-filter {
+  color: #edf2f7 !important;
+}
+
+body.body--dark .search-wrapper input::placeholder {
+  color: #91a2ad !important;
+  opacity: 1 !important;
+}
+
+body.body--dark .search-divider {
+  background: #46555e !important;
+}
+
+body.body--dark .task-type-btn {
+  color: #b8c7d1 !important;
+}
+
+body.body--dark .active-task-type {
+  background: #07558f !important;
+  color: #ffffff !important;
+}
+
+body.body--dark .stat-card {
+  background: #1d2930 !important;
+  border-color: #34434c !important;
+}
+
+body.body--dark .stat-card .text-grey-6,
+body.body--dark .stat-card .text-grey-7 {
+  color: #b8c7d1 !important;
+}
+
+/* Dialogs / nested light surfaces */
+body.body--dark .create-dialog-card,
+body.body--dark .create-dialog-body,
+body.body--dark .manage-dialog,
+body.body--dark .manage-header,
+body.body--dark .manage-tabs,
+body.body--dark .manage-panels,
+body.body--dark .manage-progress-card,
+body.body--dark .manage-subtask,
+body.body--dark .edit-subtasks-dialog,
+body.body--dark .edit-task-info,
+body.body--dark .edit-subtask-card,
+body.body--dark .edit-empty-subtasks,
+body.body--dark .edit-subtasks-footer,
+body.body--dark .empty-subtasks {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+  border-color: #34434c !important;
+}
+
+body.body--dark .subtask-editor,
+body.body--dark .timeline-item,
+body.body--dark .impact-info {
+  background: #26343c !important;
+  color: #edf2f7 !important;
+  border-color: #34434c !important;
+}
+
+body.body--dark .manage-task-name,
+body.body--dark .section-title {
+  color: #a8c7ff !important;
+}
+
+body.body--dark .manage-subtask-title,
+body.body--dark .task-project {
+  color: #edf2f7 !important;
+}
+
+body.body--dark .manage-tabs .q-tab {
+  color: #b8c7d1 !important;
+}
+
+body.body--dark .manage-tabs .q-tab--active {
+  color: #9fd2ff !important;
+}
+
+/* Keep semantic colored chips readable in dark mode. */
+body.body--dark .q-chip,
+body.body--dark .q-badge {
+  border-color: transparent;
+}
+
+
+/* =========================================================
+   TASKY DARK MODE — EMPLOYEE PLANNER CALENDAR CELLS
+   These are intentionally global because EmployeePlanner's
+   calendar cells are generated dynamically and the component
+   has a large light-mode palette in a scoped style block.
+   ========================================================= */
+
+body.body--dark .planner-page .calendar-cell {
+  background: #26343c !important;
+  background-color: #26343c !important;
+  color: #edf2f7 !important;
+  border-color: #465761 !important;
+}
+
+body.body--dark .planner-page .calendar-cell.weekend-cell {
+  background: #222f36 !important;
+  background-color: #222f36 !important;
+}
+
+body.body--dark .planner-page .calendar-cell.worked-cell {
+  background: #20372f !important;
+  background-color: #20372f !important;
+}
+
+body.body--dark .planner-page .calendar-cell.leave-cell,
+body.body--dark .planner-page .calendar-cell.holiday-cell {
+  background: #30343b !important;
+  background-color: #30343b !important;
+}
+
+body.body--dark .planner-page .calendar-cell:hover {
+  background: #2d3b43 !important;
+  border-color: #72848f !important;
+}
+
+body.body--dark .planner-page .calendar-day-number {
+  color: #edf2f7 !important;
+}
+
+body.body--dark .planner-page .today-number {
+  color: #c4f64f !important;
+}
+
+body.body--dark .planner-page .today-pill {
+  background: #3b4422 !important;
+  color: #d8ff7a !important;
+}
+
+body.body--dark .planner-page .status-worked {
+  background: #183d2a !important;
+  color: #69e59a !important;
+}
+
+body.body--dark .planner-page .status-weekend {
+  background: #3a4248 !important;
+  color: #c1cbd1 !important;
+}
+
+body.body--dark .planner-page .status-leave {
+  background: #463719 !important;
+  color: #ffd18a !important;
+}
+
+body.body--dark .planner-page .status-holiday {
+  background: #1f3548 !important;
+  color: #9fd2ff !important;
+}
+
+body.body--dark .planner-page .calendar-work-summary,
+body.body--dark .planner-page .calendar-work-summary span {
+  color: #b8c7d1 !important;
+}
+
+body.body--dark .planner-page .calendar-leave-impact,
+body.body--dark .planner-page .calendar-missed-work {
+  background: #45222a !important;
+  border-color: #7f3b47 !important;
+  color: #ffd0d5 !important;
+}
+
+body.body--dark .planner-page .calendar-weekday {
+  color: #b8c7d1 !important;
+}
+
+body.body--dark .planner-page .weekend-heading {
+  color: #91a2ad !important;
+}
+
+body.body--dark .planner-page .calendar-week-header {
+  background: #1d2930 !important;
+  border-color: #34434c !important;
+}
+
+body.body--dark .planner-page .calendar-body {
+  background: #1d2930 !important;
 }

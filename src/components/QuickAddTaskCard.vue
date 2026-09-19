@@ -53,4 +53,16 @@ defineEmits(['create']);
   font-size: 14px;
   color: #ffffff;
 }
+
+:global(body.body--dark) .quick-add-card {
+  background: #07558f !important;
+  border-color: #34434c !important;
+  color: #faffd9 !important;
+}
+
+:global(body.body--dark) .quick-add-title,
+:global(body.body--dark) .quick-add-subtitle {
+  color: #ffffff !important;
+}
+
 </style>

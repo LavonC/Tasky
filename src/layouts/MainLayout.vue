@@ -161,7 +161,7 @@
     </q-drawer>
 
     <!-- ================= HEADER ================= -->
-    <q-header class="employee-header text-dark">
+    <q-header class="employee-header">
       <UserHeader
         :icon="currentPage.icon"
         :title="currentPage.label"
@@ -287,6 +287,21 @@
   background: rgba(255, 255, 255, 0.045);
 }
 
+
+/* Employee active navigation must remain readable in dark mode.
+   app.scss also contains the global fallback for Quasar's
+   q-item--active/router-link--active classes. */
+:global(body.body--dark) .employee-sidebar .nav-active,
+:global(body.body--dark) .employee-sidebar .nav-active .q-item__section,
+:global(body.body--dark) .employee-sidebar .nav-active .q-item__label,
+:global(body.body--dark) .employee-sidebar .nav-active .q-icon {
+  color: #2196f3 !important;
+}
+
+:global(body.body--dark) .employee-sidebar .nav-active {
+  background: #ffffff !important;
+}
+
 /* ================= COLLAPSE ================= */
 
 .collapse-btn {
@@ -306,20 +321,58 @@
   background: #ffffff;
 }
 
-:global(body.body--dark) .employee-header,
-:global(body.body--dark) .page-background {
-  background: #121a1f !important;
-  color: #edf2f7;
+:global(body.body--dark) .employee-header {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+  border-bottom: 1px solid #34434c;
 }
 
-:global(body.body--dark) .employee-header :deep(.page-title) {
-  color: #edf2f7;
+:global(body.body--dark) .page-background {
+  background: #121a1f !important;
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .employee-header :deep(.page-title),
+:global(body.body--dark) .employee-header :deep(.text-h5),
+:global(body.body--dark) .employee-header :deep(.text-h6) {
+  color: #edf2f7 !important;
 }
 
 :global(body.body--dark) .employee-header :deep(.page-subtitle),
-:global(body.body--dark) .employee-header :deep(.notification-btn) {
+:global(body.body--dark) .employee-header :deep(.notification-btn),
+:global(body.body--dark) .employee-header :deep(.text-grey-6),
+:global(body.body--dark) .employee-header :deep(.text-grey-7) {
   color: #b8c7d1 !important;
 }
+
+:global(body.body--dark) .employee-header :deep(.q-icon) {
+  color: #edf2f7;
+}
+
+:global(body.body--dark) .employee-header :deep(.q-btn) {
+  color: #edf2f7 !important;
+}
+
+/* ================= LIGHT MODE HEADER ================= */
+
+.employee-header :deep(.page-title),
+.employee-header :deep(.text-h5),
+.employee-header :deep(.text-h6) {
+  color: #111827 !important;
+}
+
+.employee-header :deep(.page-subtitle) {
+  color: #738198 !important;
+}
+
+.employee-header :deep(.q-icon) {
+  color: #374151;
+}
+
+.employee-header :deep(.q-btn) {
+  color: #374151 !important;
+}
+
 </style>
 
 <script setup lang="ts">

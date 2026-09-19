@@ -494,3 +494,23 @@ async function submitForReview() {
   }
 }
 </script>
+
+<style scoped>
+
+:global(body.body--dark) .planner-page {
+  background: #121a1f !important;
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .planner-page .text-grey-6,
+:global(body.body--dark) .planner-page .text-grey-7 {
+  color: #b8c7d1 !important;
+}
+
+:global(body.body--dark) .planner-page .text-h5,
+:global(body.body--dark) .planner-page .text-h6,
+:global(body.body--dark) .planner-page .task-title {
+  color: #edf2f7 !important;
+}
+
+</style>

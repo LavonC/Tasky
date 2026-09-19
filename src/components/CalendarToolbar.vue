@@ -40,4 +40,27 @@ defineEmits(['previous', 'today', 'next']);
   font-weight: 600;
   color: #333;
 }
+
+:global(body.body--dark) .calendar-toolbar {
+  background: #1d2930 !important;
+  border-bottom-color: #34434c !important;
+}
+
+:global(body.body--dark) .calendar-month {
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .calendar-toolbar .q-btn {
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .calendar-toolbar .q-btn.q-btn--outline {
+  color: #c4f64f !important;
+  border-color: #c4f64f !important;
+}
+
+:global(body.body--dark) .calendar-toolbar .q-icon {
+  color: #edf2f7 !important;
+}
+
 </style>

@@ -3969,4 +3969,143 @@ async function submitInterrupt() {
   background: #26343c;
   border-color: #34434c;
 }
+
+/* ============================================================
+   DARK MODE — TASK MANAGER
+   Keep all Task Manager-specific light-theme styles readable.
+   ============================================================ */
+:global(body.body--dark) .app-page {
+  background: #121a1f !important;
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .my-tasks-card,
+:global(body.body--dark) .task-grid-card,
+:global(body.body--dark) .create-dialog-card,
+:global(body.body--dark) .manage-dialog,
+:global(body.body--dark) .edit-subtasks-dialog {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+  border-color: #34434c !important;
+}
+
+:global(body.body--dark) .task-name,
+:global(body.body--dark) .task-grid-title,
+:global(body.body--dark) .my-tasks-card .text-body1,
+:global(body.body--dark) .my-tasks-card .text-body2,
+:global(body.body--dark) .my-tasks-card .text-subtitle1,
+:global(body.body--dark) .my-tasks-card .text-subtitle2,
+:global(body.body--dark) .my-tasks-card .text-h6 {
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .task-description,
+:global(body.body--dark) .subtask-count,
+:global(body.body--dark) .my-tasks-card .text-grey-6,
+:global(body.body--dark) .my-tasks-card .text-grey-7 {
+  color: #b8c7d1 !important;
+}
+
+:global(body.body--dark) .task-table,
+:global(body.body--dark) .task-table :deep(.q-table__container),
+:global(body.body--dark) .task-table :deep(.q-table__middle),
+:global(body.body--dark) .task-table :deep(table),
+:global(body.body--dark) .task-table :deep(thead),
+:global(body.body--dark) .task-table :deep(tbody),
+:global(body.body--dark) .task-table :deep(tr),
+:global(body.body--dark) .task-table :deep(td) {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+  border-color: #34434c !important;
+}
+
+:global(body.body--dark) .task-table :deep(th) {
+  background: #26343c !important;
+  color: #b8c7d1 !important;
+  border-color: #34434c !important;
+}
+
+:global(body.body--dark) .task-table :deep(tbody tr:hover) {
+  background: #26343c !important;
+}
+
+:global(body.body--dark) .task-table :deep(.q-table__top),
+:global(body.body--dark) .task-table :deep(.q-table__bottom) {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .create-dialog-body,
+:global(body.body--dark) .edit-task-info,
+:global(body.body--dark) .manage-header,
+:global(body.body--dark) .manage-tabs,
+:global(body.body--dark) .manage-panels,
+:global(body.body--dark) .manage-progress-card,
+:global(body.body--dark) .manage-subtask,
+:global(body.body--dark) .timeline-card,
+:global(body.body--dark) .edit-subtask-card,
+:global(body.body--dark) .edit-empty-subtasks,
+:global(body.body--dark) .empty-subtasks {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+  border-color: #34434c !important;
+}
+
+:global(body.body--dark) .subtask-editor,
+:global(body.body--dark) .timeline-item,
+:global(body.body--dark) .impact-info {
+  background: #26343c !important;
+  color: #edf2f7 !important;
+  border-color: #34434c !important;
+}
+
+:global(body.body--dark) .manage-task-name,
+:global(body.body--dark) .section-title {
+  color: #a8c7ff !important;
+}
+
+:global(body.body--dark) .manage-subtask-title,
+:global(body.body--dark) .task-project {
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .manage-tabs .q-tab {
+  color: #b8c7d1 !important;
+}
+
+:global(body.body--dark) .manage-tabs .q-tab--active {
+  color: #9fd2ff !important;
+}
+
+:global(body.body--dark) .deadline-box {
+  background: #20374a !important;
+  border-color: #34434c !important;
+  color: #9fd2ff !important;
+}
+
+:global(body.body--dark) .deadline-overdue {
+  background: #45222a !important;
+  border-color: #6b3440 !important;
+  color: #ffb4b4 !important;
+}
+
+:global(body.body--dark) .subtask-title-input :deep(.q-field__control),
+:global(body.body--dark) .hours-input :deep(.q-field__control) {
+  background: #26343c !important;
+}
+
+:global(body.body--dark) .subtask-title-input :deep(.q-field__native),
+:global(body.body--dark) .hours-input :deep(.q-field__native),
+:global(body.body--dark) .subtask-title-input :deep(.q-field__label),
+:global(body.body--dark) .hours-input :deep(.q-field__label) {
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .edit-subtask-footer,
+:global(body.body--dark) .edit-subtasks-footer {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+  border-color: #34434c !important;
+}
+
 </style>

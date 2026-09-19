@@ -72,4 +72,16 @@ defineEmits(['click']);
 .stat-trend {
   font-weight: 500;
 }
+
+:global(body.body--dark) .stat-card {
+  background: #1d2930 !important;
+  border-color: #34434c !important;
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .stat-card .text-grey-7,
+:global(body.body--dark) .stat-card .text-grey-6 {
+  color: #b8c7d1 !important;
+}
+
 </style>

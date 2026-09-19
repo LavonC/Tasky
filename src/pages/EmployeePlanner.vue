@@ -2109,6 +2109,155 @@ async function automateDeadline() {
   color: #64748b;
 }
 
+
+/* =========================================================
+   DARK MODE — EMPLOYEE PLANNER
+   Explicitly override the light calendar palette. The
+   component contains many hard-coded light backgrounds,
+   so these rules intentionally use !important.
+   ========================================================= */
+
+:global(body.body--dark) .planner-page {
+  background: #121a1f !important;
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .calendar-container,
+:global(body.body--dark) .calendar-card {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+  border-color: #34434c !important;
+}
+
+:global(body.body--dark) .calendar-toolbar,
+:global(body.body--dark) .calendar-week-header {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+  border-color: #34434c !important;
+}
+
+:global(body.body--dark) .compact-stats {
+  background: #1d2930 !important;
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .calendar-weekday,
+:global(body.body--dark) .calendar-month,
+:global(body.body--dark) .stat-value,
+:global(body.body--dark) .calendar-day-number,
+:global(body.body--dark) .selected-date,
+:global(body.body--dark) .section-kicker,
+:global(body.body--dark) .section-title {
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .calendar-weekday {
+  color: #b8c7d1 !important;
+}
+
+:global(body.body--dark) .weekend-heading {
+  color: #91a2ad !important;
+}
+
+:global(body.body--dark) .stat-label {
+  color: #b8c7d1 !important;
+}
+
+:global(body.body--dark) .planner-page .calendar-cell {
+  background: #26343c !important;
+  background-color: #26343c !important;
+  border-color: #465761 !important;
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .planner-page .calendar-cell.weekend-cell {
+  background: #222f36 !important;
+  background-color: #222f36 !important;
+}
+
+:global(body.body--dark) .planner-page .calendar-cell.worked-cell {
+  background: #20372f !important;
+  background-color: #20372f !important;
+}
+
+:global(body.body--dark) .planner-page .calendar-cell.leave-cell,
+:global(body.body--dark) .planner-page .calendar-cell.holiday-cell {
+  background: #30343b !important;
+  background-color: #30343b !important;
+}
+
+:global(body.body--dark) .calendar-cell:hover {
+  border-color: #72848f !important;
+}
+
+:global(body.body--dark) .today-number {
+  color: #bdaeff !important;
+}
+
+:global(body.body--dark) .today-pill {
+  background: #34305a !important;
+  color: #d7d0ff !important;
+}
+
+:global(body.body--dark) .status-weekend {
+  color: #c1cbd1 !important;
+  background: #3a4248 !important;
+}
+
+:global(body.body--dark) .status-worked {
+  color: #69e59a !important;
+  background: #183d2a !important;
+}
+
+:global(body.body--dark) .status-leave {
+  color: #ffd18a !important;
+  background: #463719 !important;
+}
+
+:global(body.body--dark) .status-holiday {
+  color: #9fd2ff !important;
+  background: #1f3548 !important;
+}
+
+:global(body.body--dark) .calendar-work-summary,
+:global(body.body--dark) .calendar-work-summary span {
+  color: #b8c7d1 !important;
+}
+
+:global(body.body--dark) .compact-status-option,
+:global(body.body--dark) .date-chip {
+  background: #26343c !important;
+  border-color: #465761 !important;
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .compact-status-active {
+  background: #34305a !important;
+  border-color: #9b8cff !important;
+  color: #ffffff !important;
+}
+
+:global(body.body--dark) .compact-info-card,
+:global(body.body--dark) .compact-task-card,
+:global(body.body--dark) .empty-card {
+  background: #1d2930 !important;
+  border-color: #34434c !important;
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .compact-activity-row {
+  border-color: #34434c !important;
+}
+
+:global(body.body--dark) .compact-activity-row .text-grey-5,
+:global(body.body--dark) .compact-activity-row .text-grey-6,
+:global(body.body--dark) .compact-activity-row .text-grey-7,
+:global(body.body--dark) .compact-empty,
+:global(body.body--dark) .progress-label,
+:global(body.body--dark) .field-label {
+  color: #b8c7d1 !important;
+}
+
 :global(body.body--dark) .planner-page,
 :global(body.body--dark) .calendar-container,
 :global(body.body--dark) .calendar-card,
