@@ -471,3 +471,173 @@ body.body--dark {
   --tasky-dark-gantt-text: #edf2f7;
   --tasky-dark-gantt-muted: #b8c7d1;
 }
+
+/* =========================================================
+   TASKY AUTH SCREENS — DARK MODE
+   The auth pages use explicit light-theme colors in their
+   component styles. These overrides keep those screens readable
+   without changing the light theme.
+   ========================================================= */
+
+body.body--dark .auth-form-panel,
+body.body--dark .auth-container,
+body.body--dark .auth-page {
+  background-color: var(--tasky-dark-bg) !important;
+  color: var(--tasky-dark-text) !important;
+}
+
+body.body--dark .login-page {
+  background-color: var(--tasky-dark-bg) !important;
+  color: var(--tasky-dark-text) !important;
+}
+
+body.body--dark .login-card {
+  background-color: var(--tasky-dark-surface) !important;
+  border: 1px solid var(--tasky-dark-border) !important;
+  color: var(--tasky-dark-text) !important;
+}
+
+body.body--dark .login-title,
+body.body--dark .forgot-password-title,
+body.body--dark .register-title,
+body.body--dark .reset-password-title,
+body.body--dark .success-title,
+body.body--dark .success-dialog h3,
+body.body--dark .register-dialog h3 {
+  color: var(--tasky-dark-text) !important;
+}
+
+body.body--dark .login-subtitle,
+body.body--dark .forgot-password-subtitle,
+body.body--dark .register-subtitle,
+body.body--dark .reset-password-subtitle,
+body.body--dark .footer-text,
+body.body--dark .terms-text,
+body.body--dark .hint-text,
+body.body--dark .success-message,
+body.body--dark .login-card .text-grey-7,
+body.body--dark .forgot-password-container .text-grey-7,
+body.body--dark .register-container .text-grey-7,
+body.body--dark .reset-password-container .text-grey-7 {
+  color: var(--tasky-dark-muted) !important;
+}
+
+body.body--dark .form-label,
+body.body--dark .login-card .text-subtitle2 {
+  color: var(--tasky-dark-text) !important;
+}
+
+/* Quasar fields used by all authentication screens. */
+body.body--dark .login-card .q-field__control,
+body.body--dark .forgot-password-container .q-field__control,
+body.body--dark .register-container .q-field__control,
+body.body--dark .reset-password-container .q-field__control {
+  background-color: var(--tasky-dark-surface-2) !important;
+  color: var(--tasky-dark-text) !important;
+}
+
+body.body--dark .login-card .q-field--outlined .q-field__control:before,
+body.body--dark .forgot-password-container .q-field--outlined .q-field__control:before,
+body.body--dark .register-container .q-field--outlined .q-field__control:before,
+body.body--dark .reset-password-container .q-field--outlined .q-field__control:before {
+  border-color: var(--tasky-dark-border) !important;
+}
+
+body.body--dark .login-card .q-field--outlined:hover .q-field__control:before,
+body.body--dark .forgot-password-container .q-field--outlined:hover .q-field__control:before,
+body.body--dark .register-container .q-field--outlined:hover .q-field__control:before,
+body.body--dark .reset-password-container .q-field--outlined:hover .q-field__control:before {
+  border-color: #61727d !important;
+}
+
+body.body--dark .login-card .q-field--focused .q-field__control:after,
+body.body--dark .forgot-password-container .q-field--focused .q-field__control:after,
+body.body--dark .register-container .q-field--focused .q-field__control:after,
+body.body--dark .reset-password-container .q-field--focused .q-field__control:after {
+  border-color: #9ae634 !important;
+}
+
+body.body--dark .login-card .q-field__native,
+body.body--dark .login-card .q-field__input,
+body.body--dark .login-card .q-field__label,
+body.body--dark .login-card .q-field__marginal,
+body.body--dark .forgot-password-container .q-field__native,
+body.body--dark .forgot-password-container .q-field__input,
+body.body--dark .forgot-password-container .q-field__label,
+body.body--dark .forgot-password-container .q-field__marginal,
+body.body--dark .register-container .q-field__native,
+body.body--dark .register-container .q-field__input,
+body.body--dark .register-container .q-field__label,
+body.body--dark .register-container .q-field__marginal,
+body.body--dark .reset-password-container .q-field__native,
+body.body--dark .reset-password-container .q-field__input,
+body.body--dark .reset-password-container .q-field__label,
+body.body--dark .reset-password-container .q-field__marginal {
+  color: var(--tasky-dark-text) !important;
+}
+
+body.body--dark .login-card .q-field__native::placeholder,
+body.body--dark .login-card .q-field__input::placeholder,
+body.body--dark .forgot-password-container .q-field__native::placeholder,
+body.body--dark .forgot-password-container .q-field__input::placeholder,
+body.body--dark .register-container .q-field__native::placeholder,
+body.body--dark .register-container .q-field__input::placeholder,
+body.body--dark .reset-password-container .q-field__native::placeholder,
+body.body--dark .reset-password-container .q-field__input::placeholder {
+  color: #a6b5be !important;
+  opacity: 1 !important;
+}
+
+body.body--dark .login-card .q-field__append .q-icon,
+body.body--dark .login-card .q-field__prepend .q-icon,
+body.body--dark .forgot-password-container .q-field__append .q-icon,
+body.body--dark .forgot-password-container .q-field__prepend .q-icon,
+body.body--dark .register-container .q-field__append .q-icon,
+body.body--dark .register-container .q-field__prepend .q-icon,
+body.body--dark .reset-password-container .q-field__append .q-icon,
+body.body--dark .reset-password-container .q-field__prepend .q-icon {
+  color: #c4d0d7 !important;
+}
+
+/* Dropdowns and auth dialogs. */
+body.body--dark .q-menu,
+body.body--dark .register-dialog,
+body.body--dark .success-dialog {
+  background-color: var(--tasky-dark-surface) !important;
+  color: var(--tasky-dark-text) !important;
+  border: 1px solid var(--tasky-dark-border);
+}
+
+body.body--dark .register-dialog .q-item,
+body.body--dark .register-dialog .text-caption {
+  color: var(--tasky-dark-muted) !important;
+}
+
+body.body--dark .register-dialog .q-card {
+  background-color: var(--tasky-dark-surface-2) !important;
+  color: var(--tasky-dark-text) !important;
+  border-color: var(--tasky-dark-border) !important;
+}
+
+body.body--dark .register-dialog .q-card .text-subtitle1 {
+  color: var(--tasky-dark-text) !important;
+}
+
+body.body--dark .strength-bar {
+  background-color: #3b4a53 !important;
+}
+
+body.body--dark .back-link,
+body.body--dark .signin-link {
+  color: #b8c7d1 !important;
+}
+
+body.body--dark .terms-link {
+  color: #c4f64f !important;
+}
+
+/* Keep the branded action buttons unchanged in dark mode. */
+body.body--dark .register-button,
+body.body--dark .submit-button {
+  color: #1a1a2e !important;
+}

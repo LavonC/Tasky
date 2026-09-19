@@ -429,4 +429,20 @@ onBeforeUnmount(() => {
 :global(body.body--dark) .login-card .text-grey-7 {
   color: #b8c7d1 !important;
 }
+/* Dark mode: auth-specific text that is not a Quasar field. */
+:global(body.body--dark) .login-card .text-subtitle2 {
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .login-card .text-grey-7 {
+  color: #b8c7d1 !important;
+}
+
+:global(body.body--dark) .login-card .q-banner {
+  border: 1px solid #6b4d1f;
+}
+
+:global(body.body--dark) .register-dialog {
+  color: #edf2f7;
+}
 </style>

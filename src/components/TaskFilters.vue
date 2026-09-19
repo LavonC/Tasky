@@ -409,4 +409,45 @@ watch(searchType, (newType) => {
     justify-content: center;
   }
 }
+
+/* Dark mode */
+:global(body.body--dark) .search-wrapper,
+:global(body.body--dark) .task-type-toggle {
+  background: #26343c !important;
+  border-color: #34434c !important;
+}
+
+:global(body.body--dark) .search-type,
+:global(body.body--dark) .search-input,
+:global(body.body--dark) .inside-filter,
+:global(body.body--dark) .task-type-btn {
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .search-wrapper :deep(.q-field__control),
+:global(body.body--dark) .search-wrapper :deep(.q-field__native),
+:global(body.body--dark) .search-wrapper :deep(.q-field__input),
+:global(body.body--dark) .search-wrapper :deep(.q-field__label),
+:global(body.body--dark) .search-wrapper :deep(.q-field__marginal) {
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .search-wrapper :deep(input::placeholder) {
+  color: #91a2ad !important;
+  opacity: 1;
+}
+
+:global(body.body--dark) .search-divider {
+  background: #46555e !important;
+}
+
+:global(body.body--dark) .active-task-type {
+  background: #06518e !important;
+  color: #ffffff !important;
+}
+
+:global(body.body--dark) .task-type-btn {
+  color: #b8c7d1 !important;
+}
+
 </style>

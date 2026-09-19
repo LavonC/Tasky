@@ -105,4 +105,19 @@ defineEmits(['view-change', 'tab-change']);
   background: #26343c;
   color: #a8c7ff !important;
 }
+
+/* Dark mode */
+:global(body.body--dark) .task-tab.q-tab--active {
+  background: #26343c !important;
+  color: #9fd2ff !important;
+}
+
+:global(body.body--dark) .task-tabs .q-tab:not(.q-tab--active) {
+  color: #b8c7d1 !important;
+}
+
+:global(body.body--dark) .q-btn-toggle {
+  background: #26343c;
+}
+
 </style>

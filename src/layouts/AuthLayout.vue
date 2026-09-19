@@ -371,4 +371,12 @@ onMounted(() => {
     font-size: 1.75rem;
   }
 }
+:global(body.body--dark) .auth-form-panel {
+  background: #121a1f !important;
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .form-content {
+  color: #edf2f7 !important;
+}
 </style>

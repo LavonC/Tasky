@@ -271,4 +271,15 @@ const handleSuccessOk = () => {
     max-width: 350px;
   }
 }
+/* Dark mode overrides for explicit light-theme colors above. */
+:global(body.body--dark) .forgot-password-title,
+:global(body.body--dark) .success-title {
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .forgot-password-subtitle,
+:global(body.body--dark) .form-label,
+:global(body.body--dark) .success-message {
+  color: #b8c7d1 !important;
+}
 </style>

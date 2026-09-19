@@ -445,4 +445,19 @@ const handleRegister = async () => {
     grid-template-columns: 1fr;
   }
 }
+/* Dark mode overrides for explicit light-theme colors above. */
+:global(body.body--dark) .register-title {
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .register-subtitle,
+:global(body.body--dark) .form-label,
+:global(body.body--dark) .footer-text,
+:global(body.body--dark) .terms-text {
+  color: #b8c7d1 !important;
+}
+
+:global(body.body--dark) .terms-link {
+  color: #c4f64f !important;
+}
 </style>
