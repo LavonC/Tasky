@@ -125,9 +125,8 @@ export default function leavesRoutes(pool) {
       const affectedTasks = [];
 
       for (const task of tasks) {
+        if (!task.deadline) continue;
         const taskDeadline = new Date(task.deadline);
-
-        // Extract date string (YYYY-MM-DD) for comparison
         const taskDeadlineDate = taskDeadline.toISOString().split('T')[0];
 
         for (const leave of allLeaves) {
@@ -146,9 +145,9 @@ export default function leavesRoutes(pool) {
             affectedTasks.push({
               ...task,
               deadline_on_leave: true,
-              leave_start: leave.start_date,
-              leave_end: leave.end_date,
-              leave_type: leave.leave_type || 'manual'
+              leave_start: leaveStartDate,
+              leave_end: leaveEndDate,
+              leave_type: leave.leave_type || leave.type || 'manual'
             });
             break; // Only add once per task
           }

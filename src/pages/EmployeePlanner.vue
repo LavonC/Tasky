@@ -1387,6 +1387,8 @@ function formatDate(date: Date): string {
 ============================================================ */
 
 function parseDate(value: string): Date {
+  if (!value) return new Date();
+  if (value.includes('T')) return new Date(value);
   const [year, month, day] = value.split('-').map(Number);
 
   if (year === undefined || month === undefined || day === undefined) {
