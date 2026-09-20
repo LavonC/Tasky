@@ -74,7 +74,7 @@
           <q-tooltip>Clear filters</q-tooltip>
         </q-btn>
         <q-btn
-          color="primary"
+          color="info"
           icon="balance"
           label="Auto Rebalance"
           rounded

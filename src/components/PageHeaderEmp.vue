@@ -72,8 +72,4 @@ defineProps<Props>();
   color: #1d2939;
 }
 
-/* Notification */
-.notification-btn {
-  color: #667085;
-}
 </style>

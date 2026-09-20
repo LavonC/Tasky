@@ -7,7 +7,6 @@
       </div>
       <div class="row q-gutter-sm">
         <q-select v-model="selectedPeriod" :options="periodOptions" outlined dense style="width: 140px" @update:model-value="handlePeriodChange" />
-        <q-btn outline color="primary" icon="refresh" label="Refresh" :loading="performanceStore.loading" @click="loadPerformance" />
       </div>
     </div>
 

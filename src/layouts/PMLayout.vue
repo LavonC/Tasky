@@ -140,23 +140,26 @@
 
           <!-- Collapse -->
           <q-item
-            clickable
-            v-ripple
-            class="bg-lime-5 collapse-btn nav-item q-py-sm text-blue-black"
-            :class="sidebarCollapsed ? 'justify-center' : ''"
-            @click="sidebarCollapsed = !sidebarCollapsed"
-          >
-            <q-item-section avatar>
-              <q-icon
-                :name="sidebarCollapsed ? 'chevron_right' : 'chevron_left'"
-                size="21px"
-              />
-            </q-item-section>
+  clickable
+  v-ripple
+  class="bg-lime-5 collapse-btn nav-item q-py-sm text-blue-black"
+  :class="sidebarCollapsed ? 'justify-center' : ''"
+  @click="sidebarCollapsed = !sidebarCollapsed"
+>
+  <q-item-section avatar>
+    <q-icon
+      :name="sidebarCollapsed ? 'chevron_right' : 'chevron_left'"
+      size="21px"
+    />
+  </q-item-section>
 
-            <q-item-section v-if="!sidebarCollapsed" class="text-body2 text-weight-medium">
-              Collapse
-            </q-item-section>
-          </q-item>
+  <q-item-section
+    v-if="!sidebarCollapsed"
+    class="text-body2 text-weight-medium collapse-text"
+  >
+    Collapse
+  </q-item-section>
+</q-item>
         </q-list>
       </div>
     </q-drawer>
@@ -353,6 +356,21 @@ function handleLogout() {
 .collapse-btn {
   margin-top: 4px;
   overflow: hidden !important;
+  color: #000000 !important;
+}
+
+.collapse-btn .q-icon {
+  color: #000000 !important;
+}
+
+.collapse-text {
+  color: #000000 !important;
+}
+
+:global(body.body--dark) .pm-sidebar .collapse-btn,
+:global(body.body--dark) .pm-sidebar .collapse-btn .q-icon,
+:global(body.body--dark) .pm-sidebar .collapse-text {
+  color: #000000 !important;
 }
 
 /* ================= PAGE ================= */
@@ -393,10 +411,6 @@ function handleLogout() {
 
 :global(body.body--dark) .pm-sidebar .nav-item:not(.nav-active):hover {
   background: rgba(255, 255, 255, 0.07) !important;
-}
-
-:global(body.body--dark) .pm-sidebar .collapse-btn {
-  color: #000 !important;
 }
 
 </style>

@@ -960,3 +960,18 @@ body.body--dark .login-card .sign-in-btn.text-white,
 body.body--dark .login-card .sign-in-btn .q-btn__content {
   color: #000000 !important;
 }
+
+/* Employee header notification icon */
+.notification-btn {
+  color: #000000 !important;
+}
+
+.notification-btn .q-icon {
+  color: #000000 !important;
+}
+
+/* Dark mode */
+body.body--dark .notification-btn,
+body.body--dark .notification-btn .q-icon {
+  color: #ffffff !important;
+}

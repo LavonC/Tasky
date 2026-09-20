@@ -34,17 +34,6 @@
 
     <div class="row items-center q-gutter-lg">
       <div class="column items-center">
-        <q-circular-progress
-          :value="efficiency === null ? 0 : efficiency / 100"
-          size="80px"
-          :thickness="0.2"
-          color="primary"
-          track-color="grey-3"
-          class="q-mb-sm"
-        >
-          <div class="text-h6 text-weight-bold">{{ efficiency === null ? '--' : `${efficiency}%` }}</div>
-          <div class="text-caption text-grey-6">Efficiency</div>
-        </q-circular-progress>
       </div>
 
       <q-banner v-if="efficiencyMessage" class="bg-blue-1 text-blue-9" dense rounded>

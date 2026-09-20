@@ -18,7 +18,7 @@
               <q-avatar size="100px">
                 <img :src="authStore.user?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
               </q-avatar>
-              <q-btn flat color="primary" label="Change Avatar" class="q-mt-sm" />
+              <q-btn flat color="dark" label="Change Avatar" class="q-mt-sm" />
             </div>
             <q-input v-model="firstName" label="First Name" outlined class="q-mb-md" />
             <q-input v-model="lastName" label="Last Name" outlined class="q-mb-md" />
@@ -43,7 +43,7 @@
                   <q-item-label caption>Uses dark theme</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle :model-value="darkMode" color="primary" @update:model-value="setDarkMode" />
+                  <q-toggle :model-value="darkMode" color="dark" @update:model-value="setDarkMode" />
                 </q-item-section>
               </q-item>
               <q-item>
@@ -52,7 +52,7 @@
                   <q-item-label caption>Receive email updates</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle v-model="emailNotifications" color="primary" />
+                  <q-toggle v-model="emailNotifications" color="dark" />
                 </q-item-section>
               </q-item>
               <q-item>
@@ -61,7 +61,7 @@
                   <q-item-label caption>Get reminded of deadlines</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle v-model="taskReminders" color="primary" />
+                  <q-toggle v-model="taskReminders" color="dark" />
                 </q-item-section>
               </q-item>
             </q-list>

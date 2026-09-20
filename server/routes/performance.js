@@ -137,10 +137,18 @@ async function calculatePerformance(pool, userId, rangeName) {
   // Utilization is logged hours divided by the employee's configured weekly capacity for this period.
   const utilization = percentage(hoursLogged, capacityHours);
   const completedEstimatedHours = tasks
-    .filter((task) => task.status === 'completed')
-    .reduce((sum, task) => sum + number(task.expected_effort), 0);
-  // Efficiency is completed estimated effort divided by actual logged effort.
-  const efficiency = hoursLogged ? Number(((completedEstimatedHours / hoursLogged) * 100).toFixed(1)) : null;
+  .filter((task) => task.status === 'completed')
+  .reduce(
+    (sum, task) => sum + number(task.expected_effort),
+    0,
+  );
+
+// Workload completion = completed estimated work / total assigned estimated work.
+const efficiency = estimatedHours
+  ? Number(
+      ((completedEstimatedHours / estimatedHours) * 100).toFixed(1),
+    )
+  : null;
   const completionRate = percentage(completedTasks, totalTasks);
   const onTimeRate = percentage(onTimeCompleted, completedTasks);
   // Productivity combines completion rate and on-time rate from assigned tasks.

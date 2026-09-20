@@ -144,7 +144,7 @@
           <q-item
             clickable
             v-ripple
-            class="bg-lime-5 collapse-btn nav-item q-py-sm text-blue-grey-4"
+            class="bg-lime-5 collapse-btn nav-item q-py-sm text-black"
             :class="sidebarCollapsed ? 'justify-center' : ''"
             @click="sidebarCollapsed = !sidebarCollapsed"
           >
@@ -439,6 +439,12 @@ const navigationLinks = computed(() => {
       icon: 'settings',
       link: '/employee/settings',
       subtitle: 'Manage your account preferences.',
+    },
+    {
+      label: 'Notifications',
+      icon: 'notifications',
+      link: '/employee/notifications',
+      subtitle: 'Stay updated with your tasks and reviews',
     },
   ];
 });

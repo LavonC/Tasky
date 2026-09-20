@@ -3,13 +3,10 @@
     <!-- Header -->
     <div class="row items-center justify-between q-mb-md">
       <div class="row items-center">
-        <q-avatar color="indigo-1" text-color="indigo" icon="notifications" size="48px" class="q-mr-md" style="border-radius:12px" />
-        <div class="column"><div class="text-h5 text-weight-bold">Notifications Center</div>
-        <div class="text-grey-7 text-caption">Stay updated with your tasks and reviews</div>
-      </div></div>
+     </div>
       <div class="row q-gutter-sm">
-        <q-btn color="secondary" label="Check Deadlines" @click="checkDeadlines" :loading="checkingDeadlines" />
-        <q-btn color="primary" label="Mark All Read" @click="markAllRead" />
+        <q-btn color="info" label="Check Deadlines" @click="checkDeadlines" :loading="checkingDeadlines" />
+        <q-btn color="indigo" label="Mark All Read" @click="markAllRead" />
       </div>
     </div>
 

@@ -7,15 +7,16 @@
     <div class="row items-center justify-end q-mb-lg">
       <div class="row items-center q-gutter-sm">
         <q-btn
-          color="secondary"
-          icon="auto_fix_high"
-          label="Automate"
-          class="q-px-md"
-          @click="automateFullSchedule"
-          :loading="automating"
-        >
-          <q-tooltip>Reorganize all tasks by priority with 3-day gaps</q-tooltip>
-        </q-btn>
+  color="secondary"
+  icon="auto_fix_high"
+  label="Automate"
+  class="q-px-md"
+  style="color: black !important;"
+  @click="automateFullSchedule"
+  :loading="automating"
+>
+  <q-tooltip>Reorganize all tasks by priority with 3-day gaps</q-tooltip>
+</q-btn>
         <q-btn
           flat
           icon="lightbulb"
@@ -2327,37 +2328,83 @@ watch(activeTab, (newTab) => {
 });
 
 // Fetch user points and rank
+// Fetch user points and rank
 const fetchUserPointsAndRank = async () => {
   if (!authStore.user?.id) return;
 
   try {
-    // Fetch user points
-    const userResponse = await fetch(`http://localhost:3001/api/users/${authStore.user?.id}`);
+    // Fetch current user's points
+    const userResponse = await fetch(
+      `http://localhost:3001/api/users/${authStore.user.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
+        },
+      },
+    );
+
     const userResult = await userResponse.json();
+
     if (userResult.success && userResult.user) {
       userPoints.value = userResult.user.points || 0;
     }
 
-    // Fetch all users to calculate rank
+    // Fetch all users
     const allUsersResponse = await fetch('http://localhost:3001/api/users', {
-      headers: { Authorization: `Bearer ${authStore.token}` }
+      headers: {
+        Authorization: `Bearer ${authStore.token}`,
+      },
     });
+
     const allUsersResult = await allUsersResponse.json();
+
     if (allUsersResult.success && allUsersResult.users) {
-      const sortedUsers = allUsersResult.users.sort(
+      // IMPORTANT:
+      // Use the same employee filtering as Employee Reviews leaderboard.
+      const employeeUsers = allUsersResult.users.filter(
+        (u: any) =>
+          u.access_level === 'employee' ||
+          u.role_name !== 'Project Manager',
+      );
+
+      // Same sorting logic as Employee Reviews leaderboard.
+      const sortedUsers = employeeUsers.sort(
         (a: any, b: any) => (b.points || 0) - (a.points || 0),
       );
+
       console.log(
-        'Sorted users:',
-        sortedUsers.map((u: any) => ({ id: u.id, points: u.points })),
+        'Employee leaderboard:',
+        sortedUsers.map((u: any, index: number) => ({
+          rank: index + 1,
+          id: u.id,
+          name: `${u.first_name} ${u.last_name}`,
+          points: u.points || 0,
+        })),
       );
-      const userRankIndex = sortedUsers.findIndex((u: any) => u.id === authStore.user?.id);
-      console.log('User ID:', authStore.user?.id, 'Rank index:', userRankIndex);
-      userRank.value = userRankIndex >= 0 ? userRankIndex + 1 : 1; // Default to rank 1 if not found
+
+      // IMPORTANT:
+      // Convert both IDs to Number so "123" and 123 match.
+      const currentUserId = Number(authStore.user.id);
+
+      const userRankIndex = sortedUsers.findIndex(
+        (u: any) => Number(u.id) === currentUserId,
+      );
+
+      console.log(
+        'Current user ID:',
+        currentUserId,
+        'Rank index:',
+        userRankIndex,
+        'Rank:',
+        userRankIndex >= 0 ? userRankIndex + 1 : 'Not found',
+      );
+
+      userRank.value =
+        userRankIndex >= 0 ? userRankIndex + 1 : 0;
     }
   } catch (error) {
     console.error('Error fetching user points and rank:', error);
-    userRank.value = 1; // Default to rank 1 on error
+    userRank.value = 0;
   }
 };
 
