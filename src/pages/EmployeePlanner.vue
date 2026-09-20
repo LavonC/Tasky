@@ -1623,11 +1623,14 @@ async function automateDeadline() {
 <style scoped>
 .planner-page {
   min-height: 100vh;
+  width: 100%;
   background: #ffffff;
+  color: #111827;
 }
 
 .calendar-container {
-  background: #ffffff;
+  width: 100%;
+  background: transparent;
 }
 .planner-header {
   max-width: 1440px;
@@ -1667,10 +1670,6 @@ async function automateDeadline() {
   border-radius: var(--radius-lg);
 }
 
-.calendar-toolbar {
-  min-height: 52px;
-  border-bottom: 1px solid #edf0f5;
-}
 
 .calendar-kicker,
 .section-kicker,
@@ -2137,9 +2136,9 @@ async function automateDeadline() {
 
 /* =========================================================
    DARK MODE — EMPLOYEE PLANNER
-   Explicitly override the light calendar palette. The
-   component contains many hard-coded light backgrounds,
-   so these rules intentionally use !important.
+   One consolidated dark-mode layer. Keep all light-mode
+   component styles above; these rules intentionally override
+   hard-coded light backgrounds in this component.
    ========================================================= */
 
 :global(body.body--dark) .planner-page {
@@ -2148,35 +2147,43 @@ async function automateDeadline() {
 }
 
 :global(body.body--dark) .calendar-container,
-:global(body.body--dark) .calendar-card {
+:global(body.body--dark) .calendar-card,
+:global(body.body--dark) .compact-info-card,
+:global(body.body--dark) .compact-task-card,
+:global(body.body--dark) .empty-card,
+:global(body.body--dark) .streak-card {
   background: #1d2930 !important;
   color: #edf2f7 !important;
   border-color: #34434c !important;
 }
 
 :global(body.body--dark) .calendar-toolbar,
-:global(body.body--dark) .calendar-week-header {
+:global(body.body--dark) .compact-stats {
   background: #1d2930 !important;
   color: #edf2f7 !important;
   border-color: #34434c !important;
 }
 
-:global(body.body--dark) .compact-stats {
-  background: #1d2930 !important;
+:global(body.body--dark) .calendar-month,
+:global(body.body--dark) .calendar-weekday,
+:global(body.body--dark) .calendar-day-number,
+:global(body.body--dark) .stat-value,
+:global(body.body--dark) .selected-date,
+:global(body.body--dark) .section-kicker,
+:global(body.body--dark) .section-title,
+:global(body.body--dark) .compact-task-name,
+:global(body.body--dark) .task-title {
   color: #edf2f7 !important;
 }
 
 :global(body.body--dark) .calendar-weekday,
-:global(body.body--dark) .calendar-month,
-:global(body.body--dark) .stat-value,
-:global(body.body--dark) .calendar-day-number,
-:global(body.body--dark) .selected-date,
-:global(body.body--dark) .section-kicker,
-:global(body.body--dark) .section-title {
-  color: #edf2f7 !important;
-}
-
-:global(body.body--dark) .calendar-weekday {
+:global(body.body--dark) .stat-label,
+:global(body.body--dark) .calendar-work-summary,
+:global(body.body--dark) .calendar-work-summary span,
+:global(body.body--dark) .progress-label,
+:global(body.body--dark) .field-label,
+:global(body.body--dark) .compact-empty,
+:global(body.body--dark) .legend-item {
   color: #b8c7d1 !important;
 }
 
@@ -2184,15 +2191,33 @@ async function automateDeadline() {
   color: #91a2ad !important;
 }
 
-:global(body.body--dark) .stat-label {
-  color: #b8c7d1 !important;
+/* Month stat icons */
+:global(body.body--dark) .worked-stat {
+  color: #69e59a !important;
+  background: #183d2a !important;
 }
 
+:global(body.body--dark) .activity-stat {
+  color: #c4b5fd !important;
+  background: #34305a !important;
+}
+
+:global(body.body--dark) .hours-stat {
+  color: #9fd2ff !important;
+  background: #1f3548 !important;
+}
+
+/* Calendar cells */
 :global(body.body--dark) .planner-page .calendar-cell {
   background: #26343c !important;
   background-color: #26343c !important;
   border-color: #465761 !important;
   color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .planner-page .calendar-cell:hover {
+  background: #2d3b43 !important;
+  border-color: #72848f !important;
 }
 
 :global(body.body--dark) .planner-page .calendar-cell.weekend-cell {
@@ -2205,33 +2230,33 @@ async function automateDeadline() {
   background-color: #20372f !important;
 }
 
-:global(body.body--dark) .planner-page .calendar-cell.leave-cell,
-:global(body.body--dark) .planner-page .calendar-cell.holiday-cell {
-  background: #30343b !important;
-  background-color: #30343b !important;
+:global(body.body--dark) .planner-page .calendar-cell.leave-cell {
+  background: #463719 !important;
+  background-color: #463719 !important;
 }
 
-:global(body.body--dark) .calendar-cell:hover {
-  border-color: #72848f !important;
+:global(body.body--dark) .planner-page .calendar-cell.holiday-cell {
+  background: #1f3548 !important;
+  background-color: #1f3548 !important;
 }
 
 :global(body.body--dark) .today-number {
-  color: #bdaeff !important;
+  color: #c4f64f !important;
 }
 
 :global(body.body--dark) .today-pill {
-  background: #34305a !important;
-  color: #d7d0ff !important;
-}
-
-:global(body.body--dark) .status-weekend {
-  color: #c1cbd1 !important;
-  background: #3a4248 !important;
+  background: #3b4422 !important;
+  color: #d8ff7a !important;
 }
 
 :global(body.body--dark) .status-worked {
   color: #69e59a !important;
   background: #183d2a !important;
+}
+
+:global(body.body--dark) .status-weekend {
+  color: #c1cbd1 !important;
+  background: #3a4248 !important;
 }
 
 :global(body.body--dark) .status-leave {
@@ -2244,11 +2269,35 @@ async function automateDeadline() {
   background: #1f3548 !important;
 }
 
-:global(body.body--dark) .calendar-work-summary,
-:global(body.body--dark) .calendar-work-summary span {
+/* Activity indicators */
+:global(body.body--dark) .activity-task-icon {
+  color: #d7d0ff !important;
+  background: #34305a !important;
+}
+
+:global(body.body--dark) .activity-dots span {
+  background: #9b8cff !important;
+}
+
+:global(body.body--dark) .compact-activity-row,
+:global(body.body--dark) .compact-subtasks {
+  border-color: #34434c !important;
+}
+
+:global(body.body--dark) .compact-activity-row .text-grey-5,
+:global(body.body--dark) .compact-activity-row .text-grey-6,
+:global(body.body--dark) .compact-activity-row .text-grey-7 {
   color: #b8c7d1 !important;
 }
 
+/* Warnings */
+:global(body.body--dark) .calendar-leave-impact,
+:global(body.body--dark) .calendar-missed-work {
+  background: #45222a !important;
+  border-color: #7f3b47 !important;
+}
+
+/* Day status selector */
 :global(body.body--dark) .compact-status-option,
 :global(body.body--dark) .date-chip {
   background: #26343c !important;
@@ -2256,86 +2305,70 @@ async function automateDeadline() {
   color: #edf2f7 !important;
 }
 
+:global(body.body--dark) .compact-status-option:hover,
+:global(body.body--dark) .date-chip:hover {
+  background: #2d3b43 !important;
+  border-color: #72848f !important;
+}
+
 :global(body.body--dark) .compact-status-active {
   background: #34305a !important;
   border-color: #9b8cff !important;
+  color: #d7d0ff !important;
+}
+
+:global(body.body--dark) .date-chip-active {
+  background: #6c63ff !important;
+  border-color: #6c63ff !important;
   color: #ffffff !important;
 }
 
-:global(body.body--dark) .compact-info-card,
-:global(body.body--dark) .compact-task-card,
-:global(body.body--dark) .empty-card {
+/* Reminder */
+:global(body.body--dark) .reminder-banner {
+  color: #ffd18a !important;
+  background: #463719 !important;
+  border-color: #7f6330 !important;
+}
+
+/* Dialog */
+:global(body.body--dark) .add-work-dialog,
+:global(body.body--dark) .q-dialog .q-card {
   background: #1d2930 !important;
+  color: #edf2f7 !important;
   border-color: #34434c !important;
+}
+
+:global(body.body--dark) .q-dialog .q-card-section,
+:global(body.body--dark) .q-dialog .q-card__section {
   color: #edf2f7 !important;
 }
 
-:global(body.body--dark) .compact-activity-row {
-  border-color: #34434c !important;
+/* Inputs / selects */
+:global(body.body--dark) .q-field--outlined .q-field__control,
+:global(body.body--dark) .q-field--filled .q-field__control {
+  background: #26343c !important;
 }
 
-:global(body.body--dark) .compact-activity-row .text-grey-5,
-:global(body.body--dark) .compact-activity-row .text-grey-6,
-:global(body.body--dark) .compact-activity-row .text-grey-7,
-:global(body.body--dark) .compact-empty,
-:global(body.body--dark) .progress-label,
-:global(body.body--dark) .field-label {
-  color: #b8c7d1 !important;
+:global(body.body--dark) .q-field--outlined .q-field__control:before,
+:global(body.body--dark) .q-field--outlined .q-field__control:after {
+  border-color: #465761 !important;
 }
 
-:global(body.body--dark) .planner-page,
-:global(body.body--dark) .calendar-container,
-:global(body.body--dark) .calendar-card,
-:global(body.body--dark) .compact-info-card,
-:global(body.body--dark) .streak-card,
-:global(body.body--dark) .compact-task-card,
-:global(body.body--dark) .empty-card {
-  background: #1d2930;
-  border-color: #34434c;
+:global(body.body--dark) .q-field__native,
+:global(body.body--dark) .q-field__input,
+:global(body.body--dark) .q-field__label,
+:global(body.body--dark) .q-field__marginal {
+  color: #edf2f7 !important;
+}
+
+:global(body.body--dark) .q-field__native::placeholder,
+:global(body.body--dark) .q-field__input::placeholder {
+  color: #91a2ad !important;
+}
+
+/* Generic buttons inside planner */
+:global(body.body--dark) .planner-page .q-btn:not(.bg-primary):not(.bg-positive):not(.bg-negative) {
   color: #edf2f7;
-}
-
-:global(body.body--dark) .calendar-toolbar,
-:global(body.body--dark) .calendar-week-header,
-:global(body.body--dark) .compact-activity-row {
-  border-color: #34434c;
-}
-
-:global(body.body--dark) .calendar-cell {
-  background: #26343c;
-  border-color: #465761;
-}
-
-:global(body.body--dark) .calendar-cell.weekend-cell {
-  background: #222f36;
-}
-
-:global(body.body--dark) .calendar-cell.worked-cell {
-  background: #20372f;
-}
-
-:global(body.body--dark) .calendar-cell.leave-cell,
-:global(body.body--dark) .calendar-cell.holiday-cell {
-  background: #30343b;
-}
-
-:global(body.body--dark) .calendar-leave-impact,
-:global(body.body--dark) .calendar-missed-work {
-  background: #45222a;
-  border-color: #7f3b47;
-}
-
-:global(body.body--dark) .compact-status-option,
-:global(body.body--dark) .date-chip {
-  background: #26343c;
-  border-color: #465761;
-  color: #b8c7d1;
-}
-
-:global(body.body--dark) .compact-status-active {
-  background: #34305a;
-  border-color: #9b8cff;
-  color: #d7d0ff;
 }
 
 @media (max-width: 850px) {

@@ -944,3 +944,19 @@ body.body--dark .planner-page .calendar-week-header {
 body.body--dark .planner-page .calendar-body {
   background: #1d2930 !important;
 }
+
+/* =========================================================
+   LOGIN — DARK MODE PRIMARY CONTROL TEXT
+   ========================================================= */
+
+body.body--dark .login-card .security-check-chip,
+body.body--dark .login-card .security-check-chip.text-white,
+body.body--dark .login-card .security-check-chip .q-chip__content {
+  color: #000000 !important;
+}
+
+body.body--dark .login-card .sign-in-btn,
+body.body--dark .login-card .sign-in-btn.text-white,
+body.body--dark .login-card .sign-in-btn .q-btn__content {
+  color: #000000 !important;
+}

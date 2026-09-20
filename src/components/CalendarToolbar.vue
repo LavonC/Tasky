@@ -1,48 +1,163 @@
 <template>
-  <div class="calendar-toolbar row items-center justify-between q-px-md">
-    <div>
-      <div class="calendar-month">{{ monthName }} {{ currentYear }}</div>
+  <div class="calendar-toolbar">
+    <!-- MONTH + YEAR -->
+    <div class="calendar-month">
+      {{ monthName }} {{ currentYear }}
     </div>
-    <div class="row items-center q-gutter-xs">
-      <q-btn flat round dense icon="chevron_left" @click="$emit('previous')" />
-      <q-btn outline dense no-caps color="primary" label="Today" @click="$emit('today')" />
-      <q-btn flat round dense icon="chevron_right" @click="$emit('next')" />
+
+    <!-- NAVIGATION -->
+    <div class="calendar-navigation">
+      <q-btn
+        flat
+        round
+        dense
+        icon="chevron_left"
+        aria-label="Previous month"
+        class="calendar-nav-btn"
+        @click="$emit('previous')"
+      />
+
+      <q-btn
+        outline
+        dense
+        no-caps
+        label="Today"
+        class="today-btn"
+        @click="$emit('today')"
+      />
+
+      <q-btn
+        flat
+        round
+        dense
+        icon="chevron_right"
+        aria-label="Next month"
+        class="calendar-nav-btn"
+        @click="$emit('next')"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 interface Props {
-  monthName: string;
-  currentYear: number;
+  monthName: string
+  currentYear: number
 }
 
-defineProps<Props>();
+defineProps<Props>()
 
-defineEmits(['previous', 'today', 'next']);
+defineEmits<{
+  previous: []
+  today: []
+  next: []
+}>()
 </script>
 
 <style scoped>
+/* =========================================================
+   CALENDAR TOOLBAR
+   ========================================================= */
+
 .calendar-toolbar {
-  background: #f8f9fa;
-  border-bottom: 1px solid #e0e0e0;
+  min-height: 74px;
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  /* IMPORTANT:
+     Do not use a white/light background here.
+     The parent calendar-card controls the background.
+  */
+  background: transparent !important;
+
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+
+  padding: 0 18px;
+  box-sizing: border-box;
+
+  color: inherit;
 }
 
-.calendar-kicker {
-  font-size: 11px;
-  font-weight: 600;
-  color: #666;
-  letter-spacing: 1px;
-}
+/* =========================================================
+   MONTH + YEAR
+   ========================================================= */
 
 .calendar-month {
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
+  font-size: 32px !important;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+.calendar-navigation {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.calendar-nav-btn {
+  color: inherit !important;
+}
+
+.calendar-nav-btn :deep(.q-icon) {
+  color: inherit !important;
+}
+
+/* =========================================================
+   TODAY BUTTON
+   ========================================================= */
+
+.today-btn {
+  color: inherit !important;
+  border-color: currentColor !important;
+}
+
+.today-btn :deep(.q-btn__content) {
+  color: inherit !important;
+}
+
+/* =========================================================
+   LIGHT MODE
+   ========================================================= */
+
+:global(body:not(.body--dark)) .calendar-toolbar {
+  background: #ffffff !important;
+  color: #1f2937 !important;
+  border-bottom-color: #e5e7eb;
+}
+
+:global(body:not(.body--dark)) .calendar-month {
+  color: #1f2937 !important;
+}
+
+:global(body:not(.body--dark)) .calendar-nav-btn {
+  color: #475569 !important;
+}
+
+:global(body:not(.body--dark)) .today-btn {
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* =========================================================
+   DARK MODE
+   ========================================================= */
+
+/*
+ * No hard-coded dark background here.
+ * The toolbar simply inherits the dark calendar-card.
+ */
+
 :global(body.body--dark) .calendar-toolbar {
-  background: #1d2930 !important;
+  background: transparent !important;
+  color: #edf2f7 !important;
   border-bottom-color: #34434c !important;
 }
 
@@ -50,17 +165,20 @@ defineEmits(['previous', 'today', 'next']);
   color: #edf2f7 !important;
 }
 
-:global(body.body--dark) .calendar-toolbar .q-btn {
+:global(body.body--dark) .calendar-nav-btn {
   color: #edf2f7 !important;
 }
 
-:global(body.body--dark) .calendar-toolbar .q-btn.q-btn--outline {
-  color: #c4f64f !important;
-  border-color: #c4f64f !important;
-}
-
-:global(body.body--dark) .calendar-toolbar .q-icon {
+:global(body.body--dark) .calendar-nav-btn :deep(.q-icon) {
   color: #edf2f7 !important;
 }
 
+:global(body.body--dark) .today-btn {
+  color: #edf2f7 !important;
+  border-color: #667781 !important;
+}
+
+:global(body.body--dark) .today-btn :deep(.q-btn__content) {
+  color: #edf2f7 !important;
+}
 </style>

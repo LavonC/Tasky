@@ -54,7 +54,11 @@
         <div class="q-mb-md">
           <div class="text-subtitle2 q-mb-sm">Security Check</div>
           <div class="row items-center q-gutter-sm">
-            <q-chip color="primary" text-color="white" class="text-subtitle1">
+            <q-chip
+  color="primary"
+  :text-color="$q.dark.isActive ? 'black' : 'white'"
+  class="text-subtitle1 security-check-chip"
+>
               {{ captchaQuestion }}
             </q-chip>
             <q-input
@@ -88,13 +92,14 @@
         </div>
 
         <q-btn
-          type="submit"
-          label="Sign In"
-          color="primary"
-          class="full-width"
-          :loading="loading"
-          :disable="isLocked"
-        />
+  type="submit"
+  label="Sign In"
+  color="primary"
+  :text-color="$q.dark.isActive ? 'black' : 'white'"
+  class="full-width sign-in-btn"
+  :loading="loading"
+  :disable="isLocked"
+/>
 
         <div class="text-center q-mt-md">
           <span class="text-grey-7">Don't have an account?</span>
@@ -441,6 +446,17 @@ onBeforeUnmount(() => {
 
 :global(body.body--dark) .login-card .q-banner {
   border: 1px solid #6b4d1f;
+}
+
+/* Dark mode: black text on the primary security-check and Sign In controls. */
+:global(body.body--dark) .login-card .security-check-chip,
+:global(body.body--dark) .login-card .security-check-chip .q-chip__content {
+  color: #000 !important;
+}
+
+:global(body.body--dark) .login-card .sign-in-btn,
+:global(body.body--dark) .login-card .sign-in-btn .q-btn__content {
+  color: #000 !important;
 }
 
 /* Auth navigation links */
