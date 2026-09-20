@@ -124,7 +124,7 @@ const searchQuery = ref('');
 const scale = ref<'hour' | 'day' | 'week' | 'month'>('week');
 const groupByProject = ref(true);
 const showExtraColumns = ref(false);
-const showDependencies = ref(true);
+const showDependencies = ref(false);
 
 const scaleOptions = [
   { label: 'Hour', value: 'hour' },
