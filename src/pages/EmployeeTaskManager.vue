@@ -1745,7 +1745,7 @@ const submitComment = async () => {
 
   try {
     const response = await fetch(
-      `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}/comment`,
+      `http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/comment`,
       {
         method: 'POST',
         headers: {
@@ -1790,7 +1790,7 @@ const colleagues = ref<{ id: number; name: string }[]>([]);
 // Fetch colleagues for review selection
 const fetchColleagues = async () => {
   try {
-    const response = await fetch('http://localhost:3007/api/users/employees', {
+    const response = await fetch('http://localhost:3001/api/users/employees', {
       headers: { Authorization: `Bearer ${authStore.token}` }
     });
     const result = await response.json();
@@ -1827,7 +1827,7 @@ const submitForReview = async () => {
   }
 
   try {
-    const response = await fetch(`http://localhost:3007/api/employee/tasks/${selectedTask.value.id}/submit-review`, {
+    const response = await fetch(`http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/submit-review`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1877,7 +1877,7 @@ const fetchTasks = async () => {
   }
 
   try {
-    const response = await fetch(`http://localhost:3007/api/tasks/employee/${authStore.user?.id}`);
+    const response = await fetch(`http://localhost:3001/api/tasks/employee/${authStore.user?.id}`);
     const result = await response.json();
 
     if (result.success && result.tasks) {
@@ -1889,7 +1889,7 @@ const fetchTasks = async () => {
         result.tasks.map(async (task: any) => {
           try {
             const subtaskResponse = await fetch(
-              `http://localhost:3007/api/employee/tasks/${task.id}/subtasks`,
+              `http://localhost:3001/api/employee/tasks/${task.id}/subtasks`,
             );
             const subtaskResult = await subtaskResponse.json();
             const subtasks = subtaskResult.success
@@ -2039,7 +2039,7 @@ async function setDeadline() {
       headers['Authorization'] = `Bearer ${authStore.token}`;
     }
 
-    const url = `http://localhost:3007/api/employee/tasks/${selectedOverdueTask.value.id}`;
+    const url = `http://localhost:3001/api/employee/tasks/${selectedOverdueTask.value.id}`;
     console.log('API URL:', url);
     console.log('Request body:', JSON.stringify({ deadline: newDeadline.value }));
 
@@ -2103,7 +2103,7 @@ async function automateOverdueTask() {
       headers['Authorization'] = `Bearer ${authStore.token}`;
     }
 
-    const response = await fetch(`http://localhost:3007/api/employee/${empId}/automate-schedule`, {
+    const response = await fetch(`http://localhost:3001/api/employee/${empId}/automate-schedule`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ mode: 'clashes' }),
@@ -2148,7 +2148,7 @@ const detectDeadlineClashes = async () => {
   if (!empId) return;
 
   try {
-    const response = await fetch(`http://localhost:3007/api/employee/${empId}/deadline-clashes`);
+    const response = await fetch(`http://localhost:3001/api/employee/${empId}/deadline-clashes`);
     const data = await response.json();
     if (data.success && data.conflicts && data.conflicts.length > 0) {
       detectedConflicts.value = data.conflicts;
@@ -2169,7 +2169,7 @@ const fetchLeaveDates = async () => {
   if (!empId) return;
 
   try {
-    const response = await fetch(`http://localhost:3007/api/daily-logs/employee/${empId}/leave-dates`, {
+    const response = await fetch(`http://localhost:3001/api/daily-logs/employee/${empId}/leave-dates`, {
       headers: { Authorization: `Bearer ${authStore.token}` }
     });
     const data = await response.json();
@@ -2211,7 +2211,7 @@ const resolveClashes = async () => {
 
   automating.value = true;
   try {
-    const response = await fetch(`http://localhost:3007/api/employee/${empId}/automate-schedule`, {
+    const response = await fetch(`http://localhost:3001/api/employee/${empId}/automate-schedule`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mode: 'clashes' }),
@@ -2252,7 +2252,7 @@ const automateFullSchedule = async () => {
 
   automating.value = true;
   try {
-    const response = await fetch(`http://localhost:3007/api/employee/${empId}/automate-schedule`, {
+    const response = await fetch(`http://localhost:3001/api/employee/${empId}/automate-schedule`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mode: 'full' }),
@@ -2300,7 +2300,7 @@ const projects = ref<any[]>([]);
 
 const fetchProjects = async () => {
   try {
-    const response = await fetch(`http://localhost:3007/api/employee/${authStore.user?.id}/projects`, {
+    const response = await fetch(`http://localhost:3001/api/employee/${authStore.user?.id}/projects`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
     const result = await response.json();
@@ -2332,14 +2332,14 @@ const fetchUserPointsAndRank = async () => {
 
   try {
     // Fetch user points
-    const userResponse = await fetch(`http://localhost:3007/api/users/${authStore.user?.id}`);
+    const userResponse = await fetch(`http://localhost:3001/api/users/${authStore.user?.id}`);
     const userResult = await userResponse.json();
     if (userResult.success && userResult.user) {
       userPoints.value = userResult.user.points || 0;
     }
 
     // Fetch all users to calculate rank
-    const allUsersResponse = await fetch('http://localhost:3007/api/users', {
+    const allUsersResponse = await fetch('http://localhost:3001/api/users', {
       headers: { Authorization: `Bearer ${authStore.token}` }
     });
     const allUsersResult = await allUsersResponse.json();
@@ -2444,7 +2444,7 @@ const updateTaskProgress = async (
 ) => {
   try {
     console.log('Updating task:', taskId, 'progress:', progress, 'status:', status);
-    const response = await fetch(`http://localhost:3007/api/employee/tasks/${taskId}`, {
+    const response = await fetch(`http://localhost:3001/api/employee/tasks/${taskId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -2956,7 +2956,7 @@ async function createTask() {
       depends_on_ids: newTask.value.depends_on_ids,
     };
 
-    const response = await fetch('http://localhost:3007/api/employee/tasks', {
+    const response = await fetch('http://localhost:3001/api/employee/tasks', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2974,7 +2974,7 @@ async function createTask() {
     const subtasks = newTask.value.subtasks.filter((subtask) => subtask.title.trim());
 
     for (const subtask of subtasks) {
-      await fetch(`http://localhost:3007/api/employee/tasks/${taskId}/subtasks`, {
+      await fetch(`http://localhost:3001/api/employee/tasks/${taskId}/subtasks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -3049,7 +3049,7 @@ async function saveEditedSubtasks() {
     // Delete subtasks that were removed
     const subtasksToDelete = originalSubtasks.filter((s) => !newSubtaskIds.includes(s.id));
     for (const subtask of subtasksToDelete) {
-      await fetch(`http://localhost:3007/api/employee/subtasks/${subtask.id}`, {
+      await fetch(`http://localhost:3001/api/employee/subtasks/${subtask.id}`, {
         method: 'DELETE',
       });
     }
@@ -3059,7 +3059,7 @@ async function saveEditedSubtasks() {
 
       if (originalSubtasks.find((s) => s.id === subtask.id)) {
         // Update existing subtask
-        await fetch(`http://localhost:3007/api/employee/subtasks/${subtask.id}`, {
+        await fetch(`http://localhost:3001/api/employee/subtasks/${subtask.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -3072,7 +3072,7 @@ async function saveEditedSubtasks() {
       } else {
         // Create new subtask
         const response = await fetch(
-          `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}/subtasks`,
+          `http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/subtasks`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -3145,7 +3145,7 @@ async function saveTaskUpdate() {
   // Save to database
   try {
     const promises = selectedTask.value.subtasks.map((subtask) =>
-      fetch(`http://localhost:3007/api/employee/subtasks/${subtask.id}`, {
+      fetch(`http://localhost:3001/api/employee/subtasks/${subtask.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -3380,7 +3380,7 @@ async function submitInterrupt() {
   if (!selectedTask.value || !interruptReason.value) return;
   try {
     const response = await fetch(
-      `http://localhost:3007/api/pm/tasks/${selectedTask.value.id}/interrupt`,
+      `http://localhost:3001/api/pm/tasks/${selectedTask.value.id}/interrupt`,
       {
         method: 'POST',
         headers: {

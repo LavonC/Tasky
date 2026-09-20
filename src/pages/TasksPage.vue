@@ -552,7 +552,7 @@ const assignReviewer = async () => {
   assigning.value = true;
   try {
     const response = await fetch(
-      `http://localhost:3007/api/employee/tasks/${selectedTaskForReview.value.id}/submit-review`,
+      `http://localhost:3001/api/employee/tasks/${selectedTaskForReview.value.id}/submit-review`,
       {
         method: 'POST',
         headers: {
@@ -593,7 +593,7 @@ const finalizeReview = async () => {
   finalizing.value = true;
   try {
     const response = await fetch(
-      `http://localhost:3007/api/pm/tasks/${selectedTaskForFinalize.value.id}/finalize-review`,
+      `http://localhost:3001/api/pm/tasks/${selectedTaskForFinalize.value.id}/finalize-review`,
       {
         method: 'POST',
         headers: {

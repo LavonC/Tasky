@@ -695,7 +695,7 @@ const fetchTasks = async () => {
   }
 
   try {
-    const response = await fetch(`http://localhost:3007/api/tasks/employee/${authStore.user?.id}`, {
+    const response = await fetch(`http://localhost:3001/api/tasks/employee/${authStore.user?.id}`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
     const result = await response.json();
@@ -705,7 +705,7 @@ const fetchTasks = async () => {
       const tasksWithSubtasks = await Promise.all(
         result.tasks.map(async (task: any) => {
           const subtaskResponse = await fetch(
-            `http://localhost:3007/api/employee/tasks/${task.id}/subtasks`,
+            `http://localhost:3001/api/employee/tasks/${task.id}/subtasks`,
             {
               headers: { Authorization: `Bearer ${authStore.token}` },
             },
@@ -770,7 +770,7 @@ const fetchWorkLogs = async () => {
 
   try {
     const response = await fetch(
-      `http://localhost:3007/api/employee/work-logs/${authStore.user?.id}`,
+      `http://localhost:3001/api/employee/work-logs/${authStore.user?.id}`,
       {
         headers: { Authorization: `Bearer ${authStore.token}` },
       },
@@ -826,7 +826,7 @@ const fetchLeaves = async () => {
 
   try {
     const response = await fetch(
-      `http://localhost:3007/api/leaves/employee/${authStore.user?.id}`,
+      `http://localhost:3001/api/leaves/employee/${authStore.user?.id}`,
       {
         headers: { Authorization: `Bearer ${authStore.token}` },
       },
@@ -857,7 +857,7 @@ const fetchDayComplianceStatuses = async () => {
     const lastDay = new Date(calendarYear.value, calendarMonth.value + 1, 0);
 
     const response = await fetch(
-      `http://localhost:3007/api/daily-logs/compliance/${authStore.user?.id}?start_date=${formatDate(firstDay)}&end_date=${formatDate(lastDay)}`,
+      `http://localhost:3001/api/daily-logs/compliance/${authStore.user?.id}?start_date=${formatDate(firstDay)}&end_date=${formatDate(lastDay)}`,
       {
         headers: { Authorization: `Bearer ${authStore.token}` },
       },
@@ -879,7 +879,7 @@ const fetchLeaveImpact = async () => {
 
   try {
     const response = await fetch(
-      `http://localhost:3007/api/leaves/employee/${authStore.user?.id}/impact`,
+      `http://localhost:3001/api/leaves/employee/${authStore.user?.id}/impact`,
       {
         headers: { Authorization: `Bearer ${authStore.token}` },
       },
@@ -926,7 +926,7 @@ const fetchDayStatuses = async () => {
 
       try {
         const response = await fetch(
-          `http://localhost:3007/api/daily-logs/${authStore.user?.id}/${dateString}`,
+          `http://localhost:3001/api/daily-logs/${authStore.user?.id}/${dateString}`,
           {
             headers: { Authorization: `Bearer ${authStore.token}` },
           },
@@ -989,7 +989,7 @@ async function submitWorkLog() {
 
   isSubmittingLog.value = true;
   try {
-    const response = await fetch('http://localhost:3007/api/employee/work-log', {
+    const response = await fetch('http://localhost:3001/api/employee/work-log', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1235,7 +1235,7 @@ async function fetchDayCompliance(date: string) {
   if (!authStore.user?.id) return;
   try {
     const response = await fetch(
-      `http://localhost:3007/api/daily-logs/${authStore.user?.id}/${date}`,
+      `http://localhost:3001/api/daily-logs/${authStore.user?.id}/${date}`,
       {
         headers: { Authorization: `Bearer ${authStore.token}` },
       },
@@ -1266,7 +1266,7 @@ async function submitDayToPM() {
   console.log('Selected Status:', selectedDayStatus.value);
 
   try {
-    const response = await fetch('http://localhost:3007/api/daily-logs/submit', {
+    const response = await fetch('http://localhost:3001/api/daily-logs/submit', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1560,7 +1560,7 @@ async function saveNewDeadline() {
   automatingDeadline.value = true;
   try {
     const response = await fetch(
-      `http://localhost:3007/api/employee/tasks/${selectedAffectedTask.value.id}`,
+      `http://localhost:3001/api/employee/tasks/${selectedAffectedTask.value.id}`,
       {
         method: 'PUT',
         headers: {
@@ -1593,7 +1593,7 @@ async function automateDeadline() {
   automatingDeadline.value = true;
   try {
     const response = await fetch(
-      `http://localhost:3007/api/leaves/employee/${authStore.user?.id}/tasks/${selectedAffectedTask.value.id}/automate-deadline`,
+      `http://localhost:3001/api/leaves/employee/${authStore.user?.id}/tasks/${selectedAffectedTask.value.id}/automate-deadline`,
       {
         method: 'POST',
         headers: {

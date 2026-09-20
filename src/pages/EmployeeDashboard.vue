@@ -1007,7 +1007,7 @@ async function detectDeadlineClashes() {
   if (!empId) return;
 
   try {
-    const response = await fetch(`http://localhost:3007/api/employee/${empId}/deadline-clashes`);
+    const response = await fetch(`http://localhost:3001/api/employee/${empId}/deadline-clashes`);
     const data = await response.json();
     if (data.success && data.conflicts && data.conflicts.length > 0) {
       detectedConflicts.value = data.conflicts;
@@ -1027,7 +1027,7 @@ async function resolveClashes() {
 
   automating.value = true;
   try {
-    const response = await fetch(`http://localhost:3007/api/employee/${empId}/automate-schedule`, {
+    const response = await fetch(`http://localhost:3001/api/employee/${empId}/automate-schedule`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mode: 'clashes' }),
@@ -1069,7 +1069,7 @@ async function automateFullSchedule() {
 
   automating.value = true;
   try {
-    const response = await fetch(`http://localhost:3007/api/employee/${empId}/automate-schedule`, {
+    const response = await fetch(`http://localhost:3001/api/employee/${empId}/automate-schedule`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mode: 'full' }),
@@ -1118,7 +1118,7 @@ async function fetchFromDatabase() {
   try {
     // Fetch tasks directly from database - authentication removed
     const tasksResponse = await fetch(
-      `http://localhost:3007/api/tasks/employee/${currentEmployee.value.id}`,
+      `http://localhost:3001/api/tasks/employee/${currentEmployee.value.id}`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -1131,7 +1131,7 @@ async function fetchFromDatabase() {
     }
 
     // Fetch projects for the employee
-    const projectsResponse = await fetch(`http://localhost:3007/api/employee/${currentEmployee.value.id}/projects`, {
+    const projectsResponse = await fetch(`http://localhost:3001/api/employee/${currentEmployee.value.id}/projects`, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authStore.token}`,
@@ -1143,7 +1143,7 @@ async function fetchFromDatabase() {
     }
 
     // Fetch employees directly from database
-    const employeesResponse = await fetch('http://localhost:3007/api/users', {
+    const employeesResponse = await fetch('http://localhost:3001/api/users', {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authStore.token}`,
@@ -1156,7 +1156,7 @@ async function fetchFromDatabase() {
 
     // Fetch work logs directly from database - authentication removed
     const logsResponse = await fetch(
-      `http://localhost:3007/api/employee/work-logs/${currentEmployee.value.id}`,
+      `http://localhost:3001/api/employee/work-logs/${currentEmployee.value.id}`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -1169,7 +1169,7 @@ async function fetchFromDatabase() {
     }
 
     // Fetch user points - authentication removed
-    const userResponse = await fetch(`http://localhost:3007/api/users/${currentEmployee.value.id}`, {
+    const userResponse = await fetch(`http://localhost:3001/api/users/${currentEmployee.value.id}`, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -1256,7 +1256,7 @@ async function updateTaskProgress() {
 
     // Authentication removed for testing - pass user_id
     const response = await fetch(
-      `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}`,
+      `http://localhost:3001/api/employee/tasks/${selectedTask.value.id}`,
       {
         method: 'PUT',
         headers: {
@@ -1294,7 +1294,7 @@ function formatDate(date: string) {
 
 async function createSelfAssignedTask() {
   try {
-    const response = await fetch('http://localhost:3007/api/employee/tasks', {
+    const response = await fetch('http://localhost:3001/api/employee/tasks', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1415,7 +1415,7 @@ async function submitForReview() {
 
     // Authentication removed for testing
     const response = await fetch(
-      `http://localhost:3007/api/employee/tasks/${selectedReviewTask.value.id}/submit-review`,
+      `http://localhost:3001/api/employee/tasks/${selectedReviewTask.value.id}/submit-review`,
       {
         method: 'POST',
         headers: {
@@ -1451,7 +1451,7 @@ async function approveReview() {
   try {
     // Authentication removed for testing
     const response = await fetch(
-      `http://localhost:3007/api/employee/reviews/${selectedReviewTask.value.id}/complete`,
+      `http://localhost:3001/api/employee/reviews/${selectedReviewTask.value.id}/complete`,
       {
         method: 'PUT',
         headers: {
@@ -1488,7 +1488,7 @@ async function requestChanges() {
   try {
     // Authentication removed for testing
     const response = await fetch(
-      `http://localhost:3007/api/employee/tasks/${selectedReviewTask.value.task_id}/request-changes`,
+      `http://localhost:3001/api/employee/tasks/${selectedReviewTask.value.task_id}/request-changes`,
       {
         method: 'POST',
         headers: {

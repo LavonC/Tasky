@@ -147,7 +147,7 @@ onMounted(async () => {
 
 async function fetchReviews() {
   try {
-    const response = await fetch('http://localhost:3007/api/pm/reviews/all');
+    const response = await fetch('http://localhost:3001/api/pm/reviews/all');
     const data = await response.json();
     if (data.success) {
       allReviews.value = data.reviews;
@@ -168,7 +168,7 @@ async function finalizeReview() {
   finalizing.value = true;
   try {
     const response = await fetch(
-      `http://localhost:3007/api/pm/reviews/${selectedReview.value.id}/finalize`,
+      `http://localhost:3001/api/pm/reviews/${selectedReview.value.id}/finalize`,
       {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

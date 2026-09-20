@@ -244,7 +244,7 @@ const pageEnd = computed(() => Math.min(currentPage.value * rowsPerPage.value, d
 // Fetch projects for selection
 const fetchProjects = async () => {
   try {
-    const response = await fetch('http://localhost:3007/api/projects', {
+    const response = await fetch('http://localhost:3001/api/projects', {
       headers: getAuthHeaders(),
     });
     const result = await readApiResponse<{ success: boolean; projects?: any[] }>(response);
@@ -272,7 +272,7 @@ const fetchDailyTasks = async () => {
 
   loading.value = true;
   try {
-    const response = await fetch(`http://localhost:3007/api/employee/daily-tracker/${authStore.user?.id}`);
+    const response = await fetch(`http://localhost:3001/api/employee/daily-tracker/${authStore.user?.id}`);
     const result = await response.json();
 
     console.log('Fetch result:', result);
@@ -432,7 +432,7 @@ async function saveTask() {
       console.log('📝 Updating existing task:', editingTask.value.id);
       // Update existing task
       const response = await fetch(
-        `http://localhost:3007/api/employee/daily-tracker/${editingTask.value.id}`,
+        `http://localhost:3001/api/employee/daily-tracker/${editingTask.value.id}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -455,7 +455,7 @@ async function saveTask() {
     } else {
       console.log('➕ Creating new task');
       // Add new task - create a daily work log entry
-      const response = await fetch('http://localhost:3007/api/employee/daily-tracker', {
+      const response = await fetch('http://localhost:3001/api/employee/daily-tracker', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -490,7 +490,7 @@ async function saveTask() {
 async function deleteTask(id: number) {
   loading.value = true;
   try {
-    const response = await fetch(`http://localhost:3007/api/employee/daily-tracker/${id}`, {
+    const response = await fetch(`http://localhost:3001/api/employee/daily-tracker/${id}`, {
       method: 'DELETE',
     });
 

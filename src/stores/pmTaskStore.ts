@@ -28,7 +28,7 @@ export const usePmTaskStore = defineStore('pmTask', {
       this.loading = true;
       try {
         const queryParams = new URLSearchParams(filters as any).toString();
-        const response = await fetch(`http://localhost:3007/api/pm/tasks?${queryParams}`, {
+        const response = await fetch(`http://localhost:3001/api/pm/tasks?${queryParams}`, {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -48,7 +48,7 @@ export const usePmTaskStore = defineStore('pmTask', {
     async fetchTaskById(id: string) {
       this.loading = true;
       try {
-        const response = await fetch(`http://localhost:3007/api/pm/tasks/${id}`, {
+        const response = await fetch(`http://localhost:3001/api/pm/tasks/${id}`, {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -66,7 +66,7 @@ export const usePmTaskStore = defineStore('pmTask', {
 
     async createTask(taskData: any) {
       try {
-        const response = await fetch('http://localhost:3007/api/pm/tasks', {
+        const response = await fetch('http://localhost:3001/api/pm/tasks', {
           method: 'POST',
           headers: this.getHeaders(),
           body: JSON.stringify(taskData),
@@ -84,7 +84,7 @@ export const usePmTaskStore = defineStore('pmTask', {
 
     async updateTask(id: string, updates: any) {
       try {
-        const response = await fetch(`http://localhost:3007/api/pm/tasks/${id}`, {
+        const response = await fetch(`http://localhost:3001/api/pm/tasks/${id}`, {
           method: 'PUT',
           headers: this.getHeaders(),
           body: JSON.stringify(updates),
@@ -108,7 +108,7 @@ export const usePmTaskStore = defineStore('pmTask', {
 
     async deleteTask(id: number | string) {
       try {
-        const response = await fetch(`http://localhost:3007/api/pm/tasks/${id}`, {
+        const response = await fetch(`http://localhost:3001/api/pm/tasks/${id}`, {
           method: 'DELETE',
           headers: this.getHeaders(),
         });
@@ -133,7 +133,7 @@ export const usePmTaskStore = defineStore('pmTask', {
 
     async adjustProgress(id: string, progress: number, notes?: string) {
       try {
-        const response = await fetch(`http://localhost:3007/api/pm/tasks/${id}/progress`, {
+        const response = await fetch(`http://localhost:3001/api/pm/tasks/${id}/progress`, {
           method: 'PUT',
           headers: this.getHeaders(),
           body: JSON.stringify({ progress, notes }),
@@ -154,7 +154,7 @@ export const usePmTaskStore = defineStore('pmTask', {
 
     async assignResource(taskId: string, userIds: string[]) {
       try {
-        const response = await fetch(`http://localhost:3007/api/pm/tasks/${taskId}/assign`, {
+        const response = await fetch(`http://localhost:3001/api/pm/tasks/${taskId}/assign`, {
           method: 'POST',
           headers: this.getHeaders(),
           body: JSON.stringify({ user_ids: userIds }),

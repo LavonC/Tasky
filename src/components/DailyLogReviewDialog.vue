@@ -97,7 +97,7 @@ const reviewComments = ref<Record<number, string>>({});
 const fetchPendingLogs = async () => {
   loading.value = true;
   try {
-    const response = await fetch('http://localhost:3007/api/daily-logs/pm/pending', {
+    const response = await fetch('http://localhost:3001/api/daily-logs/pm/pending', {
       headers: getAuthHeaders(),
     });
     const result = await readApiResponse<{ success: boolean; pending: any[] }>(response);
@@ -127,7 +127,7 @@ const submitReview = async (submission: any) => {
   if (!comment) return;
 
   try {
-    const response = await fetch('http://localhost:3007/api/daily-logs/review', {
+    const response = await fetch('http://localhost:3001/api/daily-logs/review', {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({

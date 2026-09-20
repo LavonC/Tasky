@@ -276,7 +276,7 @@ const openRebalanceSimulate = async () => {
   showRebalanceDialog.value = true;
   rebalanceError.value = null;
   try {
-    const response = await fetch('http://localhost:3007/api/pm/resources/rebalance/simulate', {
+    const response = await fetch('http://localhost:3001/api/pm/resources/rebalance/simulate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -299,7 +299,7 @@ const openRebalanceSimulate = async () => {
 const applyRebalance = async () => {
   rebalanceLoading.value = true;
   try {
-    const response = await fetch('http://localhost:3007/api/pm/resources/rebalance', {
+    const response = await fetch('http://localhost:3001/api/pm/resources/rebalance', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -380,7 +380,7 @@ const fetchEmployees = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const response = await fetch('http://localhost:3007/api/pm/resources', {
+    const response = await fetch('http://localhost:3001/api/pm/resources', {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authStore.token}`,

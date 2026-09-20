@@ -19,7 +19,7 @@ import performanceRoutes, { employeePerformanceRoutes } from './routes/performan
 import cron from 'node-cron';
 import { handleDelayDetection, checkTaskDependencies } from './services/schedulingEngine.js';
 const app = express();
-const port = 3007;
+const port = 3001;
 
 // Middleware
 app.use(cors({
@@ -2769,7 +2769,7 @@ cron.schedule('0 8 * * 1-5', async () => {
 cron.schedule('0 9 * * *', async () => {
   try {
     console.log('Checking for approaching deadlines...');
-    const response = await fetch('http://localhost:3007/api/notifications/check-deadlines', {
+    const response = await fetch('http://localhost:3001/api/notifications/check-deadlines', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });

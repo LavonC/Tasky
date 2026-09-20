@@ -270,7 +270,7 @@ watch([() => form.value.auto_assign, () => form.value.resources_needed], async (
   if (autoAssign) {
     const n = Number(numResources) || 1;
     try {
-      const response = await fetch('http://localhost:3007/api/pm/schedule/recommend-preview', {
+      const response = await fetch('http://localhost:3001/api/pm/schedule/recommend-preview', {
         method: 'POST',
         headers: taskStore.getHeaders(),
         body: JSON.stringify({

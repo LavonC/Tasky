@@ -62,7 +62,7 @@ async function confirmEvent() {
     if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
       headers['Authorization'] = `Bearer ${authStore.token}`;
     }
-    await fetch(`http://localhost:3007/api/pm/schedule/queue/${props.event.id}/confirm`, {
+    await fetch(`http://localhost:3001/api/pm/schedule/queue/${props.event.id}/confirm`, {
       method: 'POST',
       headers,
     });
@@ -83,7 +83,7 @@ async function rejectEvent() {
     if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
       headers['Authorization'] = `Bearer ${authStore.token}`;
     }
-    await fetch(`http://localhost:3007/api/pm/schedule/queue/${props.event.id}/reject`, {
+    await fetch(`http://localhost:3001/api/pm/schedule/queue/${props.event.id}/reject`, {
       method: 'POST',
       headers,
     });

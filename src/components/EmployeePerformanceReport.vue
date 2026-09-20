@@ -305,7 +305,7 @@ async function loadPerformanceData() {
   loading.value = true;
   try {
     const response = await fetch(
-      `http://localhost:3007/api/pm/employee-performance/${props.employee.id}`,
+      `http://localhost:3001/api/pm/employee-performance/${props.employee.id}`,
       { headers: getAuthHeaders() }
     );
     const data = await response.json();

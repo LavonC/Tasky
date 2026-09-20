@@ -26,7 +26,7 @@ export const useAnalyticsStore = defineStore('analytics', {
     async fetchOverview(period = 'this_month') {
       try {
         const response = await fetch(
-          `http://localhost:3007/api/pm/analytics/overview?period=${encodeURIComponent(period)}`,
+          `http://localhost:3001/api/pm/analytics/overview?period=${encodeURIComponent(period)}`,
           {
           headers: this.getHeaders(),
           },
@@ -41,7 +41,7 @@ export const useAnalyticsStore = defineStore('analytics', {
     async fetchProjectProgress(period = 'this_month') {
       try {
         const response = await fetch(
-          `http://localhost:3007/api/pm/analytics/project-progress?period=${encodeURIComponent(period)}`,
+          `http://localhost:3001/api/pm/analytics/project-progress?period=${encodeURIComponent(period)}`,
           {
             headers: this.getHeaders(),
           },
@@ -55,7 +55,7 @@ export const useAnalyticsStore = defineStore('analytics', {
 
     async fetchTaskDistribution() {
       try {
-        const response = await fetch('http://localhost:3007/api/pm/analytics/task-distribution', {
+        const response = await fetch('http://localhost:3001/api/pm/analytics/task-distribution', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -84,7 +84,7 @@ export const useAnalyticsStore = defineStore('analytics', {
 
     async fetchCompletionTrend() {
       try {
-        const response = await fetch('http://localhost:3007/api/pm/analytics/completion-trend', {
+        const response = await fetch('http://localhost:3001/api/pm/analytics/completion-trend', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -96,7 +96,7 @@ export const useAnalyticsStore = defineStore('analytics', {
 
     async fetchResourceWorkload() {
       try {
-        const response = await fetch('http://localhost:3007/api/pm/analytics/resource-workload', {
+        const response = await fetch('http://localhost:3001/api/pm/analytics/resource-workload', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -108,7 +108,7 @@ export const useAnalyticsStore = defineStore('analytics', {
 
     async fetchDeadlineRisks() {
       try {
-        const response = await fetch('http://localhost:3007/api/pm/analytics/deadline-risks', {
+        const response = await fetch('http://localhost:3001/api/pm/analytics/deadline-risks', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -120,7 +120,7 @@ export const useAnalyticsStore = defineStore('analytics', {
 
     async fetchProjectPerformance() {
       try {
-        const response = await fetch('http://localhost:3007/api/pm/analytics/project-performance', {
+        const response = await fetch('http://localhost:3001/api/pm/analytics/project-performance', {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -145,7 +145,7 @@ export const useAnalyticsStore = defineStore('analytics', {
     async fetchDailyLogCompliance() {
       try {
         const response = await fetch(
-          'http://localhost:3007/api/pm/analytics/daily-log-compliance',
+          'http://localhost:3001/api/pm/analytics/daily-log-compliance',
           {
             headers: this.getHeaders(),
           },

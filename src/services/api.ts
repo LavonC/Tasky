@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3007';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export function getAuthHeaders(): Record<string, string> {
   const token = sessionStorage.getItem('tasky_token');

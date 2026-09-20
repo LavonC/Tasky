@@ -397,7 +397,7 @@ async function fetchTasks() {
 
   try {
     const response = await fetch(
-      `http://localhost:3007/api/tasks/employee/${authStore.user.id}`,
+      `http://localhost:3001/api/tasks/employee/${authStore.user.id}`,
     );
     const data = await response.json();
     if (data.success) {
@@ -410,7 +410,7 @@ async function fetchTasks() {
 
 async function fetchProjects() {
   try {
-    const response = await fetch(`http://localhost:3007/api/employee/${authStore.user?.id}/projects`, {
+    const response = await fetch(`http://localhost:3001/api/employee/${authStore.user?.id}/projects`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
     const data = await response.json();
@@ -424,7 +424,7 @@ async function fetchProjects() {
 
 async function fetchEmployees() {
   try {
-    const response = await fetch('http://localhost:3007/api/users', {
+    const response = await fetch('http://localhost:3001/api/users', {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
     const data = await response.json();
@@ -448,7 +448,7 @@ async function fetchAssignedReviews() {
     if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
       headers['Authorization'] = `Bearer ${authStore.token}`;
     }
-    const response = await fetch('http://localhost:3007/api/employee/reviews/pending?user_id=' + authStore.user.id, {
+    const response = await fetch('http://localhost:3001/api/employee/reviews/pending?user_id=' + authStore.user.id, {
       headers,
     });
     const data = await response.json();
@@ -469,7 +469,7 @@ async function fetchReviewHistory() {
       headers['Authorization'] = `Bearer ${authStore.token}`;
     }
     const response = await fetch(
-      `http://localhost:3007/api/employee/reviews/history?user_id=${authStore.user.id}`,
+      `http://localhost:3001/api/employee/reviews/history?user_id=${authStore.user.id}`,
       { headers }
     );
     const data = await response.json();
@@ -486,7 +486,7 @@ async function fetchReviewHistory() {
 
 async function fetchLeaderboard() {
   try {
-    const response = await fetch('http://localhost:3007/api/users', {
+    const response = await fetch('http://localhost:3001/api/users', {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
     const data = await response.json();

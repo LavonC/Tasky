@@ -148,7 +148,7 @@ async function resign() {
   if (!authStore.user?.id) return;
   resigning.value = true;
   try {
-    const response = await fetch('http://localhost:3007/api/employee/resign', {
+    const response = await fetch('http://localhost:3001/api/employee/resign', {
       method: 'POST',
       headers: { Authorization: `Bearer ${authStore.token}` },
     });

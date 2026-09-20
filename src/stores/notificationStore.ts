@@ -24,7 +24,7 @@ export const useNotificationStore = defineStore('notification', {
       try {
         const auth = useAuthStore();
         const userId = auth.user?.id;
-        const response = await fetch(`http://localhost:3007/api/employee/notifications?user_id=${userId}`, {
+        const response = await fetch(`http://localhost:3001/api/employee/notifications?user_id=${userId}`, {
           headers: this.getHeaders(),
         });
         const data = await response.json();
@@ -40,7 +40,7 @@ export const useNotificationStore = defineStore('notification', {
 
     async checkDeadlines() {
       try {
-        const response = await fetch('http://localhost:3007/api/notifications/check-deadlines', {
+        const response = await fetch('http://localhost:3001/api/notifications/check-deadlines', {
           method: 'POST',
           headers: this.getHeaders(),
         });
@@ -59,7 +59,7 @@ export const useNotificationStore = defineStore('notification', {
       try {
         const auth = useAuthStore();
         const userId = auth.user?.id;
-        const response = await fetch(`http://localhost:3007/api/employee/notifications/${id}/read`, {
+        const response = await fetch(`http://localhost:3001/api/employee/notifications/${id}/read`, {
           method: 'PUT',
           headers: { ...this.getHeaders(), 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: userId }),
@@ -77,7 +77,7 @@ export const useNotificationStore = defineStore('notification', {
       try {
         const auth = useAuthStore();
         const userId = auth.user?.id;
-        const response = await fetch('http://localhost:3007/api/employee/notifications/read-all', {
+        const response = await fetch('http://localhost:3001/api/employee/notifications/read-all', {
           method: 'PUT',
           headers: { ...this.getHeaders(), 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: userId }),
@@ -94,7 +94,7 @@ export const useNotificationStore = defineStore('notification', {
       try {
         const auth = useAuthStore();
         const userId = auth.user?.id;
-        const response = await fetch(`http://localhost:3007/api/employee/notifications/${id}`, {
+        const response = await fetch(`http://localhost:3001/api/employee/notifications/${id}`, {
           method: 'DELETE',
           headers: { ...this.getHeaders(), 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: userId }),

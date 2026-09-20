@@ -148,7 +148,7 @@ const submitComment = async () => {
     const taskId = props.prefilledTask ? props.prefilledTask.id : selectedTaskId.value;
     const employeeId = props.prefilledEmployee ? props.prefilledEmployee.id : selectedEmployeeId.value;
 
-    const response = await fetch('http://localhost:3007/api/pm/tasks/comment', {
+    const response = await fetch('http://localhost:3001/api/pm/tasks/comment', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
