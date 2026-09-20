@@ -1,5 +1,5 @@
 <template>
-  <q-page class="q-pa-md">
+  <q-page class="q-pa-md" style="background:#f8f9fa">
     <div class="row items-center justify-between q-mb-md">
       <div class="text-h4 text-weight-bold"></div>
       <q-btn color="primary" icon="add" label="Add Daily Task" @click="showAddDialog = true" />

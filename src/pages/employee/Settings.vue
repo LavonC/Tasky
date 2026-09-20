@@ -3,10 +3,7 @@
     <!-- Header -->
     <div class="row items-center justify-between q-mb-md">
       <div class="row items-center">
-        <q-avatar color="indigo-1" text-color="indigo" icon="settings" size="48px" class="q-mr-md" style="border-radius:12px" />
-        <div class="column"><div class="text-h5 text-weight-bold">Settings</div>
-        <div class="text-grey-7 text-caption">Manage your account preferences</div>
-      </div></div>
+        </div>
     </div>
 
     <div class="row q-col-gutter-md">

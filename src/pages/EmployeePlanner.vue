@@ -1,5 +1,5 @@
 <template>
-  <q-page class="planner-page q-pa-md">
+  <q-page class="planner-page q-pa-md" style="background:#f8f9fa">
     <!-- =========================================================
          HEADER
     ========================================================= -->

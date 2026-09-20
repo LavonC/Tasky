@@ -1,5 +1,5 @@
 <template>
-  <q-page class="app-page q-pa-lg">
+  <q-page class="app-page q-pa-lg" style="background:#f8f9fa">
     <!-- ========================================================= -->
     <!-- PAGE HEADER -->
     <!-- ========================================================= -->

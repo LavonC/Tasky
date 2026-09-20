@@ -434,6 +434,12 @@ const navigationLinks = computed(() => {
       link: '/employee/reviews',
       subtitle: 'View and submit your performance reviews.',
     },
+    {
+      label: 'Settings',
+      icon: 'settings',
+      link: '/employee/settings',
+      subtitle: 'Manage your account preferences.',
+    },
   ];
 });
 
