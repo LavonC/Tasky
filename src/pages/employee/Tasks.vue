@@ -290,7 +290,9 @@
                   />
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label class="text-weight-bold">{{ task.title }}</q-item-label>
+                  <q-item-label class="text-weight-bold">
+                    Task: {{ task.title }}
+                  </q-item-label>
                   <q-item-label caption class="text-grey-7">
                     Project: {{ task.project_name || getProjectName(task.project_id) }}
                   </q-item-label>

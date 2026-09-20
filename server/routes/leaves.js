@@ -125,9 +125,8 @@ export default function leavesRoutes(pool) {
       const affectedTasks = [];
 
       for (const task of tasks) {
+        if (!task.deadline) continue;
         const taskDeadline = new Date(task.deadline);
-
-        // Extract date string (YYYY-MM-DD) for comparison
         const taskDeadlineDate = taskDeadline.toISOString().split('T')[0];
 
         for (const leave of allLeaves) {
@@ -146,9 +145,9 @@ export default function leavesRoutes(pool) {
             affectedTasks.push({
               ...task,
               deadline_on_leave: true,
-              leave_start: leave.start_date,
-              leave_end: leave.end_date,
-              leave_type: leave.leave_type || 'manual'
+              leave_start: leaveStartDate,
+              leave_end: leaveEndDate,
+              leave_type: leave.leave_type || leave.type || 'manual'
             });
             break; // Only add once per task
           }
@@ -309,6 +308,32 @@ export default function leavesRoutes(pool) {
         `UPDATE task SET deadline = ? WHERE id = ?`,
         [finalDateStr, taskId]
       );
+
+      // Create notification for PM
+      const [taskInfo] = await pool.execute(
+        `SELECT t.title, p.created_by as pm_id, u.first_name, u.last_name
+         FROM task t
+         JOIN project p ON t.project_id = p.id
+         JOIN user u ON u.id = ?
+         WHERE t.id = ?`,
+        [userId, taskId]
+      );
+
+      if (taskInfo.length > 0) {
+        const { title, pm_id, first_name, last_name } = taskInfo[0];
+        const employeeName = `${first_name} ${last_name}`;
+        
+        await pool.execute(
+          `INSERT INTO notification (user_id, type, title, message, reference_type, reference_id, is_read, created_at)
+           VALUES (?, 'general', ?, ?, 'task', ?, 0, NOW())`,
+          [
+            pm_id,
+            `Task Deadline Automated`,
+            `Employee ${employeeName} has automated the deadline for task "${title}" to ${finalDateStr} due to a leave conflict.`,
+            taskId
+          ]
+        );
+      }
 
       res.json({
         success: true,

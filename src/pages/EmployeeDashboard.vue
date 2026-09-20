@@ -859,9 +859,9 @@
                   />
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label class="text-weight-bold">{{ task.title }}</q-item-label>
+                  <q-item-label class="text-weight-bold">Task: {{ task.title }}</q-item-label>
                   <q-item-label caption class="text-grey-7">
-                    Project: {{ task.project_name || getProjectById(task.project_id)?.name || 'Project' }}
+                    Project: {{ task.project_name || getProjectById(task.project_id)?.name || 'Unknown Project' }}
                   </q-item-label>
                 </q-item-section>
                 <q-item-section side>

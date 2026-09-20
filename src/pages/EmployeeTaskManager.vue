@@ -1509,9 +1509,9 @@
                   />
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label class="text-weight-bold">{{ task.name }}</q-item-label>
+                  <q-item-label class="text-weight-bold">Task: {{ task.title }}</q-item-label>
                   <q-item-label caption class="text-grey-7">
-                    Project: {{ task.project || 'Project' }}
+                    Project: {{ task.project_name || 'Unknown Project' }}
                   </q-item-label>
                 </q-item-section>
                 <q-item-section side>
@@ -1562,8 +1562,8 @@
                 <q-badge :color="getPriorityBadgeColor(task.priority)" :label="task.priority" />
               </q-item-section>
               <q-item-section>
-                <q-item-label class="text-weight-bold">{{ task.name }}</q-item-label>
-                <q-item-label caption>{{ task.project || 'Project' }}</q-item-label>
+                <q-item-label class="text-weight-bold">Task: {{ task.name }}</q-item-label>
+                <q-item-label caption>Project: {{ task.project || 'Unknown Project' }}</q-item-label>
                 <q-item-label caption class="text-red">{{ formatDate(task.deadline) }}</q-item-label>
               </q-item-section>
               <q-item-section side>

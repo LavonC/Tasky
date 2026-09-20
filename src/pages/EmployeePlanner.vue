@@ -124,7 +124,7 @@
               <!-- LEAVE IMPACT INDICATOR -->
 
               <div
-                v-if="isDayAffectedByLeave(day.date)"
+                v-if="hasLeaveImpact(day.date)"
                 class="calendar-leave-impact cursor-pointer"
                 @click.stop="openLeaveImpactDialog(day.date)"
               >
@@ -1063,6 +1063,23 @@ function isDayAffectedByLeave(dateString: string): boolean {
   return false;
 }
 
+function hasLeaveImpact(dateString: string): boolean {
+  if (!dateString || !isDayAffectedByLeave(dateString)) return false;
+
+  const checkDate = new Date(dateString);
+  
+  for (const task of affectedTasks.value) {
+    const taskDeadline = new Date(task.deadline);
+    if (taskDeadline.toDateString() === checkDate.toDateString()) {
+      if (task.status !== 'completed' && task.status !== 'Completed' && Number(task.progress) < 100) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 function isDayMissedWork(dateString: string): boolean {
   if (!dateString) return false;
 
@@ -1104,7 +1121,12 @@ function isTaskAffectedByLeave(log: any, dateString: string): boolean {
     if (task.id === log.task_id || task.title === log.taskTitle) {
       const taskDeadline = new Date(task.deadline);
       const checkDate = new Date(dateString);
-      return taskDeadline.toDateString() === checkDate.toDateString();
+      
+      if (taskDeadline.toDateString() === checkDate.toDateString()) {
+        if (task.status !== 'completed' && task.status !== 'Completed' && Number(task.progress) < 100) {
+          return true;
+        }
+      }
     }
   }
 
@@ -1387,6 +1409,8 @@ function formatDate(date: Date): string {
 ============================================================ */
 
 function parseDate(value: string): Date {
+  if (!value) return new Date();
+  if (value.includes('T')) return new Date(value);
   const [year, month, day] = value.split('-').map(Number);
 
   if (year === undefined || month === undefined || day === undefined) {
@@ -1545,6 +1569,7 @@ async function saveNewDeadline() {
         },
         body: JSON.stringify({
           deadline: newDeadline.value,
+          is_leave_conflict: true,
         }),
       },
     );
