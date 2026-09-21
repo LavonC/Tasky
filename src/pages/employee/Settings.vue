@@ -16,7 +16,7 @@
           <q-card-section>
             <div class="column items-center q-mb-md">
               <q-avatar size="100px">
-                <img :src="authStore.user?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
+                <img :src="avatar || authStore.user?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
               </q-avatar>
               <q-input
                 v-model="avatar"

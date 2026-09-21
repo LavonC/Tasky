@@ -7,25 +7,14 @@
     <div class="row items-center justify-end q-mb-lg">
       <div class="row items-center q-gutter-sm">
         <q-btn
-  color="secondary"
-  icon="auto_fix_high"
-  label="Automate"
-  class="q-px-md"
-  style="color: black !important;"
-  @click="automateFullSchedule"
-  :loading="automating"
->
-  <q-tooltip>Reorganize all tasks by priority with 3-day gaps</q-tooltip>
-</q-btn>
-        <q-btn
-          flat
-          icon="lightbulb"
-          color="blue-10"
-          @click="showInsightsDialog = true"
-          label="Insights"
+          color="secondary"
+          icon="auto_fix_high"
+          label="Automate"
           class="q-px-md"
+          @click="automateFullSchedule"
+          :loading="automating"
         >
-          <q-tooltip>View employee insights</q-tooltip>
+          <q-tooltip>Reorganize all tasks by priority with 3-day gaps</q-tooltip>
         </q-btn>
         <div class="points-badge">
           <q-icon name="monetization_on" size="20px" color="#FFD700" />
@@ -313,6 +302,14 @@
                     <q-item-section> Manage Progress </q-item-section>
                   </q-item>
 
+                  <q-item clickable v-close-popup @click="openEditDeadline(props.row)">
+                    <q-item-section avatar>
+                      <q-icon name="event" color="orange" />
+                    </q-item-section>
+
+                    <q-item-section> Edit Deadline </q-item-section>
+                  </q-item>
+
                   <q-separator />
 
                   <!-- DELETE -->
@@ -362,6 +359,10 @@
 
                     <q-item clickable v-close-popup @click="openManage(task)">
                       <q-item-section> Manage Progress </q-item-section>
+                    </q-item>
+
+                    <q-item clickable v-close-popup @click="openEditDeadline(task)">
+                      <q-item-section> Edit Deadline </q-item-section>
                     </q-item>
                   </q-list>
                 </q-menu>
@@ -1432,52 +1433,6 @@
     </q-dialog>
 
     <!-- ========================================================= -->
-    <!-- INSIGHTS DIALOG -->
-    <!-- ========================================================= -->
-
-    <q-dialog v-model="showInsightsDialog">
-      <q-card style="min-width: 500px; max-width: 600px">
-        <q-card-section>
-          <div class="text-h6 text-weight-bold">
-            <q-icon name="lightbulb" class="q-mr-sm" color="primary" />
-            Employee Insights
-          </div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <div class="row q-col-gutter-md q-mb-md" v-if="taskInsightStats.total">
-            <div class="col-5">
-              <div class="employee-insight-donut" :style="employeeInsightDonutStyle"><div>{{ taskInsightStats.total }}</div></div>
-            </div>
-            <div class="col-7">
-              <div v-for="item in taskInsightStats.breakdown" :key="item.label" class="row justify-between text-caption q-mb-sm">
-                <span><q-icon name="circle" :color="item.color" size="9px" class="q-mr-xs" />{{ item.label }}</span><strong>{{ item.count }}</strong>
-              </div>
-            </div>
-          </div>
-          <q-list separator v-if="insights.length > 0">
-            <q-item v-for="(insight, index) in insights" :key="index">
-              <q-item-section avatar>
-                <q-icon name="info" color="primary" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>{{ insight }}</q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
-          <div v-else class="text-center q-pa-xl text-grey-6">
-            <q-icon name="lightbulb" size="48px" class="q-mb-sm text-grey-4" />
-            <div class="text-h6">No insights available</div>
-            <div class="text-caption">Complete more tasks to see insights</div>
-          </div>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Close" v-close-popup />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
     <!-- Task Clash Detected Dialog -->
     <q-dialog v-model="showClashDialog" persistent>
       <q-card style="min-width: 600px; max-width: 750px" class="rounded-borders">
@@ -1536,6 +1491,43 @@
             label="Automate"
             @click="resolveClashes"
             :loading="automating"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Edit Deadline Dialog -->
+    <q-dialog v-model="showEditDeadlineDialog">
+      <q-card style="min-width: 400px">
+        <q-card-section>
+          <div class="text-h6 text-weight-bold">Edit Task Deadline</div>
+          <div class="text-body2 text-grey-6 q-mt-xs">
+            {{ selectedTask?.name }}
+          </div>
+        </q-card-section>
+        <q-separator />
+        <q-card-section>
+          <div class="text-caption q-mb-md">
+            Select a new deadline. The scheduling system will check for conflicts and notify your PM if changes are made.
+          </div>
+          <q-input
+            v-model="editDeadlineValue"
+            type="date"
+            outlined
+            label="New Deadline *"
+            :min="getMinDate()"
+          />
+        </q-card-section>
+        <q-card-actions align="right" class="q-pa-md">
+          <q-btn flat no-caps label="Cancel" @click="showEditDeadlineDialog = false" />
+          <q-btn
+            unelevated
+            no-caps
+            color="primary"
+            label="Update Deadline"
+            @click="submitDeadlineEdit"
+            :disable="!editDeadlineValue"
+            :loading="updatingEditDeadline"
           />
         </q-card-actions>
       </q-card>
@@ -1723,8 +1715,6 @@ const showAddDialog = ref(false);
 const showEditDialog = ref(false);
 
 const showManageDrawer = ref(false);
-
-const showInsightsDialog = ref(false);
 
 const userPoints = ref(0);
 const userRank = ref(0);
@@ -2407,80 +2397,6 @@ const fetchUserPointsAndRank = async () => {
     userRank.value = 0;
   }
 };
-
-// Employee Insights
-const insights = computed(() => {
-  const insightsList: string[] = [];
-  const total = tasks.value.length;
-  const completed = tasks.value.filter((t) => t.status === 'completed').length;
-  const inProgress = tasks.value.filter((t) => t.status === 'in-progress').length;
-  const notStarted = tasks.value.filter((t) => t.status === 'not-started').length;
-  const blocked = tasks.value.filter((t) => t.status === 'blocked').length;
-
-  const avgProgress =
-    total > 0 ? Math.round(tasks.value.reduce((sum, t) => sum + taskProgress(t), 0) / total) : 0;
-
-  if (total === 0) {
-    insightsList.push('No tasks assigned yet. Check with your Project Manager.');
-  } else {
-    if (inProgress > 0) {
-      insightsList.push(`${inProgress} tasks are currently in progress.`);
-    }
-
-    if (completed > 0) {
-      insightsList.push(`${completed} tasks completed. Great work!`);
-    }
-
-    if (notStarted > 0) {
-      insightsList.push(`${notStarted} tasks haven't been started yet.`);
-    }
-
-    if (blocked > 0) {
-      insightsList.push(`${blocked} tasks are blocked. Consider resolving dependencies.`);
-    }
-
-    if (avgProgress < 50 && total > 0) {
-      insightsList.push('Average progress is below 50%. Focus on completing tasks.');
-    }
-
-    const overdue = tasks.value.filter((t) => isOverdue(t)).length;
-    if (overdue > 0) {
-      insightsList.push(`${overdue} tasks are overdue. Prioritize these!`);
-    }
-
-    const highPriority = tasks.value.filter(
-      (t) => t.priority === 'high' && t.status !== 'completed',
-    ).length;
-    if (highPriority > 0) {
-      insightsList.push(`${highPriority} high-priority tasks need attention.`);
-    }
-  }
-
-  return insightsList;
-});
-
-const taskInsightStats = computed(() => {
-  const breakdown = [
-    { label: 'Completed', count: tasks.value.filter((task) => task.status === 'completed').length, color: 'positive' },
-    { label: 'In progress', count: tasks.value.filter((task) => task.status === 'in-progress').length, color: 'primary' },
-    { label: 'Blocked', count: tasks.value.filter((task) => task.status === 'blocked').length, color: 'negative' },
-    { label: 'Not started', count: tasks.value.filter((task) => task.status === 'not-started').length, color: 'grey-6' },
-  ];
-  return { total: tasks.value.length, breakdown };
-});
-
-const employeeInsightDonutStyle = computed(() => {
-  const total = Math.max(taskInsightStats.value.total, 1);
-  let start = 0;
-  const colors = ['#21ba45', '#1976d2', '#c10015', '#9e9e9e'];
-  const stops = taskInsightStats.value.breakdown.map((item, index) => {
-    const end = start + (item.count / total) * 360;
-    const stop = `${colors[index]} ${start}deg ${end}deg`;
-    start = end;
-    return stop;
-  });
-  return { background: `conic-gradient(${stops.join(', ')})` };
-});
 
 // Update task progress/status to backend
 const updateTaskProgress = async (
@@ -3423,6 +3339,10 @@ function isOverdue(task: Task) {
 const showInterruptDialog = ref(false);
 const interruptReason = ref('');
 
+const showEditDeadlineDialog = ref(false);
+const editDeadlineValue = ref('');
+const updatingEditDeadline = ref(false);
+
 async function submitInterrupt() {
   if (!selectedTask.value || !interruptReason.value) return;
   try {
@@ -3450,6 +3370,59 @@ async function submitInterrupt() {
   } catch (error) {
     console.error('Interrupt task error:', error);
     $q.notify({ color: 'negative', message: 'Server error' });
+  }
+}
+
+function openEditDeadline(task: Task) {
+  selectedTask.value = task;
+  editDeadlineValue.value = task.deadline ? task.deadline.split('T')[0] : '';
+  showEditDeadlineDialog.value = true;
+}
+
+function getMinDate() {
+  const today = new Date();
+  return today.toISOString().split('T')[0];
+}
+
+async function submitDeadlineEdit() {
+  if (!selectedTask.value || !editDeadlineValue.value) return;
+  
+  updatingEditDeadline.value = true;
+  try {
+    const response = await fetch(
+      `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}/deadline`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authStore.token}`,
+        },
+        body: JSON.stringify({ deadline: editDeadlineValue.value }),
+      },
+    );
+
+    const result = await response.json();
+    
+    if (result.success) {
+      $q.notify({
+        color: 'positive',
+        message: 'Deadline updated successfully',
+        icon: 'check_circle',
+      });
+      showEditDeadlineDialog.value = false;
+      await fetchTasks(); // Refresh tasks
+    } else {
+      $q.notify({
+        color: 'negative',
+        message: result.error || 'Failed to update deadline',
+        icon: 'error',
+      });
+    }
+  } catch (error) {
+    console.error('Update deadline error:', error);
+    $q.notify({ color: 'negative', message: 'Server error' });
+  } finally {
+    updatingEditDeadline.value = false;
   }
 }
 </script>

@@ -108,28 +108,6 @@
       </q-card-section>
     </q-card>
 
-    <!-- Employee Insights -->
-    <q-card v-if="insights.length > 0" class="q-mt-md bg-blue-1" flat bordered>
-      <q-card-section>
-        <div class="text-h6 text-weight-bold text-blue-9">
-          <q-icon name="lightbulb" class="q-mr-sm" />
-          Employee Insights
-        </div>
-      </q-card-section>
-      <q-card-section class="q-pt-none">
-        <q-list separator>
-          <q-item v-for="(insight, index) in insights" :key="index">
-            <q-item-section avatar>
-              <q-icon name="info" color="blue" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>{{ insight }}</q-item-label>
-            </q-item-section>
-          </q-item>
-        </q-list>
-      </q-card-section>
-    </q-card>
-
     <!-- Add/Edit Dialog -->
     <q-dialog v-model="showAddDialog">
       <q-card style="min-width: 500px; max-width: 700px">
@@ -334,53 +312,7 @@ const projectSummary = computed(() => {
   }));
 });
 
-const insights = computed(() => {
-  const insightsList: string[] = [];
-  const { totalTasks, completedTasks, inProgressTasks, averageProgress, remainingTasks } =
-    summary.value;
 
-  if (inProgressTasks > 0) {
-    insightsList.push(`${inProgressTasks} tasks are currently in progress.`);
-  }
-
-  if (averageProgress < 50 && totalTasks > 0) {
-    insightsList.push('Average progress is below 50%. Consider focusing on completing tasks.');
-  }
-
-  if (completedTasks === 0 && totalTasks > 0) {
-    insightsList.push('No tasks completed yet. Start by finishing at least one task.');
-  }
-
-  if (totalTasks > 5) {
-    insightsList.push(
-      `You have ${totalTasks} tasks. Consider prioritizing the most important ones.`,
-    );
-  }
-
-  const notStarted = dailyTasks.value.filter((t) => t.status === 'not-started').length;
-  if (notStarted > 0) {
-    insightsList.push(`${notStarted} tasks haven't been started yet.`);
-  }
-
-  if (remainingTasks > 0) {
-    insightsList.push(`${remainingTasks} tasks remain to be completed.`);
-  }
-
-  const onHold = dailyTasks.value.filter((t) => t.status === 'on-hold').length;
-  if (onHold > 0) {
-    insightsList.push(`${onHold} tasks are on hold. Review and update their status.`);
-  }
-
-  // Project-specific insights
-  if (projectSummary.value.length > 0) {
-    const slowProjects = projectSummary.value.filter((p) => p.avgProgress < 50);
-    if (slowProjects.length > 0) {
-      insightsList.push(`${slowProjects.length} project(s) have average progress below 50%.`);
-    }
-  }
-
-  return insightsList;
-});
 
 function getStatusColor(status: string) {
   const colors: Record<string, string> = {

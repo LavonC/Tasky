@@ -752,6 +752,39 @@ app.post('/api/auth/reset-password', async (req, res) => {
   }
 });
 
+// Avatar upload endpoint
+app.post('/api/user/avatar', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Handle JSON request with base64 data
+    let avatarUrl = req.body.avatar_data;
+    
+    if (!avatarUrl) {
+      return res.status(400).json({ success: false, error: 'Avatar data is required' });
+    }
+
+    const connection = await pool.getConnection();
+    try {
+      await connection.execute(
+        'UPDATE user SET avatar = ? WHERE id = ?',
+        [avatarUrl, userId]
+      );
+
+      res.json({ 
+        success: true, 
+        avatar: avatarUrl,
+        message: 'Avatar updated successfully'
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Avatar upload error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
 // Update user profile endpoint
 app.put('/api/users/:id', authenticateToken, async (req, res) => {
   try {
@@ -1970,6 +2003,85 @@ app.post('/api/pm/tasks/reassign', async (req, res) => {
     }
   } catch (error) {
     console.error('Reassign task error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// PUT /api/employee/tasks/:id/deadline - Update task deadline (employee request)
+app.put('/api/employee/tasks/:id/deadline', authenticateToken, async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const { deadline } = req.body;
+    const userId = req.user.id;
+
+    if (!deadline) {
+      return res.status(400).json({ success: false, error: 'Deadline is required' });
+    }
+
+    const connection = await pool.getConnection();
+    try {
+      // Get current task details
+      const [taskRows] = await connection.execute(
+        'SELECT * FROM task WHERE id = ?',
+        [taskId]
+      );
+      
+      if (taskRows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Task not found' });
+      }
+
+      const task = taskRows[0];
+      const oldDeadline = task.deadline;
+
+      // Update the deadline
+      await connection.execute(
+        'UPDATE task SET deadline = ? WHERE id = ?',
+        [deadline, taskId]
+      );
+
+      // Create notification for PM about deadline change
+      // Get org_id from project
+      const [projectRows] = await connection.execute(
+        'SELECT org_id FROM project WHERE id = ?',
+        [task.project_id]
+      );
+      
+      const orgId = projectRows.length > 0 ? projectRows[0].org_id : 1;
+      
+      // Get employee name for notification
+      const [employeeRows] = await connection.execute(
+        'SELECT first_name, last_name FROM user WHERE id = ?',
+        [userId]
+      );
+      
+      const employeeName = employeeRows.length > 0 
+        ? `${employeeRows[0].first_name} ${employeeRows[0].last_name}` 
+        : 'Employee';
+      
+      const [pmRows] = await connection.execute(
+        'SELECT id FROM user WHERE application_role = ? AND org_id = ?',
+        ['project_manager', orgId]
+      );
+
+      for (const pm of pmRows) {
+        await connection.execute(
+          `INSERT INTO notification (user_id, type, title, message, reference_id, reference_type, created_at) 
+           VALUES (?, 'deadline_change', 'Task Deadline Changed', ?, ?, 'task', NOW())`,
+          [pm.id, `${employeeName} changed deadline for task "${task.title}" from ${oldDeadline} to ${deadline}`, taskId]
+        );
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Deadline updated successfully and PM notified',
+        oldDeadline,
+        newDeadline: deadline
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Update deadline error:', error);
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });

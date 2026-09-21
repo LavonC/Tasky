@@ -91,8 +91,6 @@
 
               'leave-cell': day.status === 'leave',
 
-              'holiday-cell': day.status === 'holiday',
-
               'today-cell': day.isToday,
 
               'selected-cell': selectedDate === day.date,
@@ -508,7 +506,7 @@ import { useAuthStore } from '@/stores/authStore';
    TYPES
 ============================================================ */
 
-type DayStatus = 'worked' | 'leave' | 'holiday' | 'weekend' | 'no-entry';
+type DayStatus = 'worked' | 'leave' | 'weekend' | 'no-entry';
 
 type TaskStatus = 'Pending' | 'In Progress' | 'Completed' | 'Blocked';
 
@@ -1474,9 +1472,6 @@ function statusLabel(status: DayStatus): string {
     case 'leave':
       return 'Leave';
 
-    case 'holiday':
-      return 'Holiday';
-
     case 'weekend':
       return 'Weekend';
 
@@ -1492,9 +1487,6 @@ function statusIcon(status: DayStatus): string {
 
     case 'leave':
       return 'event_busy';
-
-    case 'holiday':
-      return 'celebration';
 
     case 'weekend':
       return 'weekend';
@@ -1761,10 +1753,6 @@ async function automateDeadline() {
   background: #f59e0b;
 }
 
-.holiday-dot {
-  background: #3b82f6;
-}
-
 .weekend-label {
   padding: 2px 5px;
   border-radius: 3px;
@@ -1841,10 +1829,6 @@ async function automateDeadline() {
   background: #fffaf0;
 }
 
-.holiday-cell {
-  background: #f7f8ff;
-}
-
 .today-cell {
   border: 2px solid #7c3aed;
 }
@@ -1891,11 +1875,6 @@ async function automateDeadline() {
 .status-leave {
   color: #f59e0b;
   background: #fffbeb;
-}
-
-.status-holiday {
-  color: #3b82f6;
-  background: #eff6ff;
 }
 
 .calendar-work-summary {

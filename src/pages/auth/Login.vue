@@ -18,7 +18,7 @@
 <div class="row items-center q-gutter-sm q-mb-md">
   <!-- ID Prefix -->
   <q-input
-    :model-value="form.role === 'Project Manager' ? 'PM' : 'EMP'"
+    :model-value="form.role === 'Project Manager' ? 'PM-' : 'EMP-'"
     outlined
     readonly
     dense
@@ -277,7 +277,7 @@ const handleLogin = async () => {
 try {
   // Create the full ID based on the selected role
   const prefix = form.role === 'Project Manager' ? 'PM' : 'EMP';
-  const identifier = `${prefix}${form.id}`;
+  const identifier = `${prefix}-${form.id}`;
 
   // Call backend API directly
   const response = await fetch('http://localhost:3001/api/auth/login', {

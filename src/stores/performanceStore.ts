@@ -16,7 +16,7 @@ export const usePerformanceStore = defineStore('performance', () => {
   async function loadAll(requestedRange?: PerformanceRange) {
     const authStore = useAuthStore();
     const selectedRange = requestedRange || range.value;
-    if (!authStore.currentUser || authStore.currentUser.role !== 'employee') {
+    if (!authStore.user || authStore.user.role !== 'employee') {
       error.value = 'An authenticated employee session is required.';
       summary.value = null;
       return null;
