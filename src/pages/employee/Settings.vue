@@ -19,9 +19,23 @@
           <q-card-section>
             <div class="column items-center q-mb-md">
               <q-avatar size="100px">
-                <img :src="authStore.user?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
+                <img :src="avatarPreview || authStore.user?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
               </q-avatar>
-              <q-btn flat color="primary" label="Change Avatar" class="q-mt-sm" />
+              <input 
+                type="file" 
+                ref="avatarInput" 
+                accept="image/*" 
+                style="display: none" 
+                @change="handleAvatarChange"
+              />
+              <q-btn flat color="primary" label="Change Avatar" class="q-mt-sm" @click="triggerAvatarUpload" />
+              <q-btn 
+                v-if="avatarPreview" 
+                flat color="negative" 
+                label="Cancel" 
+                class="q-mt-sm" 
+                @click="cancelAvatarChange" 
+              />
             </div>
             <q-input v-model="firstName" label="First Name" outlined class="q-mb-md" />
             <q-input v-model="lastName" label="Last Name" outlined class="q-mb-md" />
@@ -105,6 +119,9 @@ const phone = ref('');
 const darkMode = ref(false);
 const emailNotifications = ref(true);
 const taskReminders = ref(true);
+const avatarInput = ref<HTMLInputElement | null>(null);
+const avatarPreview = ref('');
+const avatarFile = ref<File | null>(null);
 
 onMounted(() => {
   darkMode.value = localStorage.getItem('tasky_dark_mode') === 'true';
@@ -131,6 +148,103 @@ function saveProfile() {
     email: email.value,
     phone: phone.value,
   });
+  
+  // If there's a new avatar, upload it
+  if (avatarFile.value) {
+    uploadAvatar();
+  }
+}
+
+function triggerAvatarUpload() {
+  avatarInput.value?.click();
+}
+
+function handleAvatarChange(event: Event) {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (file) {
+    avatarFile.value = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      avatarPreview.value = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function cancelAvatarChange() {
+  avatarPreview.value = '';
+  avatarFile.value = null;
+  if (avatarInput.value) {
+    avatarInput.value.value = '';
+  }
+}
+
+async function uploadAvatar() {
+  if (!avatarFile.value || !authStore.user?.id) return;
+  
+  try {
+    // Convert file to base64
+    const reader = new FileReader();
+    reader.readAsDataURL(avatarFile.value);
+    
+    reader.onload = async () => {
+      const base64Data = reader.result as string;
+      
+      const response = await fetch('http://localhost:3007/api/user/avatar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authStore.token}`,
+        },
+        body: JSON.stringify({
+          avatar_data: base64Data,
+          user_id: authStore.user.id.toString()
+        }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        $q.notify({
+          color: 'positive',
+          message: 'Avatar updated successfully',
+          icon: 'check_circle',
+        });
+        
+        // Update local user avatar
+        if (authStore.user) {
+          authStore.user.avatar = result.avatar;
+          sessionStorage.setItem('tasky_user', JSON.stringify(authStore.user));
+        }
+        
+        // Clear preview
+        avatarPreview.value = '';
+        avatarFile.value = null;
+      } else {
+        $q.notify({
+          color: 'negative',
+          message: result.error || 'Failed to upload avatar',
+          icon: 'error',
+        });
+      }
+    };
+    
+    reader.onerror = () => {
+      $q.notify({
+        color: 'negative',
+        message: 'Error reading file',
+        icon: 'error',
+      });
+    };
+  } catch (error) {
+    console.error('Avatar upload error:', error);
+    $q.notify({
+      color: 'negative',
+      message: 'Error uploading avatar',
+      icon: 'error',
+    });
+  }
 }
 
 function logout() {
