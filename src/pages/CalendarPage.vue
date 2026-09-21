@@ -140,7 +140,7 @@ const hierarchyOptions = [
 const prioritySummary = computed(() => [
   { key: 'critical', label: 'Critical', color: 'red', icon: 'priority_high', count: pmTaskStore.tasks.filter((t: any) => t.priority === 'critical').length },
   { key: 'high', label: 'High', color: 'orange', icon: 'flag', count: pmTaskStore.tasks.filter((t: any) => t.priority === 'high').length },
-  { key: 'medium', label: 'Medium', color: 'yellow', icon: 'remove', count: pmTaskStore.tasks.filter((t: any) => t.priority === 'medium').length },
+  { key: 'medium', label: 'Medium', color: 'amber', icon: 'remove', count: pmTaskStore.tasks.filter((t: any) => t.priority === 'medium').length },
   { key: 'low', label: 'Low', color: 'green', icon: 'arrow_downward', count: pmTaskStore.tasks.filter((t: any) => t.priority === 'low').length },
 ]);
 
