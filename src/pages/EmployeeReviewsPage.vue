@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md" style="background:#f8f9fa">
-    <div class="text-h5 text-weight-bold q-mb-md"></div>
+    <div class="text-h5 text-weight-bold q-mb-md full-width"></div>
 
     <q-tabs
       v-model="activeTab"
@@ -8,7 +8,7 @@
       class="text-grey-7 q-mb-md"
       active-color="primary"
       indicator-color="primary"
-      align="left"
+      align="justify"
     >
       <q-tab name="completed" label="Completed Tasks" />
       <q-tab name="assigned" label="Assigned Reviews" />

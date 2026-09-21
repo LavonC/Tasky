@@ -753,9 +753,12 @@ app.post('/api/auth/reset-password', async (req, res) => {
 });
 
 // Update user profile endpoint
-app.put('/api/users/:id', async (req, res) => {
+app.put('/api/users/:id', authenticateToken, async (req, res) => {
   try {
     const userId = req.params.id;
+    if (String(req.user.id) !== String(userId)) {
+      return res.status(403).json({ success: false, error: 'You can only update your own profile' });
+    }
     const { firstName, surname, email, phone, avatar } = req.body;
 
     const connection = await pool.getConnection();
@@ -793,6 +796,48 @@ app.put('/api/users/:id', async (req, res) => {
     }
   } catch (error) {
     console.error('Update user error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// Change the authenticated user's password
+app.put('/api/users/:id/password', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (String(req.user.id) !== String(userId)) {
+      return res.status(403).json({ success: false, error: 'You can only change your own password' });
+    }
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, error: 'Current and new passwords are required' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, error: 'New password must be at least 8 characters' });
+    }
+
+    const connection = await pool.getConnection();
+    try {
+      const [users] = await connection.execute('SELECT password_hash FROM user WHERE id = ?', [userId]);
+      if (users.length === 0) {
+        return res.status(404).json({ success: false, error: 'User not found' });
+      }
+
+      const passwordMatches =
+        (await bcrypt.compare(currentPassword, users[0].password_hash)) ||
+        currentPassword === users[0].password_hash;
+      if (!passwordMatches) {
+        return res.status(401).json({ success: false, error: 'Current password is incorrect' });
+      }
+
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+      await connection.execute('UPDATE user SET password_hash = ? WHERE id = ?', [passwordHash, userId]);
+      return res.json({ success: true, message: 'Password changed successfully' });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Change password error:', error);
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });

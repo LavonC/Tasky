@@ -34,14 +34,14 @@
     </div>
     <!-- Graphs Section -->
     <section class="graphs-section">
-      <div class="row items-center justify-between" style="flex: 0 0 auto">
+      <div class="row items-center full-width" style="flex: 0 0 auto">
         <q-tabs
           v-model="graphsTab"
           dense
-          class="text-grey-7 command-center-tabs"
+          class="text-grey-7 command-center-tabs col"
           active-color="primary"
           indicator-color="primary"
-          align="left"
+          align="justify"
         >
           <q-tab name="performance" label="Performance" icon="trending_up" />
           <q-tab name="resources" label="Resources" icon="groups" />
@@ -99,16 +99,16 @@
   class="bottom-section"
 >
   <div
-    class="row items-center justify-between"
+    class="row items-center full-width"
     style="flex: 0 0 auto"
   >
   <q-tabs
     v-model="activeTab"
     dense
-    class="text-grey-7 command-center-tabs"
+    class="text-grey-7 command-center-tabs col"
     active-color="primary"
     indicator-color="primary"
-    align="left"
+    align="justify"
   >
     <q-tab name="overview" label="Overview" icon="dashboard" />
     <q-tab name="insights" label="Insights" icon="insights" />

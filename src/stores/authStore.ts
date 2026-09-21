@@ -223,6 +223,7 @@ export const useAuthStore = defineStore('auth', () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...(token.value ? { Authorization: `Bearer ${token.value}` } : {}),
         },
         body: JSON.stringify(profileData),
       });
@@ -238,6 +239,30 @@ export const useAuthStore = defineStore('auth', () => {
       return { success: false, error: data.error || 'Failed to update profile' };
     } catch (error) {
       console.error('Update profile error:', error);
+      return { success: false, error: 'Server error. Please try again.' };
+    }
+  };
+
+  const changePassword = async (userId: string, currentPassword: string, newPassword: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/${userId}/password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token.value ? { Authorization: `Bearer ${token.value}` } : {}),
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        return { success: true, message: data.message };
+      }
+
+      return { success: false, error: data.error || 'Failed to change password' };
+    } catch (error) {
+      console.error('Change password error:', error);
       return { success: false, error: 'Server error. Please try again.' };
     }
   };
@@ -263,6 +288,7 @@ export const useAuthStore = defineStore('auth', () => {
     resetPassword,
     logout,
     updateProfile,
+    changePassword,
     validateInviteCode,
   };
 });

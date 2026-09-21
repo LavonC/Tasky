@@ -18,13 +18,38 @@
               <q-avatar size="100px">
                 <img :src="authStore.user?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
               </q-avatar>
-              <q-btn flat color="dark" label="Change Avatar" class="q-mt-sm" />
+              <q-input
+                v-model="avatar"
+                label="Avatar URL"
+                outlined
+                dense
+                class="q-mt-md full-width"
+                hint="Use a publicly accessible image URL"
+              />
             </div>
             <q-input v-model="firstName" label="First Name" outlined class="q-mb-md" />
             <q-input v-model="lastName" label="Last Name" outlined class="q-mb-md" />
             <q-input v-model="email" label="Email" outlined class="q-mb-md" />
             <q-input v-model="phone" label="Phone" outlined class="q-mb-md" />
             <q-btn color="primary" label="Save Changes" @click="saveProfile" class="full-width" />
+          </q-card-section>
+        </q-card>
+
+        <q-card flat bordered class="settings-card q-mt-md">
+          <q-card-section>
+            <div class="text-h6 text-weight-bold">Change Password</div>
+          </q-card-section>
+          <q-card-section>
+            <q-input v-model="currentPassword" label="Current Password" type="password" outlined class="q-mb-md" />
+            <q-input v-model="newPassword" label="New Password" type="password" outlined class="q-mb-md" />
+            <q-input v-model="confirmPassword" label="Confirm New Password" type="password" outlined class="q-mb-md" />
+            <q-btn
+              color="primary"
+              label="Update Password"
+              class="full-width"
+              :loading="changingPassword"
+              @click="changePassword"
+            />
           </q-card-section>
         </q-card>
       </div>
@@ -119,10 +144,15 @@ const firstName = ref('');
 const lastName = ref('');
 const email = ref('');
 const phone = ref('');
+const avatar = ref('');
+const currentPassword = ref('');
+const newPassword = ref('');
+const confirmPassword = ref('');
 const darkMode = ref(false);
 const emailNotifications = ref(true);
 const taskReminders = ref(true);
 const resigning = ref(false);
+const changingPassword = ref(false);
 
 onMounted(() => {
   darkMode.value = localStorage.getItem('tasky_dark_mode') === 'true';
@@ -132,6 +162,7 @@ onMounted(() => {
     lastName.value = authStore.user.surname || '';
     email.value = authStore.user.email || '';
     phone.value = authStore.user.phone || '';
+    avatar.value = authStore.user.avatar || '';
   }
 });
 
@@ -183,7 +214,7 @@ async function saveProfile() {
     surname: lastName.value.trim(),
     email: email.value.trim(),
     phone: phone.value.trim(),
-    ...(authStore.user.avatar !== undefined ? { avatar: authStore.user.avatar } : {}),
+    avatar: avatar.value.trim(),
   };
 
   const result = await authStore.updateProfile(authStore.user.id, profileData);
@@ -200,6 +231,35 @@ async function saveProfile() {
       message: result.error || 'Failed to update profile',
       position: 'top',
     });
+  }
+}
+
+async function changePassword() {
+  if (!authStore.user?.id) return;
+  if (!currentPassword.value || !newPassword.value) {
+    $q.notify({ type: 'negative', message: 'Enter your current and new passwords', position: 'top' });
+    return;
+  }
+  if (newPassword.value.length < 8) {
+    $q.notify({ type: 'negative', message: 'New password must be at least 8 characters', position: 'top' });
+    return;
+  }
+  if (newPassword.value !== confirmPassword.value) {
+    $q.notify({ type: 'negative', message: 'New passwords do not match', position: 'top' });
+    return;
+  }
+
+  changingPassword.value = true;
+  const result = await authStore.changePassword(authStore.user.id, currentPassword.value, newPassword.value);
+  changingPassword.value = false;
+
+  if (result.success) {
+    currentPassword.value = '';
+    newPassword.value = '';
+    confirmPassword.value = '';
+    $q.notify({ type: 'positive', message: 'Password changed successfully', position: 'top' });
+  } else {
+    $q.notify({ type: 'negative', message: result.error || 'Failed to change password', position: 'top' });
   }
 }
 
