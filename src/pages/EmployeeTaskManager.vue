@@ -3390,7 +3390,7 @@ async function submitDeadlineEdit() {
   updatingEditDeadline.value = true;
   try {
     const response = await fetch(
-      `http://localhost:3007/api/employee/tasks/${selectedTask.value.id}/deadline`,
+      `http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/deadline`,
       {
         method: 'PUT',
         headers: {

@@ -137,7 +137,7 @@ CREATE TABLE `notification` (
   `type`           ENUM('task_assigned','task_status_changed','deadline_approaching',
                         'deadline_missed','risk_alert','comment_added','ai_suggestion',
                         'delay_reason_required','daily_log_reminder','daily_log_warning',
-                        'leave_approved','leave_rejected','general') NOT NULL DEFAULT 'general',
+                        'leave_approved','leave_rejected','deadline_change','general') NOT NULL DEFAULT 'general',
   `title`          VARCHAR(255) NOT NULL,
   `message`        TEXT         NOT NULL,
   `reference_type` ENUM('task','project','user','leave_request') DEFAULT NULL,

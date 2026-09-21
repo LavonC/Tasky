@@ -118,6 +118,20 @@ pool
     }
 
     try {
+      await connection.query(`
+        ALTER TABLE notification MODIFY COLUMN type ENUM(
+          'task_assigned','task_status_changed','deadline_approaching',
+          'deadline_missed','risk_alert','comment_added','ai_suggestion',
+          'delay_reason_required','daily_log_reminder','daily_log_warning',
+          'leave_approved','leave_rejected','deadline_change','general'
+        ) NOT NULL DEFAULT 'general';
+      `);
+      console.log('Updated notification type enum');
+    } catch (e) {
+      console.error('Failed to update notification type enum:', e.message);
+    }
+
+    try {
       await connection.query(
         'ALTER TABLE subtask ADD COLUMN estimated_hours DECIMAL(5,2) NOT NULL DEFAULT 0 AFTER progress;'
       );
