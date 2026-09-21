@@ -27,7 +27,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
-// Allow an employee to leave the organization without deleting historical work.
+// Allow an employee to leave the organization by deleting their account.
 app.post('/api/employee/resign', authenticateToken, async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -36,16 +36,31 @@ app.post('/api/employee/resign', authenticateToken, async (req, res) => {
     const connection = await pool.getConnection();
     try {
       const [users] = await connection.execute(
-        `SELECT u.id, r.access_level FROM user u JOIN role r ON r.id = u.role_id WHERE u.id = ? AND u.is_active = 1`,
+        `SELECT u.id, u.org_id, r.access_level FROM user u JOIN role r ON r.id = u.role_id WHERE u.id = ?`,
         [userId],
       );
-      if (users.length === 0) return res.status(404).json({ success: false, error: 'Active employee not found' });
+      if (users.length === 0) return res.status(404).json({ success: false, error: 'Employee not found' });
       if (users[0].access_level !== 'employee') {
         return res.status(403).json({ success: false, error: 'Only employees can resign' });
       }
 
       await connection.beginTransaction();
-      await connection.execute('UPDATE user SET is_active = 0 WHERE id = ?', [userId]);
+      
+      // Reassign entities created by this user to a PM in the same org to avoid foreign key constraints
+      const [pms] = await connection.execute(
+        `SELECT id FROM user WHERE org_id = ? AND application_role = 'project_manager' LIMIT 1`,
+        [users[0].org_id]
+      );
+      if (pms.length > 0) {
+        const pmId = pms[0].id;
+        await connection.execute(`UPDATE project SET created_by = ? WHERE created_by = ?`, [pmId, userId]);
+        await connection.execute(`UPDATE project_member SET added_by = ? WHERE added_by = ?`, [pmId, userId]);
+        await connection.execute(`UPDATE workspace_invite SET invited_by = ? WHERE invited_by = ?`, [pmId, userId]);
+        await connection.execute(`UPDATE task SET created_by = ? WHERE created_by = ?`, [pmId, userId]);
+        await connection.execute(`UPDATE task_assignment SET assigned_by = ? WHERE assigned_by = ?`, [pmId, userId]);
+      }
+
+      await connection.execute('DELETE FROM user WHERE id = ?', [userId]);
       await connection.commit();
       res.json({ success: true });
     } catch (error) {
@@ -55,8 +70,8 @@ app.post('/api/employee/resign', authenticateToken, async (req, res) => {
       connection.release();
     }
   } catch (error) {
-    console.error('Employee resignation error:', error);
-    res.status(500).json({ success: false, error: 'Unable to leave organization' });
+    console.error('Employee account deletion error:', error);
+    res.status(500).json({ success: false, error: 'Unable to delete account' });
   }
 });
 // Protect every PM endpoint, including legacy handlers declared below.
@@ -277,7 +292,7 @@ async function getUserByIdentifier(identifier) {
   const connection = await pool.getConnection();
   try {
     const [rows] = await connection.execute(
-      'SELECT u.*, r.name as role_name, r.access_level FROM user u JOIN role r ON u.role_id = r.id WHERE u.employee_code = ? OR u.email = ?',
+      'SELECT u.*, r.name as role_name, r.access_level FROM user u JOIN role r ON u.role_id = r.id WHERE (u.employee_code = ? OR u.email = ?) AND u.is_active = 1',
       [identifier, identifier],
     );
     const user = rows[0];

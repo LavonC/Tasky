@@ -79,17 +79,17 @@
 
         <q-card class="settings-card q-mt-md" bordered>
           <q-card-section>
-            <div class="text-h6 text-weight-bold text-negative">Leave organization</div>
+            <div class="text-h6 text-weight-bold text-negative">Delete account</div>
             <div class="text-caption text-grey-7 q-mt-xs">
-              Your access and active membership will be removed. Your completed work history is retained.
+              Your account will be permanently deleted and your access will be removed. Your completed work history is retained under a generic project manager.
             </div>
           </q-card-section>
           <q-card-section>
             <q-btn
               color="negative"
               outline
-              icon="logout"
-              label="Resign from organization"
+              icon="delete"
+              label="Delete my account"
               class="full-width"
               :loading="resigning"
               @click="confirmResignation"
@@ -137,10 +137,10 @@ onMounted(() => {
 
 function confirmResignation() {
   $q.dialog({
-    title: 'Resign from organization?',
-    message: 'You will be signed out immediately and will no longer appear in your organization.',
+    title: 'Delete Account?',
+    message: 'Your account will be permanently deleted and you will be signed out immediately.',
     cancel: true,
-    ok: { label: 'Resign', color: 'negative' },
+    ok: { label: 'Delete', color: 'negative' },
   }).onOk(() => resign());
 }
 
@@ -153,11 +153,11 @@ async function resign() {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
     const result = await response.json();
-    if (!response.ok || !result.success) throw new Error(result.error || 'Unable to resign');
-    $q.notify({ type: 'positive', message: 'You have left the organization.' });
+    if (!response.ok || !result.success) throw new Error(result.error || 'Unable to delete account');
+    $q.notify({ type: 'positive', message: 'Your account has been deleted.' });
     logout();
   } catch (error) {
-    $q.notify({ type: 'negative', message: error instanceof Error ? error.message : 'Unable to resign' });
+    $q.notify({ type: 'negative', message: error instanceof Error ? error.message : 'Unable to delete account' });
   } finally {
     resigning.value = false;
   }
