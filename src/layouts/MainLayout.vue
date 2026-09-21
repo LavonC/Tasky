@@ -123,6 +123,25 @@
             </q-item-section>
           </q-item>
 
+          <!-- Settings -->
+          <q-item
+            clickable
+            v-ripple
+            to="/employee/settings"
+            :active="$route.path === '/employee/settings'"
+            active-class="nav-active"
+            class="nav-item q-py-sm text-blue-grey-4"
+            :class="sidebarCollapsed ? 'justify-center' : ''"
+          >
+            <q-item-section avatar>
+              <q-icon name="o_settings" size="21px" />
+            </q-item-section>
+
+            <q-item-section v-if="!sidebarCollapsed" class="text-body2 text-weight-medium">
+              Settings
+            </q-item-section>
+          </q-item>
+
           <!-- Logout -->
           <q-item
             clickable
@@ -434,24 +453,28 @@ const navigationLinks = computed(() => {
       link: '/employee/reviews',
       subtitle: 'View and submit your performance reviews.',
     },
-    {
-      label: 'Settings',
-      icon: 'settings',
-      link: '/employee/settings',
-      subtitle: 'Manage your account preferences.',
-    },
+  ];
+});
+
+const currentPage = computed(() => {
+  const allPages = [
+    ...navigationLinks.value,
     {
       label: 'Notifications',
       icon: 'notifications',
       link: '/employee/notifications',
       subtitle: 'Stay updated with your tasks and reviews',
     },
+    {
+      label: 'Settings',
+      icon: 'settings',
+      link: '/employee/settings',
+      subtitle: 'Manage your account preferences.',
+    }
   ];
-});
 
-const currentPage = computed(() => {
   return (
-    navigationLinks.value.find((link) => route.path.startsWith(link.link)) ??
+    allPages.find((link) => route.path.startsWith(link.link)) ??
     navigationLinks.value[0] ?? {
       label: 'Task Manager',
       icon: 'assignment',
