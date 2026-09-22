@@ -2,7 +2,7 @@
   <q-page
     class="q-pa-md pm-dashboard-page"
     style="
-      min-height: 100vh;
+      min-height: 150vh;
       overflow-x: hidden;
       display: flex;
       flex-direction: column;
@@ -32,6 +32,7 @@
     </div>
 
     <!-- Needs Attention Section -->
+    <Teleport defer to="#overview-attention-slot">
     <section class="attention-section q-mb-md">
       <q-card class="full-height flex column">
         <q-card-section class="bg-red-1 text-red-9 q-pb-sm">
@@ -47,7 +48,7 @@
         <q-tabs
           v-model="attentionTab"
           dense
-          class="text-grey-7 command-center-tabs col"
+          class="text-grey-7 command-center-tabs"
           active-color="primary"
           indicator-color="primary"
           align="justify"
@@ -56,11 +57,10 @@
           <q-tab name="project" :label="`Projects (${dashboardStore.stats?.atRiskProjects ?? 0})`" />
           <q-tab name="employee" :label="`Employees (${dashboardStore.stats?.overloadedResources ?? 0})`" />
           <q-tab name="task" :label="`Tasks (${dashboardStore.stats?.overdueTasks ?? 0})`" />
-          <q-tab name="insights" label="Insights" />
         </q-tabs>
         <q-card-section
           class="q-pt-none q-px-md q-pb-md"
-          style="max-height: 350px; overflow-y: auto"
+          style="max-height: 465px; overflow-y: auto"
         >
           <q-list separator v-if="hasAttentionItems">
             <!-- Delayed Projects -->
@@ -168,8 +168,350 @@
             </template>
           </q-list>
 
-          <!-- Insights Tab Content -->
-          <div v-if="attentionTab === 'insights'" class="insights-content">
+          <div v-if="!hasAttentionItems && !dashboardStore.loading" class="text-center q-pa-xl text-grey-6">
+            <q-icon name="check_circle" size="48px" class="q-mb-sm text-green-4" />
+            <div class="text-h6">All clear!</div>
+            <div>No items need your immediate attention.</div>
+          </div>
+        </q-card-section>
+      </q-card>
+    </section>
+    </Teleport>
+
+   <!-- Original Section Tabs + Collapse -->
+<div class="bottom-section">
+  <div
+    class="row items-center full-width"
+    style="flex: 0 0 auto"
+  >
+    <q-tabs
+      v-model="activeTab"
+      dense
+      class="text-grey-7 command-center-tabs"
+      active-color="primary"
+      indicator-color="primary"
+      align="justify"
+    >
+      <q-tab name="overview" label="Overview" icon="dashboard" />
+      <q-tab name="performance" label="Performances" icon="trending_up" />
+      <q-tab name="resources" label="Resources" icon="groups" />
+      <q-tab name="delivery" label="Delivery Risks" icon="event" />
+      <q-tab name="completed" label="Completed" icon="check_circle" />
+      <q-tab name="insights" label="Insights" icon="insights" />
+    </q-tabs>
+  </div>
+
+  <q-tab-panels
+    v-model="activeTab"
+    animated
+    keep-alive
+    class="bottom-tab-panels transparent"
+    style="min-height: 400px"
+  >
+    <!-- Overview Tab -->
+    <q-tab-panel name="overview" class="q-pa-none">
+      <div class="row q-col-gutter-md">
+        <div id="overview-attention-slot" class="col-12 col-md-6 overview-panel-slot"></div>
+
+        <div class="col-12 col-md-6">
+          <q-card class="full-height flex column">
+            <q-card-section class="bg-green-1 text-green-9 q-pb-sm">
+              <div class="row items-center justify-between">
+                <div class="row items-center">
+                  <q-icon name="groups" size="24px" class="q-mr-sm" />
+                  <div class="text-h6 text-weight-bold">Team Members</div>
+
+                  <q-badge color="orange" class="q-ml-sm" rounded>
+                    {{ dashboardStore.stats?.pendingReviews ?? 0 }} Reviews Pending
+                  </q-badge>
+                </div>
+
+                <div class="row items-center q-gutter-sm">
+                  <q-input
+                    v-model="teamSearchQuery"
+                    outlined
+                    dense
+                    bg-color="white"
+                    placeholder="Search team..."
+                    class="team-search"
+                  >
+                    <template v-slot:prepend>
+                      <q-icon name="search" />
+                    </template>
+                  </q-input>
+
+                  <q-spinner-dots
+                    v-if="dashboardStore.loading"
+                    size="24px"
+                  />
+                </div>
+              </div>
+
+              <div class="text-caption">
+                All users in your organization
+              </div>
+            </q-card-section>
+
+            <q-card-section
+              class="q-pt-none q-px-md q-pb-md"
+              style="max-height: 500px; overflow-y: auto"
+            >
+              <q-list separator v-if="dashboardStore.users.length > 0">
+                <q-item
+                  v-for="user in filteredUsers"
+                  :key="user.id"
+                  class="q-py-md cursor-pointer"
+                  clickable
+                  @click="showEmployeePerformance(user)"
+                >
+                  <q-item-section avatar>
+                    <q-avatar>
+                      <img
+                        :src="
+                          user.avatar_url ||
+                          `https://i.pravatar.cc/150?img=${user.id}`
+                        "
+                      />
+                    </q-avatar>
+                  </q-item-section>
+
+                  <q-item-section>
+                    <q-item-label class="text-weight-bold">
+                      {{ user.first_name }} {{ user.last_name }}
+                    </q-item-label>
+
+                    <q-item-label caption>
+                      {{ user.employee_code }} - {{ user.role_name }}
+                    </q-item-label>
+
+                    <q-item-label
+                      caption
+                      v-if="user.email"
+                      class="text-grey-7"
+                    >
+                      {{ user.email }}
+                    </q-item-label>
+                  </q-item-section>
+
+                  <q-item-section side>
+                    <div
+                      class="column items-end q-gutter-xs"
+                      style="min-width: 120px"
+                    >
+                      <q-badge
+                        :color="
+                          user.access_level === 'manager'
+                            ? 'orange'
+                            : 'blue'
+                        "
+                      >
+                        {{
+                          user.access_level === 'manager'
+                            ? 'Manager'
+                            : 'Employee'
+                        }}
+                      </q-badge>
+
+                      <div class="row items-center no-wrap full-width">
+                        <q-linear-progress
+                          :value="
+                            Math.min(Number(user.points || 0), 100) / 100
+                          "
+                          color="primary"
+                          track-color="grey-3"
+                          rounded
+                          size="6px"
+                          class="col"
+                        />
+
+                        <span class="text-caption text-grey-7 q-ml-xs">
+                          {{ Number(user.points || 0) }} pts
+                        </span>
+                      </div>
+
+                      <div class="text-caption text-grey-6">
+                        Performance points
+                      </div>
+                    </div>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+
+              <div
+                v-else-if="!dashboardStore.loading"
+                class="text-center q-pa-xl text-grey-6"
+              >
+                <q-icon name="person_off" size="48px" class="q-mb-sm" />
+                <div class="text-h6">No users found</div>
+              </div>
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
+    </q-tab-panel>
+
+    <!-- Performance Tab -->
+    <q-tab-panel name="performance" class="q-pa-none">
+      <div class="row q-col-gutter-md">
+        <div class="col-12 graph-card">
+          <ProjectPerformanceTable />
+        </div>
+      </div>
+    </q-tab-panel>
+
+    <!-- Resources Tab -->
+    <q-tab-panel name="resources" class="q-pa-none">
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-4 graph-card">
+          <ResourceUtilizationChart :resources="resources" />
+        </div>
+
+        <div class="col-12 col-md-4 graph-card">
+          <ActiveTasksChart :resources="resources" />
+        </div>
+
+        <div class="col-12 col-md-4 graph-card">
+          <WorkloadScatterChart :resources="resources" />
+        </div>
+      </div>
+    </q-tab-panel>
+
+    <!-- Delivery Risk Tab -->
+    <q-tab-panel name="delivery" class="q-pa-none">
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-4 graph-card">
+          <UpcomingDeadlineRisks />
+        </div>
+
+        <div class="col-12 col-md-4 graph-card">
+          <ProjectHealthBars
+            :projects="analyticsStore.projectProgress"
+          />
+        </div>
+
+        <div class="col-12 col-md-4 graph-card">
+          <TaskStatusDistribution />
+        </div>
+      </div>
+    </q-tab-panel>
+
+    <!-- Completed Tab -->
+    <q-tab-panel name="completed" class="q-pa-none">
+      <q-card class="full-height">
+        <q-card-section class="bg-green-1 text-green-9 q-pb-sm">
+          <div class="row items-center justify-between">
+            <div class="row items-center">
+              <q-icon
+                name="check_circle"
+                size="24px"
+                class="q-mr-sm"
+              />
+              <div class="text-h6 text-weight-bold">
+                Completed Tasks
+              </div>
+            </div>
+
+            <q-spinner-dots
+              v-if="loadingCompleted"
+              size="24px"
+            />
+          </div>
+
+          <div class="text-caption">
+            All completed tasks - click to view review status
+          </div>
+        </q-card-section>
+
+        <q-card-section
+          class="q-pt-none q-px-md q-pb-md"
+          style="max-height: 600px; overflow-y: auto"
+        >
+          <q-list separator v-if="completedTasks.length > 0">
+            <q-item
+              v-for="task in completedTasks"
+              :key="task.id"
+              class="q-py-md"
+              clickable
+              @click="showTaskDetail(task)"
+            >
+              <q-item-section avatar>
+                <q-icon
+                  name="check_circle"
+                  color="green"
+                  size="32px"
+                />
+              </q-item-section>
+
+              <q-item-section>
+                <q-item-label class="text-weight-bold">
+                  {{ task.title }}
+                </q-item-label>
+
+                <q-item-label caption>
+                  Project: {{ task.project_name }}
+                </q-item-label>
+
+                <q-item-label caption>
+                  Assigned to:
+                  {{ task.assigned_first_name }}
+                  {{ task.assigned_last_name }}
+                </q-item-label>
+
+                <q-item-label caption>
+                  Progress: {{ task.progress }}%
+                </q-item-label>
+
+                <q-item-label
+                  caption
+                  v-if="task.review_status"
+                  class="text-purple-8 q-mt-xs"
+                >
+                  Review: {{ task.review_status }}
+                </q-item-label>
+              </q-item-section>
+
+              <q-item-section side>
+                <div class="column items-end">
+                  <q-badge
+                    :color="
+                      task.review_status === 'review-done'
+                        ? 'green'
+                        : 'orange'
+                    "
+                    :label="
+                      task.review_status || 'Pending Review'
+                    "
+                  />
+
+                  <div class="text-caption text-grey-6 q-mt-xs">
+                    {{ formatDate(task.completed_at) }}
+                  </div>
+                </div>
+              </q-item-section>
+            </q-item>
+          </q-list>
+
+          <div
+            v-else-if="!loadingCompleted"
+            class="text-center q-pa-xl text-grey-6"
+          >
+            <q-icon
+              name="check_circle"
+              size="48px"
+              class="q-mb-sm text-green-4"
+            />
+            <div class="text-h6">No completed tasks yet</div>
+            <div>
+              Tasks will appear here after they are completed
+            </div>
+          </div>
+        </q-card-section>
+      </q-card>
+    </q-tab-panel>
+
+    <!-- Insights Tab -->
+    <q-tab-panel name="insights" class="q-pa-none">
+      <div class="insights-content">
             <div class="row q-col-gutter-md q-mb-md">
               <!-- Project Health -->
               <div class="col-12 col-sm-6 col-lg-3">
@@ -825,719 +1167,11 @@
                 </q-card>
               </div>
             </div>
-          </div>
 
-          <div v-else-if="!dashboardStore.loading" class="text-center q-pa-xl text-grey-6">
-            <q-icon name="check_circle" size="48px" class="q-mb-sm text-green-4" />
-            <div class="text-h6">All clear!</div>
-            <div>No items need your immediate attention.</div>
-          </div>
-        </q-card-section>
-      </q-card>
-    </section>
 
-    <!-- Original Section Tabs + Collapse -->
-<div
-  class="bottom-section"
->
-  <div
-    class="row items-center full-width"
-    style="flex: 0 0 auto"
-  >
-  <q-tabs
-    v-model="activeTab"
-    dense
-    class="text-grey-7 command-center-tabs col"
-    active-color="primary"
-    indicator-color="primary"
-    align="justify"
-  >
-    <q-tab name="performance" label="Performance" icon="trending_up" />
-    <q-tab name="resources" label="Resources" icon="groups" />
-    <q-tab name="delivery" label="Delivery Risk" icon="event" />
-    <q-tab name="overview" label="Overview" icon="dashboard" />
-    <q-tab name="completed" label="Completed" icon="check_circle" />
-  </q-tabs>
-  </div>
-
-  <q-tab-panels
-    v-model="activeTab"
-    animated
-    class="bottom-tab-panels transparent"
-    style="min-height: 400px;"
-  >
-      <!-- Overview Tab -->
-      <q-tab-panel name="overview" class="q-pa-none">
-        <div class="row q-col-gutter-md">
-          <!-- Team Members Full Width -->
-          <div class="col-12">
-            <q-card class="full-height flex column">
-              <q-card-section class="bg-green-1 text-green-9 q-pb-sm">
-                <div class="row items-center justify-between">
-                  <div class="row items-center">
-                    <q-icon name="groups" size="24px" class="q-mr-sm" />
-                    <div class="text-h6 text-weight-bold">Team Members</div>
-                    <q-badge color="orange" class="q-ml-sm" rounded>
-                      {{ dashboardStore.stats?.pendingReviews ?? 0 }} Reviews Pending
-                    </q-badge>
-                  </div>
-                  <div class="row items-center q-gutter-sm"><q-input v-model="teamSearchQuery" outlined dense bg-color="white" placeholder="Search team..." class="team-search"><template v-slot:prepend><q-icon name="search" /></template></q-input><q-spinner-dots v-if="dashboardStore.loading" size="24px" /></div>
-                </div>
-                <div class="text-caption">All users in your organization</div>
-              </q-card-section>
-
-              <q-card-section
-                class="q-pt-none q-px-md q-pb-md"
-                style="max-height: 500px; overflow-y: auto"
-              >
-                <q-list separator v-if="dashboardStore.users.length > 0">
-                  <q-item
-                    v-for="user in filteredUsers"
-                    :key="user.id"
-                    class="q-py-md cursor-pointer"
-                    clickable
-                    @click="showEmployeePerformance(user)"
-                  >
-                    <q-item-section avatar>
-                      <q-avatar>
-                        <img :src="user.avatar_url || `https://i.pravatar.cc/150?img=${user.id}`" />
-                      </q-avatar>
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label class="text-weight-bold"
-                        >{{ user.first_name }} {{ user.last_name }}</q-item-label
-                      >
-                      <q-item-label caption
-                        >{{ user.employee_code }} - {{ user.role_name }}</q-item-label
-                      >
-                      <q-item-label caption v-if="user.email" class="text-grey-7">{{
-                        user.email
-                      }}</q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                      <div class="column items-end q-gutter-xs" style="min-width: 120px">
-                        <q-badge :color="user.access_level === 'manager' ? 'orange' : 'blue'">
-                          {{ user.access_level === 'manager' ? 'Manager' : 'Employee' }}
-                        </q-badge>
-                        <div class="row items-center no-wrap full-width">
-                          <q-linear-progress
-                            :value="Math.min(Number(user.points || 0), 100) / 100"
-                            color="primary"
-                            track-color="grey-3"
-                            rounded
-                            size="6px"
-                            class="col"
-                          />
-                          <span class="text-caption text-grey-7 q-ml-xs">{{ Number(user.points || 0) }} pts</span>
-                        </div>
-                        <div class="text-caption text-grey-6">Performance points</div>
-                      </div>
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-
-                <div v-else-if="!dashboardStore.loading" class="text-center q-pa-xl text-grey-6">
-                  <q-icon name="person_off" size="48px" class="q-mb-sm" />
-                  <div class="text-h6">No users found</div>
-                </div>
-              </q-card-section>
-            </q-card>
-          </div>
-        </div>
-      </q-tab-panel>
-
-      <!-- Performance Tab -->
-      <q-tab-panel name="performance" class="q-pa-none">
-        <div class="row q-col-gutter-md">
-          <div class="col-12 graph-card"><ProjectPerformanceTable /></div>
-        </div>
-      </q-tab-panel>
-
-      <!-- Resources Tab -->
-      <q-tab-panel name="resources" class="q-pa-none">
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-md-4 graph-card"><ResourceUtilizationChart :resources="resources" /></div>
-          <div class="col-12 col-md-4 graph-card"><ActiveTasksChart :resources="resources" /></div>
-          <div class="col-12 col-md-4 graph-card"><WorkloadScatterChart :resources="resources" /></div>
-        </div>
-      </q-tab-panel>
-
-      <!-- Delivery Risk Tab -->
-      <q-tab-panel name="delivery" class="q-pa-none">
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-md-4 graph-card"><UpcomingDeadlineRisks /></div>
-          <div class="col-12 col-md-4 graph-card"><ProjectHealthBars :projects="analyticsStore.projectProgress" /></div>
-          <div class="col-12 col-md-4 graph-card"><TaskStatusDistribution /></div>
-        </div>
-      </q-tab-panel>
-
-      <!-- Completed Tab -->                color="green"
-                track-color="grey-3"
-                rounded
-                size="10px"
-              />
-            </div>
-
-            <!-- At Risk -->
-            <div class="q-mb-lg">
-              <div class="row justify-between items-center q-mb-xs">
-                <div class="row items-center">
-                  <q-icon
-                    name="warning"
-                    color="orange"
-                    size="18px"
-                    class="q-mr-sm"
-                  />
-                  <span class="text-weight-medium">At Risk</span>
-                </div>
-
-                <span class="text-weight-bold">
-                  {{ atRiskProjects }}
-                </span>
-              </div>
-
-              <q-linear-progress
-                :value="projectHealthPercentage(atRiskProjects)"
-                color="orange"
-                track-color="grey-3"
-                rounded
-                size="10px"
-              />
-            </div>
-
-            <!-- Delayed -->
-            <div>
-              <div class="row justify-between items-center q-mb-xs">
-                <div class="row items-center">
-                  <q-icon
-                    name="error"
-                    color="red"
-                    size="18px"
-                    class="q-mr-sm"
-                  />
-                  <span class="text-weight-medium">Delayed</span>
-                </div>
-
-                <span class="text-weight-bold">
-                  {{ delayedProjects }}
-                </span>
-              </div>
-
-              <q-linear-progress
-                :value="projectHealthPercentage(delayedProjects)"
-                color="red"
-                track-color="grey-3"
-                rounded
-                size="10px"
-              />
-            </div>
-
-          </q-card-section>
-        </q-card>
       </div>
-
-      <!-- Task Delivery -->
-      <div class="col-12 col-md-6">
-        <q-card class="insight-large-card">
-          <q-card-section>
-            <div class="row items-center">
-              <q-avatar
-                color="blue-1"
-                text-color="blue"
-                icon="task_alt"
-                size="42px"
-                class="q-mr-md"
-              />
-
-              <div>
-                <div class="text-h6 text-weight-bold">
-                  Delivery Overview
-                </div>
-                <div class="text-caption text-grey-7">
-                  Tasks requiring delivery attention
-                </div>
-              </div>
-            </div>
-          </q-card-section>
-
-          <q-separator />
-
-          <q-card-section>
-
-            <div class="row q-col-gutter-md">
-
-              <div class="col-4">
-                <div class="delivery-stat bg-green-1">
-                  <q-icon
-                    name="check_circle"
-                    color="green"
-                    size="28px"
-                  />
-                  <div class="text-h5 text-weight-bold q-mt-sm">
-                    {{ completedTasks.length }}
-                  </div>
-                  <div class="text-caption text-grey-7">
-                    Completed
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-4">
-                <div class="delivery-stat bg-blue-1">
-                  <q-icon
-                    name="pending"
-                    color="blue"
-                    size="28px"
-                  />
-                  <div class="text-h5 text-weight-bold q-mt-sm">
-                    {{ inProgressTasks }}
-                  </div>
-                  <div class="text-caption text-grey-7">
-                    In Progress
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-4">
-                <div class="delivery-stat bg-red-1">
-                  <q-icon
-                    name="priority_high"
-                    color="red"
-                    size="28px"
-                  />
-                  <div class="text-h5 text-weight-bold q-mt-sm">
-                    {{ overdueTasks }}
-                  </div>
-                  <div class="text-caption text-grey-7">
-                    Overdue
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            <q-banner
-              rounded
-              class="bg-orange-1 text-orange-9 q-mt-lg"
-              v-if="overdueTasks > 0"
-            >
-              <template v-slot:avatar>
-                <q-icon name="warning" color="orange" />
-              </template>
-
-              <div class="text-weight-medium">
-                Delivery risk detected
-              </div>
-
-              <div class="text-caption">
-                {{ overdueTasks }} task(s) are currently overdue.
-                Review them before they impact dependent work.
-              </div>
-            </q-banner>
-
-            <q-banner
-              rounded
-              class="bg-green-1 text-green-9 q-mt-lg"
-              v-else
-            >
-              <template v-slot:avatar>
-                <q-icon name="check_circle" color="green" />
-              </template>
-
-              <div class="text-weight-medium">
-                Delivery is on track
-              </div>
-
-              <div class="text-caption">
-                There are currently no overdue tasks.
-              </div>
-            </q-banner>
-
-          </q-card-section>
-        </q-card>
-      </div>
-
-    </div>
-
-    <!-- Bottom Row -->
-    <div class="row q-col-gutter-md">
-
-      <!-- Team Capacity -->
-      <div class="col-12 col-md-6">
-        <q-card class="insight-large-card">
-          <q-card-section>
-            <div class="row items-center justify-between">
-              <div class="row items-center">
-                <q-avatar
-                  color="orange-1"
-                  text-color="orange"
-                  icon="groups"
-                  size="42px"
-                  class="q-mr-md"
-                />
-
-                <div>
-                  <div class="text-h6 text-weight-bold">
-                    Team Capacity
-                  </div>
-                  <div class="text-caption text-grey-7">
-                    Workload distribution across employees
-                  </div>
-                </div>
-              </div>
-
-              <div class="text-h5 text-weight-bold">
-                {{ overloadedResources }}
-                <span class="text-caption text-grey-6">
-                  overloaded
-                </span>
-              </div>
-            </div>
-          </q-card-section>
-
-          <q-separator />
-
-          <q-card-section>
-            <div
-              v-if="dashboardStore.attentionItems.overloadedResources.length"
-            >
-              <div
-                v-for="resource in dashboardStore.attentionItems.overloadedResources.slice(0, 5)"
-                :key="resource.id"
-                class="capacity-row"
-              >
-                <q-avatar size="38px" class="q-mr-md">
-                  <img
-                    :src="
-                      resource.avatar ||
-                      `https://i.pravatar.cc/150?img=${resource.id}`
-                    "
-                  />
-                </q-avatar>
-
-                <div class="col">
-                  <div class="row justify-between">
-                    <div class="text-weight-medium">
-                      {{ resource.first_name }}
-                      {{ resource.last_name }}
-                    </div>
-
-                    <div
-                      class="text-weight-bold"
-                      :class="
-                        resource.utilization >= 100
-                          ? 'text-red'
-                          : 'text-orange'
-                      "
-                    >
-                      {{ resource.utilization }}%
-                    </div>
-                  </div>
-
-                  <q-linear-progress
-                    :value="Math.min(resource.utilization / 100, 1)"
-                    :color="
-                      resource.utilization >= 100
-                        ? 'red'
-                        : 'orange'
-                    "
-                    track-color="grey-3"
-                    rounded
-                    size="8px"
-                    class="q-mt-xs"
-                  />
-
-                  <div class="text-caption text-grey-6 q-mt-xs">
-                    {{ resource.project_count }} active project(s)
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div
-              v-else
-              class="text-center q-pa-lg text-grey-6"
-            >
-              <q-icon
-                name="check_circle"
-                size="42px"
-                color="green-4"
-              />
-              <div class="text-subtitle1 q-mt-sm">
-                Team capacity looks healthy
-              </div>
-              <div class="text-caption">
-                No overloaded employees detected.
-              </div>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-
-      <!-- Priority Actions -->
-      <div class="col-12 col-md-6">
-        <q-card class="insight-large-card">
-          <q-card-section>
-            <div class="row items-center">
-              <q-avatar
-                color="red-1"
-                text-color="red"
-                icon="priority_high"
-                size="42px"
-                class="q-mr-md"
-              />
-
-              <div>
-                <div class="text-h6 text-weight-bold">
-                  Recommended Actions
-                </div>
-                <div class="text-caption text-grey-7">
-                  Areas that deserve your attention
-                </div>
-              </div>
-            </div>
-          </q-card-section>
-
-          <q-separator />
-
-          <q-card-section>
-
-            <q-item
-              v-if="overdueTasks > 0"
-              class="action-item bg-red-1 q-mb-sm"
-            >
-              <q-item-section avatar>
-                <q-icon
-                  name="schedule"
-                  color="red"
-                  size="28px"
-                />
-              </q-item-section>
-
-              <q-item-section>
-                <q-item-label class="text-weight-bold">
-                  Review overdue tasks
-                </q-item-label>
-
-                <q-item-label caption>
-                  {{ overdueTasks }} task(s) have missed their deadlines.
-                </q-item-label>
-              </q-item-section>
-
-              <q-item-section side>
-                <q-btn
-                  flat
-                  round
-                  icon="arrow_forward"
-                  color="red"
-                  to="/dashboard/tasks"
-                />
-              </q-item-section>
-            </q-item>
-
-            <q-item
-              v-if="atRiskProjects > 0"
-              class="action-item bg-orange-1 q-mb-sm"
-            >
-              <q-item-section avatar>
-                <q-icon
-                  name="warning"
-                  color="orange"
-                  size="28px"
-                />
-              </q-item-section>
-
-              <q-item-section>
-                <q-item-label class="text-weight-bold">
-                  Intervene in at-risk projects
-                </q-item-label>
-
-                <q-item-label caption>
-                  {{ atRiskProjects }} project(s) may require
-                  management intervention.
-                </q-item-label>
-              </q-item-section>
-
-              <q-item-section side>
-                <q-btn
-                  flat
-                  round
-                  icon="arrow_forward"
-                  color="orange"
-                  to="/dashboard/projects"
-                />
-              </q-item-section>
-            </q-item>
-
-            <q-item
-              v-if="overloadedResources > 0"
-              class="action-item bg-blue-1 q-mb-sm"
-            >
-              <q-item-section avatar>
-                <q-icon
-                  name="groups"
-                  color="blue"
-                  size="28px"
-                />
-              </q-item-section>
-
-              <q-item-section>
-                <q-item-label class="text-weight-bold">
-                  Balance team workload
-                </q-item-label>
-
-                <q-item-label caption>
-                  {{ overloadedResources }} employee(s) are
-                  above their workload capacity.
-                </q-item-label>
-              </q-item-section>
-
-              <q-item-section side>
-                <q-btn
-                  flat
-                  round
-                  icon="arrow_forward"
-                  color="blue"
-                  to="/dashboard/resources"
-                />
-              </q-item-section>
-            </q-item>
-
-            <q-item
-              v-if="pendingReviews > 0"
-              class="action-item bg-purple-1"
-            >
-              <q-item-section avatar>
-                <q-icon
-                  name="rate_review"
-                  color="purple"
-                  size="28px"
-                />
-              </q-item-section>
-
-              <q-item-section>
-                <q-item-label class="text-weight-bold">
-                  Complete pending reviews
-                </q-item-label>
-
-                <q-item-label caption>
-                  {{ pendingReviews }} review(s) are waiting
-                  for manager action.
-                </q-item-label>
-              </q-item-section>
-
-              <q-item-section side>
-                <q-btn
-                  flat
-                  round
-                  icon="arrow_forward"
-                  color="purple"
-                />
-              </q-item-section>
-            </q-item>
-
-            <div
-              v-if="
-                overdueTasks === 0 &&
-                atRiskProjects === 0 &&
-                overloadedResources === 0 &&
-                pendingReviews === 0
-              "
-              class="text-center q-pa-lg"
-            >
-              <q-icon
-                name="verified"
-                color="green"
-                size="52px"
-              />
-
-              <div class="text-h6 text-weight-bold q-mt-sm">
-                Everything looks good
-              </div>
-
-              <div class="text-caption text-grey-6">
-                No immediate management actions are required.
-              </div>
-            </div>
-
-          </q-card-section>
-        </q-card>
-      </div>
-
-    </div>
-
-  </div>
-</q-tab-panel>
-=======
-      </q-tab-panel>
-
-      <!-- Resources Tab -->
-      <q-tab-panel name="resources" class="q-pa-none">
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-md-4 graph-card"><ResourceUtilizationChart :resources="resources" /></div>
-          <div class="col-12 col-md-4 graph-card"><ActiveTasksChart :resources="resources" /></div>
-          <div class="col-12 col-md-4 graph-card"><WorkloadScatterChart :resources="resources" /></div>
-        </div>
-      </q-tab-panel>
-
-      <!-- Delivery Risk Tab -->
-      <q-tab-panel name="delivery" class="q-pa-none">
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-md-4 graph-card"><UpcomingDeadlineRisks /></div>
-          <div class="col-12 col-md-4 graph-card"><ProjectHealthBars :projects="analyticsStore.projectProgress" /></div>
-          <div class="col-12 col-md-4 graph-card"><TaskStatusDistribution /></div>
-        </div>
-      </q-tab-panel>
->>>>>>> c3f3a95811dc11ae0586b38b0441be74c0c7d7d5
-
-      <!-- Completed Tab -->
-      <q-tab-panel name="completed" class="q-pa-none">
-        <q-card class="full-height">
-          <q-card-section class="bg-green-1 text-green-9 q-pb-sm">
-            <div class="row items-center justify-between">
-              <div class="row items-center">
-                <q-icon name="check_circle" size="24px" class="q-mr-sm" />
-                <div class="text-h6 text-weight-bold">Completed Tasks</div>
-              </div>
-              <q-spinner-dots v-if="loadingCompleted" size="24px" />
-            </div>
-            <div class="text-caption">All completed tasks - click to view review status</div>
-          </q-card-section>
-
-          <q-card-section class="q-pt-none q-px-md q-pb-md" style="max-height: 600px; overflow-y: auto">
-            <q-list separator v-if="completedTasks.length > 0">
-              <q-item v-for="task in completedTasks" :key="task.id" class="q-py-md" clickable @click="showTaskDetail(task)">
-                <q-item-section avatar>
-                  <q-icon name="check_circle" color="green" size="32px" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label class="text-weight-bold">{{ task.title }}</q-item-label>
-                  <q-item-label caption>Project: {{ task.project_name }}</q-item-label>
-                  <q-item-label caption>Assigned to: {{ task.assigned_first_name }} {{ task.assigned_last_name }}</q-item-label>
-                  <q-item-label caption>Progress: {{ task.progress }}%</q-item-label>
-                  <q-item-label caption v-if="task.review_status" class="text-purple-8 q-mt-xs">
-                    Review: {{ task.review_status }}
-                  </q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <div class="column items-end">
-                    <q-badge :color="task.review_status === 'review-done' ? 'green' : 'orange'" :label="task.review_status || 'Pending Review'" />
-                    <div class="text-caption text-grey-6 q-mt-xs">
-                      {{ formatDate(task.completed_at) }}
-                    </div>
-                  </div>
-                </q-item-section>
-              </q-item>
-            </q-list>
-            <div v-else-if="!loadingCompleted" class="text-center q-pa-xl text-grey-6">
-              <q-icon name="check_circle" size="48px" class="q-mb-sm text-green-4" />
-              <div class="text-h6">No completed tasks yet</div>
-              <div>Tasks will appear here after they are completed</div>
-            </div>
-          </q-card-section>
-        </q-card>
-      </q-tab-panel>
-    </q-tab-panels>
+    </q-tab-panel>
+  </q-tab-panels>
 </div>
 
     <!-- Employee Performance Dialog -->
@@ -1864,12 +1498,22 @@ function showEmployeePerformance(user: any) {
   margin-bottom: 16px;
 }
 
+.overview-panel-slot {
+  display: flex;
+  min-height: 400px;
+}
+
+.overview-panel-slot > .attention-section {
+  width: 100%;
+  margin-bottom: 0;
+}
+
 .graph-tab-panels {
   margin-top: 0;
 }
 
 .command-center-tabs {
-  width: min(100%, 560px);
+  width: 100%;
 }
 
 .command-center-tabs :deep(.q-tab) {
