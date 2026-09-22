@@ -16,7 +16,7 @@
         <div class="text-grey-7 text-caption">Overview of what needs your attention today</div>
       </div>
       <div class="row items-center q-gutter-sm">
-        <q-btn v-if="pendingDailyLogsCount > 0" color="positive" icon="assignment_turned_in" outline round @click="showDailyLogReview = true">
+        <q-btn v-if="pendingDailyLogsCount > 0" color="negative" icon="notifications" outline round @click="showDailyLogReview = true">
           <q-badge color="red" floating>{{ pendingDailyLogsCount }}</q-badge>
           <q-tooltip>Review Daily Logs</q-tooltip>
         </q-btn>
@@ -193,9 +193,7 @@
       align="justify"
     >
       <q-tab name="overview" label="Overview" icon="dashboard" />
-      <q-tab name="performance" label="Performances" icon="trending_up" />
-      <q-tab name="resources" label="Resources" icon="groups" />
-      <q-tab name="delivery" label="Delivery Risks" icon="event" />
+      <q-tab name="resources" label="Performances" icon="trending_up" />
       <q-tab name="completed" label="Completed" icon="check_circle" />
       <q-tab name="insights" label="Insights" icon="insights" />
     </q-tabs>
@@ -348,6 +346,19 @@
           </q-card>
         </div>
       </div>
+      <div class="row q-col-gutter-md q-mt-md">
+        <div class="col-12 col-md-4 graph-card">
+          <ResourceUtilizationChart :resources="resources" />
+        </div>
+
+        <div class="col-12 col-md-4 graph-card">
+          <ActiveTasksChart :resources="resources" />
+        </div>
+
+        <div class="col-12 col-md-4 graph-card">
+          <WorkloadScatterChart :resources="resources" />
+        </div>
+      </div>
     </q-tab-panel>
 
     <!-- Performance Tab -->
@@ -361,7 +372,7 @@
 
     <!-- Resources Tab -->
     <q-tab-panel name="resources" class="q-pa-none">
-      <div class="row q-col-gutter-md">
+      <div class="row q-col-gutter-md q-mb-md">
         <div class="col-12 col-md-4 graph-card">
           <ResourceUtilizationChart :resources="resources" />
         </div>
@@ -372,6 +383,24 @@
 
         <div class="col-12 col-md-4 graph-card">
           <WorkloadScatterChart :resources="resources" />
+        </div>
+      </div>
+       <div class="row q-col-gutter-md q-mb-md">
+        <div class="col-12 col-md-4 graph-card">
+          <UpcomingDeadlineRisks />
+        </div>
+
+        <div class="col-12 col-md-4 graph-card">
+          <TaskCompletionTrend :data="analyticsStore.completionTrend" />
+        </div>
+
+        <div class="col-12 col-md-4 graph-card">
+          <TaskStatusDistribution />
+        </div>
+      </div>
+      <div class="row q-col-gutter-md">
+        <div class="col-12 graph-card">
+          <ProjectPerformanceTable />
         </div>
       </div>
     </q-tab-panel>
@@ -1235,7 +1264,7 @@ import EmployeePerformanceReport from '../components/EmployeePerformanceReport.v
 import DailyLogReviewDialog from '../components/DailyLogReviewDialog.vue';
 import ProjectPerformanceTable from '../components/ProjectPerformanceTable.vue';
 import TaskPriorityDonut from '../components/TaskPriorityDonut.vue';
-import TaskCompletionTrend from '../components/TaskCompletionTrend.vue';
+import TaskCompletionTrend from '../components/TaskCompletionTrendCorrect.vue';
 import ResourceUtilizationChart from '../components/ResourceUtilizationChart.vue';
 import ActiveTasksChart from '../components/ActiveTasksChart.vue';
 import WorkloadScatterChart from '../components/WorkloadScatterChart.vue';

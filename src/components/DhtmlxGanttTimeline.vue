@@ -776,23 +776,107 @@ gantt.setWorkTime({
     return 'dhtmlx-grid-row-task';
   };
 
-  // Tooltip Template with Employee Name and Progress
-  
+  // Rich Tooltip: task/project summary + employees currently working on the task
   (gantt.templates as any).tooltip_text = (start: Date, end: Date, task: DhtmlxGanttTaskItem) => {
     const pct = Math.round((task.progress || 0) * 100);
-    const text = escapeHtml(task.text || '');
-    
-    // Get employee names from assignees
+    const text = escapeHtml(task.text || 'Untitled task');
+    const projectName = escapeHtml(task.project_name || 'TaskFlow Project');
+    const status = escapeHtml((task.status || 'scheduled').replace(/_/g, ' '));
+    const priority = escapeHtml(task.priority || 'medium');
     const assignees = task.assignees || [];
-    const employeeNames = assignees.length > 0
-      ? assignees.map((a: any) => `${a.first_name || ''} ${a.last_name || ''}`.trim()).join(', ')
-      : 'Unassigned';
-    
+    const displayEnd = new Date(end.getTime() - 1000 * 60 * 60 * 24);
+    const dateRange = `${formatDate(start)} – ${formatDate(displayEnd)}`;
+    const durationDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+    const totalHours = (task.segments || []).reduce((sum, seg) => sum + Number(seg.allocatedHours || 0), 0);
+
+    const employeeRows = assignees.length > 0
+      ? assignees.map((employee: any) => {
+          const first = employee.first_name || '';
+          const last = employee.last_name || '';
+          const name = `${first} ${last}`.trim() || 'Unnamed employee';
+          const initials = ((first.charAt(0) || '') + (last.charAt(0) || '')).toUpperCase() || '?';
+          const code = employee.employee_code ? `<span class="gantt-tooltip-employee-code">${escapeHtml(employee.employee_code)}</span>` : '';
+          return (
+            `<div class="gantt-tooltip-employee">` +
+              `<span class="gantt-tooltip-avatar">${escapeHtml(initials)}</span>` +
+              `<span class="gantt-tooltip-employee-main">` +
+                `<span class="gantt-tooltip-employee-name">${escapeHtml(name)}</span>` +
+                code +
+              `</span>` +
+            `</div>`
+          );
+        }).join('')
+      : `<div class="gantt-tooltip-empty">No employee assigned</div>`;
+
+    const segmentsHtml = (task.segments && task.segments.length > 0)
+      ? `<div class="gantt-tooltip-section">` +
+          `<div class="gantt-tooltip-section-label">WORK SCHEDULE</div>` +
+          `<div class="gantt-tooltip-segments">` +
+            task.segments.map((seg) => {
+              const segEnd = new Date(seg.endDate.getTime() - 1000 * 60 * 60 * 24);
+              return `<div class="gantt-tooltip-segment"><span>${formatDate(seg.startDate)} – ${formatDate(segEnd)}</span><strong>${seg.allocatedHours}h</strong></div>`;
+            }).join('') +
+          `</div>` +
+        `</div>`
+      : '';
+
+    if (task.type === 'project') {
+      return (
+        `<div class="gantt-tooltip-card gantt-tooltip-project">` +
+          `<div class="gantt-tooltip-header">` +
+            `<div class="gantt-tooltip-icon">📁</div>` +
+            `<div class="gantt-tooltip-heading">` +
+              `<div class="gantt-tooltip-title">${text}</div>` +
+              `<div class="gantt-tooltip-subtitle">Project summary</div>` +
+            `</div>` +
+          `</div>` +
+          `<div class="gantt-tooltip-progress-row"><span>Progress</span><strong>${pct}%</strong></div>` +
+          `<div class="gantt-tooltip-progress"><span style="width:${pct}%"></span></div>` +
+          `<div class="gantt-tooltip-meta-grid">` +
+            `<div><small>Timeline</small><strong>${dateRange}</strong></div>` +
+            `<div><small>Tasks</small><strong>${task.task_count || 0}</strong></div>` +
+          `</div>` +
+        `</div>`
+      );
+    }
+
+    if (task.is_external) {
+      return (
+        `<div class="gantt-tooltip-card gantt-tooltip-external">` +
+          `<div class="gantt-tooltip-header">` +
+            `<div class="gantt-tooltip-icon">🔒</div>` +
+            `<div class="gantt-tooltip-heading"><div class="gantt-tooltip-title">${text}</div><div class="gantt-tooltip-subtitle">${projectName}</div></div>` +
+          `</div>` +
+          `<div class="gantt-tooltip-warning">Managed by another Project Manager. Task details are hidden.</div>` +
+          `<div class="gantt-tooltip-meta-grid"><div><small>Timeline</small><strong>${dateRange}</strong></div><div><small>Duration</small><strong>${durationDays}d</strong></div></div>` +
+        `</div>`
+      );
+    }
+
     return (
-      `<div class="gantt-tooltip">` +
-      `<div class="tooltip-title">${text}</div>` +
-      `<div class="tooltip-info">Employee: ${employeeNames}</div>` +
-      `<div class="tooltip-info">Progress: ${pct}%</div>` +
+      `<div class="gantt-tooltip-card">` +
+        `<div class="gantt-tooltip-header">` +
+          `<div class="gantt-tooltip-icon">✏️</div>` +
+          `<div class="gantt-tooltip-heading">` +
+            `<div class="gantt-tooltip-title">${text}</div>` +
+            `<div class="gantt-tooltip-subtitle">${projectName}</div>` +
+          `</div>` +
+        `</div>` +
+        `<div class="gantt-tooltip-badges">` +
+          `<span class="gantt-tooltip-status">${status}</span>` +
+          `<span class="gantt-tooltip-priority">${priority}</span>` +
+        `</div>` +
+        `<div class="gantt-tooltip-progress-row"><span>Task progress</span><strong>${pct}%</strong></div>` +
+        `<div class="gantt-tooltip-progress"><span style="width:${pct}%"></span></div>` +
+        `<div class="gantt-tooltip-meta-grid">` +
+          `<div><small>Timeline</small><strong>${dateRange}</strong></div>` +
+          `<div><small>Scheduled effort</small><strong>${totalHours ? `${Math.round(totalHours * 10) / 10}h` : '—'}</strong></div>` +
+        `</div>` +
+        `<div class="gantt-tooltip-section">` +
+          `<div class="gantt-tooltip-section-label">EMPLOYEES WORKING ON THIS TASK</div>` +
+          `<div class="gantt-tooltip-employees">${employeeRows}</div>` +
+        `</div>` +
+        segmentsHtml +
       `</div>`
     );
   };
@@ -1867,28 +1951,69 @@ defineExpose({
     }
   }
 
-  /* Tooltip */
+  /* Rich Gantt Tooltip */
   .gantt_tooltip {
-    background: #1e293b;
-    color: #ffffff;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    max-width: 250px;
-
-    .tooltip-title {
-      font-weight: 700;
-      margin-bottom: 4px;
-      font-size: 13px;
-    }
-
-    .tooltip-info {
-      font-size: 11px;
-      margin-bottom: 2px;
-      color: #cbd5e1;
-    }
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    max-width: 390px !important;
+    min-width: 320px;
+    overflow: visible !important;
   }
+
+  .gantt-tooltip-card {
+    width: 350px;
+    box-sizing: border-box;
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 14px 35px rgba(15, 23, 42, 0.18), 0 3px 8px rgba(15, 23, 42, 0.08);
+    font-family: inherit;
+  }
+
+  .gantt-tooltip-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+  .gantt-tooltip-icon { width: 30px; height: 30px; flex: 0 0 30px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: #eef2ff; font-size: 15px; }
+  .gantt-tooltip-heading { min-width: 0; flex: 1; }
+  .gantt-tooltip-title { font-size: 13px; line-height: 1.3; font-weight: 800; color: #0f172a; white-space: normal; word-break: break-word; }
+  .gantt-tooltip-subtitle { margin-top: 3px; color: #64748b; font-size: 10.5px; font-weight: 600; }
+  .gantt-tooltip-badges { display: flex; gap: 6px; margin-bottom: 12px; }
+  .gantt-tooltip-status, .gantt-tooltip-priority { display: inline-flex; padding: 3px 7px; border-radius: 999px; font-size: 9.5px; font-weight: 700; text-transform: capitalize; background: #f1f5f9; color: #475569; }
+  .gantt-tooltip-priority { background: #fff7ed; color: #c2410c; }
+  .gantt-tooltip-progress-row { display: flex; justify-content: space-between; align-items: center; color: #64748b; font-size: 10.5px; font-weight: 600; margin-bottom: 5px; }
+  .gantt-tooltip-progress-row strong { color: #4338ca; font-size: 11px; }
+  .gantt-tooltip-progress { height: 6px; background: #e2e8f0; border-radius: 99px; overflow: hidden; margin-bottom: 13px; }
+  .gantt-tooltip-progress span { display: block; height: 100%; background: #6366f1; border-radius: inherit; }
+  .gantt-tooltip-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 9px 0; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
+  .gantt-tooltip-meta-grid > div { min-width: 0; }
+  .gantt-tooltip-meta-grid small { display: block; color: #94a3b8; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+  .gantt-tooltip-meta-grid strong { display: block; color: #334155; font-size: 10.5px; line-height: 1.35; }
+  .gantt-tooltip-section { margin-top: 12px; }
+  .gantt-tooltip-section-label { color: #64748b; font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 7px; }
+  .gantt-tooltip-employees { display: flex; flex-direction: column; gap: 6px; }
+  .gantt-tooltip-employee { display: flex; align-items: center; gap: 8px; padding: 6px 7px; background: #f8fafc; border: 1px solid #eef2f7; border-radius: 8px; }
+  .gantt-tooltip-avatar { width: 25px; height: 25px; flex: 0 0 25px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #e0e7ff; color: #4338ca; font-size: 9px; font-weight: 800; }
+  .gantt-tooltip-employee-main { min-width: 0; display: flex; flex-direction: column; }
+  .gantt-tooltip-employee-name { color: #334155; font-size: 10.5px; font-weight: 700; }
+  .gantt-tooltip-employee-code { color: #94a3b8; font-size: 9px; margin-top: 1px; }
+  .gantt-tooltip-segments { display: flex; flex-direction: column; gap: 4px; }
+  .gantt-tooltip-segment { display: flex; justify-content: space-between; gap: 10px; padding: 5px 7px; border-radius: 6px; background: #f8fafc; color: #64748b; font-size: 9.5px; }
+  .gantt-tooltip-segment strong { color: #475569; }
+  .gantt-tooltip-empty { padding: 7px 8px; border-radius: 7px; background: #f8fafc; color: #94a3b8; font-size: 10px; font-style: italic; }
+  .gantt-tooltip-warning { padding: 8px 9px; border-radius: 8px; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: 10px; line-height: 1.4; margin-bottom: 10px; }
+
+  body.body--dark .gantt_tooltip .gantt-tooltip-card {
+    background: #1d2930; border-color: #34434c; color: #edf2f7; box-shadow: 0 16px 38px rgba(0,0,0,.45);
+  }
+  body.body--dark .gantt-tooltip-title { color: #f8fafc; }
+  body.body--dark .gantt-tooltip-subtitle, body.body--dark .gantt-tooltip-section-label { color: #94a3b8; }
+  body.body--dark .gantt-tooltip-meta-grid { border-color: #34434c; }
+  body.body--dark .gantt-tooltip-meta-grid strong, body.body--dark .gantt-tooltip-employee-name { color: #e2e8f0; }
+  body.body--dark .gantt-tooltip-employee, body.body--dark .gantt-tooltip-segment, body.body--dark .gantt-tooltip-empty { background: #202a32; border-color: #34434c; }
+  body.body--dark .gantt-tooltip-avatar { background: rgba(99,102,241,.2); color: #a5b4fc; }
+  body.body--dark .gantt-tooltip-warning { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.3); color: #fbbf24; }
 }
 
 /* ----------------------------------------------------
@@ -2312,4 +2437,389 @@ body.body--dark .timeline-card .gantt-no-data-overlay .text-grey-6 {
 .timeline-chart-surface.is-dark .gantt-chart-viewport {
   background: #1d2930 !important;
 }
+
+/* ============================================================
+   Gantt Tooltip — visualization only
+   The markup/data above is intentionally left unchanged.
+   ============================================================ */
+
+.gantt_tooltip {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  z-index: 10000 !important;
+}
+
+.gantt-tooltip-card {
+  width: 370px;
+  max-width: 370px;
+  box-sizing: border-box;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #1e293b;
+  box-shadow:
+    0 16px 40px rgba(15, 23, 42, 0.16),
+    0 3px 12px rgba(15, 23, 42, 0.08);
+  font-family: var(--font-primary, 'Plus Jakarta Sans', 'Inter', sans-serif);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.gantt-tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 14px;
+}
+
+.gantt-tooltip-icon {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  font-size: 17px;
+}
+
+.gantt-tooltip-heading {
+  min-width: 0;
+  flex: 1;
+}
+
+.gantt-tooltip-title {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gantt-tooltip-subtitle {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 10.5px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gantt-tooltip-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 15px;
+}
+
+.gantt-tooltip-status,
+.gantt-tooltip-priority {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: capitalize;
+}
+
+.gantt-tooltip-status {
+  background: #eef2ff;
+  color: #4f46e5;
+  border: 1px solid #c7d2fe;
+}
+
+.gantt-tooltip-priority {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.gantt-tooltip-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.gantt-tooltip-progress-row strong {
+  color: #334155;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.gantt-tooltip-progress {
+  width: 100%;
+  height: 7px;
+  margin-bottom: 15px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9eef5;
+}
+
+.gantt-tooltip-progress span {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  transition: width 0.2s ease;
+}
+
+.gantt-tooltip-meta-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 0.8fr;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.gantt-tooltip-meta-grid > div {
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid #e5eaf0;
+  border-radius: 9px;
+  background: #f8fafc;
+}
+
+.gantt-tooltip-meta-grid small {
+  display: block;
+  margin-bottom: 4px;
+  color: #94a3b8;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.gantt-tooltip-meta-grid strong {
+  display: block;
+  color: #334155;
+  font-size: 10.5px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gantt-tooltip-section {
+  margin-top: 13px;
+  padding-top: 13px;
+  border-top: 1px solid #e8edf2;
+}
+
+.gantt-tooltip-section-label {
+  margin-bottom: 9px;
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.gantt-tooltip-employees {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gantt-tooltip-employee {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 7px 9px;
+  border: 1px solid #e5eaf0;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.gantt-tooltip-avatar {
+  width: 29px;
+  height: 29px;
+  flex: 0 0 29px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #ede9fe;
+  color: #6d28d9;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.gantt-tooltip-employee-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.gantt-tooltip-employee-name {
+  color: #334155;
+  font-size: 10.5px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gantt-tooltip-employee-code {
+  color: #94a3b8;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.gantt-tooltip-empty {
+  padding: 10px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #94a3b8;
+  background: #f8fafc;
+  text-align: center;
+  font-size: 10px;
+}
+
+.gantt-tooltip-segments {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.gantt-tooltip-segment {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e5eaf0;
+  color: #64748b;
+  font-size: 9.5px;
+}
+
+.gantt-tooltip-segment strong {
+  flex: 0 0 auto;
+  color: #7c3aed;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.gantt-tooltip-warning {
+  margin-bottom: 13px;
+  padding: 10px 11px;
+  border: 1px solid #fed7aa;
+  border-radius: 9px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.gantt-tooltip-project .gantt-tooltip-icon {
+  background: #eff6ff;
+  border-color: #dbeafe;
+}
+
+.gantt-tooltip-project .gantt-tooltip-progress span {
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+}
+
+.gantt-tooltip-external .gantt-tooltip-icon {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+/* Dark mode */
+body.body--dark .gantt_tooltip {
+  background: transparent !important;
+}
+
+body.body--dark .gantt-tooltip-card {
+  border-color: #34434c;
+  background: #1d2930;
+  color: #e2e8f0;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.38),
+    0 3px 14px rgba(0, 0, 0, 0.24);
+}
+
+body.body--dark .gantt-tooltip-icon {
+  background: #26343c;
+  border-color: #3b4a54;
+}
+
+body.body--dark .gantt-tooltip-title {
+  color: #f8fafc;
+}
+
+body.body--dark .gantt-tooltip-subtitle,
+body.body--dark .gantt-tooltip-progress-row,
+body.body--dark .gantt-tooltip-section-label {
+  color: #94a3b8;
+}
+
+body.body--dark .gantt-tooltip-progress-row strong {
+  color: #e2e8f0;
+}
+
+body.body--dark .gantt-tooltip-progress {
+  background: #34434c;
+}
+
+body.body--dark .gantt-tooltip-meta-grid > div,
+body.body--dark .gantt-tooltip-employee,
+body.body--dark .gantt-tooltip-segment {
+  background: #232f38;
+  border-color: #3a4a54;
+}
+
+body.body--dark .gantt-tooltip-meta-grid small {
+  color: #81919c;
+}
+
+body.body--dark .gantt-tooltip-meta-grid strong,
+body.body--dark .gantt-tooltip-employee-name {
+  color: #dbe4ea;
+}
+
+body.body--dark .gantt-tooltip-section {
+  border-top-color: #34434c;
+}
+
+body.body--dark .gantt-tooltip-avatar {
+  background: #342c52;
+  color: #c4b5fd;
+}
+
+body.body--dark .gantt-tooltip-employee-code,
+body.body--dark .gantt-tooltip-segment {
+  color: #94a3b8;
+}
+
+body.body--dark .gantt-tooltip-empty {
+  background: #232f38;
+  border-color: #52636e;
+  color: #94a3b8;
+}
+
+body.body--dark .gantt-tooltip-warning {
+  background: #3a2b1d;
+  border-color: #79552d;
+  color: #fdba74;
+}
+
 </style>
