@@ -1183,7 +1183,7 @@ const showDailyLogReview = ref(false);
 const pendingDailyLogsCount = ref(0);
 const fetchPendingDailyLogs = async () => {
   try {
-    const response = await fetch('http://localhost:3007/api/daily-logs/pm/pending', {
+    const response = await fetch('http://localhost:3001/api/daily-logs/pm/pending', {
       headers: getAuthHeaders(),
     });
     const result = await readApiResponse<{ success: boolean; pending: any[] }>(response);
@@ -1231,7 +1231,7 @@ analyticsStore.loadAll();
 
 async function fetchResources() {
   try {
-    const response = await fetch('http://localhost:3007/api/pm/resources', {
+    const response = await fetch('http://localhost:3001/api/pm/resources', {
       headers: getAuthHeaders(),
     });
     const data = await readApiResponse<{ success: boolean; resources?: any[] }>(response);
@@ -1354,7 +1354,7 @@ async function fetchCompletedReviews() {
   loadingCompleted.value = true;
   try {
     // Fetch all completed tasks with review info
-    const response = await fetch('http://localhost:3007/api/pm/tasks/completed', {
+    const response = await fetch('http://localhost:3001/api/pm/tasks/completed', {
       headers: getAuthHeaders(),
     });
     const data = await readApiResponse<{ success: boolean; tasks: any[] }>(response);
@@ -1364,7 +1364,7 @@ async function fetchCompletedReviews() {
       const tasksWithReviews = await Promise.all(
         data.tasks.map(async (task: any) => {
           try {
-            const reviewResponse = await fetch(`http://localhost:3007/api/pm/tasks/${task.id}/review-status`, {
+            const reviewResponse = await fetch(`http://localhost:3001/api/pm/tasks/${task.id}/review-status`, {
               headers: getAuthHeaders(),
             });
             const reviewData = await readApiResponse<{ success: boolean; review_status?: string; reviewer_name?: string }>(reviewResponse);

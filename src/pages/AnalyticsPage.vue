@@ -188,7 +188,7 @@ const exportReport = async () => {
     
     // Fetch overview data
     const overviewResponse = await fetch(
-      `http://localhost:3007/api/pm/analytics/overview?period=${encodeURIComponent(filterMonth.value)}`,
+      `http://localhost:3001/api/pm/analytics/overview?period=${encodeURIComponent(filterMonth.value)}`,
       { headers }
     );
     const overviewData = await overviewResponse.json();
@@ -199,7 +199,7 @@ const exportReport = async () => {
     
     // Fetch project performance data
     const projectResponse = await fetch(
-      'http://localhost:3007/api/pm/analytics/project-performance',
+      'http://localhost:3001/api/pm/analytics/project-performance',
       { headers }
     );
     const projectData = await projectResponse.json();
