@@ -1,11 +1,11 @@
 -- ============================================================
 -- TASKY -- Expanded Comprehensive Seed Data
--- 5 Organizations, 200 Users, 45 Projects,
--- 444 Tasks, 718 Subtasks
+-- 5 Organizations, 200 Users, 49 Projects,
+-- 464 Tasks, 718 Subtasks
 -- ============================================================
 -- Run AFTER schema.sql.
--- Password for ALL users: password123
--- BCrypt hash: $2b$10$DzYSU/E6cNledVHArbIeE.0k/0QjHSr9PjGIrYWyRW9wxemvhQvC6
+-- Password for ALL users: P@ssword123
+-- BCrypt hash: $2b$10$67rWRpGItV/kXu1P2nGGsutlxT74rphxATqZb87qvidKjixA4Chl6
 -- ============================================================
 SET SQL_SAFE_UPDATES = 0;
 SET NAMES utf8mb4;
@@ -104,18 +104,18 @@ INSERT INTO `role` (`id`, `org_id`, `name`, `description`, `access_level`) VALUE
 -- ============================================================
 -- 3. USERS (~4 PMs + ~36 Employees per org)
 -- ============================================================
-SET @pw = '$2b$10$DzYSU/E6cNledVHArbIeE.0k/0QjHSr9PjGIrYWyRW9wxemvhQvC6';
+SET @pw = '$2b$10$67rWRpGItV/kXu1P2nGGsutlxT74rphxATqZb87qvidKjixA4Chl6';
 
 INSERT INTO `user` (`id`,`org_id`,`role_id`,`employee_code`,`first_name`,`last_name`,`email`,`password_hash`,`phone`,`professional_role`,`application_role`,`skills`,`max_hours_per_week`,`points`,`is_active`) VALUES
 (1, 1, 2, 'PM-001', 'Audrey', 'Coleman', 'audrey.coleman@tasky.com', @pw, '+1-555-3045', 'other', 'project_manager', '["Project Management", "Scrum Master", "Confluence", "Roadmapping"]', 40.00, 43, 1),
 (2, 1, 2, 'PM-002', 'Landon', 'Jenkins', 'landon.jenkins@tasky.com', @pw, '+1-555-1546', 'other', 'project_manager', '["Project Management", "Agile", "Scrum", "JIRA"]', 40.00, 193, 1),
 (3, 1, 2, 'PM-003', 'Ian', 'Watson', 'ian.watson@tasky.com', @pw, '+1-555-2065', 'other', 'project_manager', '["Project Management", "Agile", "DevOps", "Scrum"]', 40.00, 400, 1),
 (4, 1, 2, 'PM-004', 'Sophia', 'James', 'sophia.james@tasky.com', @pw, '+1-555-2015', 'other', 'project_manager', '["Project Management", "Kanban", "Risk Management"]', 40.00, 226, 1),
-(5, 1, 3, 'EMP-001', 'Audrey', 'Washington', 'audrey.washington@tasky.com', @pw, '+1-555-5939', 'developer', 'employee', '["Vue.js", "React", "TypeScript", "CSS", "Node.js"]', 45.00, 320, 1),
-(6, 1, 4, 'EMP-002', 'Amelia', 'Jenkins', 'amelia.jenkins@tasky.com', @pw, '+1-555-1914', 'developer', 'employee', '["Vue.js", "Express", "MySQL", "Tailwind"]', 45.00, 26, 1),
-(7, 1, 5, 'EMP-003', 'Sadie', 'Thomas', 'sadie.thomas@tasky.com', @pw, '+1-555-7581', 'designer', 'employee', '["Figma", "InVision", "Accessibility", "UX Writing"]', 35.00, 316, 1),
-(8, 1, 6, 'EMP-004', 'Jack', 'Washington', 'jack.washington@tasky.com', @pw, '+1-555-1173', 'developer', 'employee', '["Python", "FastAPI", "PostgreSQL", "Celery"]', 40.00, 196, 1),
-(9, 1, 7, 'EMP-005', 'Grace', 'Brown', 'grace.brown@tasky.com', @pw, '+1-555-2659', 'devops', 'employee', '["Azure", "Terraform", "GitHub Actions", "Grafana"]', 40.00, 333, 1),
+(5, 1, 3, 'EMP-001', 'Anushka', 'Jan', 'audrey.washington@tasky.com', @pw, '+1-555-5939', 'developer', 'employee', '["Vue.js", "React", "TypeScript", "CSS", "Node.js"]', 45.00, 320, 1),
+(6, 1, 4, 'EMP-002', 'Conrad', 'Alves', 'amelia.jenkins@tasky.com', @pw, '+1-555-1914', 'developer', 'employee', '["Vue.js", "Express", "MySQL", "Tailwind"]', 45.00, 26, 1),
+(7, 1, 5, 'EMP-003', 'Jiya', 'Haldankar', 'sadie.thomas@tasky.com', @pw, '+1-555-7581', 'designer', 'employee', '["Figma", "InVision", "Accessibility", "UX Writing"]', 35.00, 316, 1),
+(8, 1, 6, 'EMP-004', 'Noval', 'Fernandes', 'jack.washington@tasky.com', @pw, '+1-555-1173', 'developer', 'employee', '["Python", "FastAPI", "PostgreSQL", "Celery"]', 40.00, 196, 1),
+(9, 1, 7, 'EMP-005', 'Vaishnavi', 'Nayak', 'grace.brown@tasky.com', @pw, '+1-555-2659', 'devops', 'employee', '["Azure", "Terraform", "GitHub Actions", "Grafana"]', 40.00, 333, 1),
 (10, 1, 8, 'EMP-006', 'Taylor', 'Walker', 'taylor.walker@tasky.com', @pw, '+1-555-8439', 'qa_engineer', 'employee', '["Selenium", "Cypress", "Jest", "Test Planning"]', 45.00, 168, 1),
 (11, 1, 9, 'EMP-007', 'Caleb', 'Green', 'caleb.green@tasky.com', @pw, '+1-555-2682', 'business_analyst', 'employee', '["Requirements Gathering", "JIRA", "Confluence", "SQL"]', 35.00, 304, 1),
 (12, 1, 3, 'EMP-008', 'Wyatt', 'Parker', 'wyatt.parker@tasky.com', @pw, '+1-555-3064', 'developer', 'employee', '["React", "GraphQL", "TypeScript", "MongoDB"]', 45.00, 131, 1),
@@ -8110,6 +8110,71 @@ INSERT INTO `task_schedule_history` (`task_id`,`reschedule_event_id`,`old_schedu
 (420, 10, '2026-07-25', '2026-07-28', '2026-08-22', '2026-08-25', 'PM approved deadline extension.');
 
 -- ============================================================
+-- 26b. PM-001 EXTRA PROJECTS & TASKS (5 projects total, 5 tasks each)
+-- ============================================================
+INSERT INTO `project` (`id`,`org_id`,`created_by`,`name`,`description`,`status`,`priority`,`color`,`start_date`,`end_date`,`progress`) VALUES
+(46, 1, 1, 'Customer Feedback Analytics Platform', 'Centralized platform to collect, tag and analyze customer feedback.', 'active', 'high', '#1976D2', '2026-06-01', '2026-11-15', 0.00),
+(47, 1, 1, 'Employee Onboarding Automation', 'Automated workflows for new-hire onboarding, IT provisioning and paperwork.', 'planning', 'medium', '#00796B', '2026-07-01', '2026-12-01', 0.00),
+(48, 1, 1, 'Real-Time Chat Support System', 'Live chat widget and agent console for real-time customer support.', 'active', 'critical', '#5D4037', '2026-05-15', '2026-10-30', 0.00),
+(49, 1, 1, 'Warehouse Robotics Integration', 'Integration layer connecting warehouse robotics with inventory systems.', 'on-hold', 'medium', '#455A64', '2026-08-01', '2027-01-20', 0.00);
+
+INSERT INTO `project_member` (`project_id`,`user_id`,`added_by`) VALUES
+(46, 1, 1),
+(47, 1, 1),
+(48, 1, 1),
+(49, 1, 1);
+
+INSERT INTO `task` (`id`,`project_id`,`phase_id`,`created_by`,`title`,`description`,`status`,`priority`,`deadline`,`start_date`,`expected_effort`,`actual_effort`,`progress`,`risk_status`,`is_self_assigned`,`resources_needed`,`completed_at`) VALUES
+(445, 46, NULL, 1, 'Feedback Collection API', 'Build API endpoints to ingest feedback from multiple channels.', 'in-progress', 'high', '2026-07-15', '2026-06-01', 20.00, 8.00, 40.00, 'on-track', 0, 2, NULL),
+(446, 46, NULL, 1, 'Sentiment Tagging Engine', 'Auto-tag feedback entries with sentiment and topic labels.', 'not-started', 'medium', '2026-08-10', '2026-07-16', 18.00, 0.00, 0.00, 'on-track', 0, 2, NULL),
+(447, 46, NULL, 1, 'Analytics Dashboard UI', 'Build dashboard views for feedback trends and breakdowns.', 'not-started', 'medium', '2026-09-05', '2026-08-11', 22.00, 0.00, 0.00, 'on-track', 0, 2, NULL),
+(448, 46, NULL, 1, 'Export & Reporting Module', 'Allow CSV/PDF export of feedback reports.', 'not-started', 'low', '2026-10-01', '2026-09-06', 12.00, 0.00, 0.00, 'on-track', 0, 1, NULL),
+(449, 46, NULL, 1, 'Integration Testing & QA', 'End-to-end testing of the feedback analytics pipeline.', 'not-started', 'high', '2026-11-10', '2026-10-02', 16.00, 0.00, 0.00, 'on-track', 0, 2, NULL),
+(450, 47, NULL, 1, 'Onboarding Workflow Design', 'Map out the end-to-end new-hire onboarding workflow.', 'in-progress', 'medium', '2026-07-20', '2026-07-01', 14.00, 5.00, 35.00, 'on-track', 0, 1, NULL),
+(451, 47, NULL, 1, 'IT Provisioning Automation', 'Automate account creation and equipment requests.', 'not-started', 'high', '2026-08-25', '2026-07-21', 20.00, 0.00, 0.00, 'on-track', 0, 2, NULL),
+(452, 47, NULL, 1, 'Digital Paperwork Module', 'E-signature and document collection for new hires.', 'not-started', 'medium', '2026-09-20', '2026-08-26', 16.00, 0.00, 0.00, 'on-track', 0, 1, NULL),
+(453, 47, NULL, 1, 'Manager Checklist Portal', 'Portal for managers to track onboarding task completion.', 'not-started', 'low', '2026-10-15', '2026-09-21', 12.00, 0.00, 0.00, 'on-track', 0, 1, NULL),
+(454, 47, NULL, 1, 'Pilot Rollout & Feedback', 'Run pilot with one department and gather feedback.', 'not-started', 'medium', '2026-12-01', '2026-10-16', 10.00, 0.00, 0.00, 'on-track', 0, 2, NULL),
+(455, 48, NULL, 1, 'Chat Widget Frontend', 'Build embeddable live chat widget for customer-facing sites.', 'in-progress', 'critical', '2026-06-20', '2026-05-15', 24.00, 12.00, 50.00, 'on-track', 0, 2, NULL),
+(456, 48, NULL, 1, 'Agent Console', 'Build the agent-facing console for handling live chats.', 'in-progress', 'high', '2026-07-25', '2026-06-21', 26.00, 6.00, 23.00, 'at-risk', 0, 2, NULL),
+(457, 48, NULL, 1, 'Real-Time Messaging Backend', 'WebSocket-based backend for real-time message delivery.', 'not-started', 'critical', '2026-08-20', '2026-07-26', 28.00, 0.00, 0.00, 'on-track', 0, 3, NULL),
+(458, 48, NULL, 1, 'Chat History & Search', 'Persist and index chat transcripts for search.', 'not-started', 'medium', '2026-09-15', '2026-08-21', 14.00, 0.00, 0.00, 'on-track', 0, 1, NULL),
+(459, 48, NULL, 1, 'Load Testing & Rollout', 'Load test the chat system and plan phased rollout.', 'not-started', 'high', '2026-10-30', '2026-09-16', 16.00, 0.00, 0.00, 'on-track', 0, 2, NULL),
+(460, 49, NULL, 1, 'Robotics API Gateway', 'Build a gateway to connect warehouse robots to core systems.', 'not-started', 'medium', '2026-09-10', '2026-08-01', 22.00, 0.00, 0.00, 'on-track', 0, 2, NULL),
+(461, 49, NULL, 1, 'Inventory Sync Service', 'Sync robot pick/pack events with inventory counts.', 'not-started', 'medium', '2026-10-05', '2026-09-11', 20.00, 0.00, 0.00, 'on-track', 0, 2, NULL),
+(462, 49, NULL, 1, 'Robot Fleet Monitoring', 'Dashboard to monitor robot fleet status and health.', 'not-started', 'low', '2026-11-01', '2026-10-06', 18.00, 0.00, 0.00, 'on-track', 0, 1, NULL),
+(463, 49, NULL, 1, 'Safety & Error Handling', 'Implement safety interlocks and error recovery flows.', 'not-started', 'high', '2026-12-05', '2026-11-02', 20.00, 0.00, 0.00, 'on-track', 0, 2, NULL),
+(464, 49, NULL, 1, 'Pilot Zone Deployment', 'Deploy and validate the integration in a pilot warehouse zone.', 'not-started', 'medium', '2027-01-20', '2026-12-06', 14.00, 0.00, 0.00, 'on-track', 0, 2, NULL);
+
+-- ============================================================
+-- 26c. AVATAR UPDATES
+-- ============================================================
+-- PM-001
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/32c2464d89a977b703fe872f014e48d6?s=400&d=robohash&r=x',
+                  `avatar_url` = 'https://gravatar.com/avatar/32c2464d89a977b703fe872f014e48d6?s=400&d=robohash&r=x'
+WHERE `id` = 1;
+
+-- EMP-001 through EMP-018
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/9e08c5653340883d00753900e5d7a3a2?s=400&d=robohash&r=x',  `avatar_url` = 'https://gravatar.com/avatar/9e08c5653340883d00753900e5d7a3a2?s=400&d=robohash&r=x'  WHERE `id` = 5;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/1d3f7d5bbf60afef54a8a6e66e93e46f?s=400&d=robohash&r=x',  `avatar_url` = 'https://gravatar.com/avatar/1d3f7d5bbf60afef54a8a6e66e93e46f?s=400&d=robohash&r=x'  WHERE `id` = 6;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/c79f022e9c0899bd43a92c2dc3212392?s=400&d=robohash&r=x',  `avatar_url` = 'https://gravatar.com/avatar/c79f022e9c0899bd43a92c2dc3212392?s=400&d=robohash&r=x'  WHERE `id` = 7;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/f73d43e2ccb570485fee83ea88ea1eba?s=400&d=robohash&r=x',  `avatar_url` = 'https://gravatar.com/avatar/f73d43e2ccb570485fee83ea88ea1eba?s=400&d=robohash&r=x'  WHERE `id` = 8;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/0622ba49258e2b1b53c750117f23db12?s=400&d=robohash&r=x',  `avatar_url` = 'https://gravatar.com/avatar/0622ba49258e2b1b53c750117f23db12?s=400&d=robohash&r=x'  WHERE `id` = 9;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/9a8fa1308d9b779cbdab09d4a2c815ab?s=400&d=robohash&r=x',  `avatar_url` = 'https://gravatar.com/avatar/9a8fa1308d9b779cbdab09d4a2c815ab?s=400&d=robohash&r=x'  WHERE `id` = 10;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/3899a173a9b16e7b8b6568a90d2e00d9?s=400&d=robohash&r=x',  `avatar_url` = 'https://gravatar.com/avatar/3899a173a9b16e7b8b6568a90d2e00d9?s=400&d=robohash&r=x'  WHERE `id` = 11;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/8c40c15cb09faa7063b3f583ebbf1a5a?s=400&d=robohash&r=x',  `avatar_url` = 'https://gravatar.com/avatar/8c40c15cb09faa7063b3f583ebbf1a5a?s=400&d=robohash&r=x'  WHERE `id` = 12;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/a8feb46e419063ee081e070ba379ac41?s=400&d=robohash&r=x',  `avatar_url` = 'https://gravatar.com/avatar/a8feb46e419063ee081e070ba379ac41?s=400&d=robohash&r=x'  WHERE `id` = 13;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/a8feb46e419063ee081e070ba379ac41?s=400&d=wavatar&r=x',   `avatar_url` = 'https://gravatar.com/avatar/a8feb46e419063ee081e070ba379ac41?s=400&d=wavatar&r=x'   WHERE `id` = 14;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/a8feb46e419063ee081e070ba379ac41?s=400&d=monsterid&r=x', `avatar_url` = 'https://gravatar.com/avatar/a8feb46e419063ee081e070ba379ac41?s=400&d=monsterid&r=x' WHERE `id` = 15;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/a8feb46e419063ee081e070ba379ac41?s=400&d=robohash&r=x',  `avatar_url` = 'https://gravatar.com/avatar/a8feb46e419063ee081e070ba379ac41?s=400&d=robohash&r=x'  WHERE `id` = 16;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/a8feb46e419063ee081e070ba379ac41?s=400&d=retro&r=x',     `avatar_url` = 'https://gravatar.com/avatar/a8feb46e419063ee081e070ba379ac41?s=400&d=retro&r=x'     WHERE `id` = 17;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/a8feb46e419063ee081e070ba379ac41?s=400&d=wavatar&r=x',   `avatar_url` = 'https://gravatar.com/avatar/a8feb46e419063ee081e070ba379ac41?s=400&d=wavatar&r=x'   WHERE `id` = 18;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/6347cfa806f99dbacab34948c6bfcac1?s=400&d=robohash&r=x',  `avatar_url` = 'https://gravatar.com/avatar/6347cfa806f99dbacab34948c6bfcac1?s=400&d=robohash&r=x'  WHERE `id` = 19;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/215d4dfbc27a5d1628874c1d80dc81f6?s=400&d=robohash&r=x',  `avatar_url` = 'https://gravatar.com/avatar/215d4dfbc27a5d1628874c1d80dc81f6?s=400&d=robohash&r=x'  WHERE `id` = 20;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/179ffdc7d54b1a2092791ff1faf2dbb5?s=400&d=robohash&r=x',  `avatar_url` = 'https://gravatar.com/avatar/179ffdc7d54b1a2092791ff1faf2dbb5?s=400&d=robohash&r=x'  WHERE `id` = 21;
+UPDATE `user` SET `avatar` = 'https://gravatar.com/avatar/3d0d3b9cb14f425a33d4892a835a514b?s=400&d=robohash&r=x',  `avatar_url` = 'https://gravatar.com/avatar/3d0d3b9cb14f425a33d4892a835a514b?s=400&d=robohash&r=x'  WHERE `id` = 22;
+
+-- ============================================================
 -- 27. UPDATE PROJECT PROGRESS (computed from task averages)
 -- ============================================================
 UPDATE `project` p SET p.`progress` = (SELECT COALESCE(AVG(t.`progress`), 0) FROM `task` t WHERE t.`project_id` = p.`id`);
@@ -8120,8 +8185,8 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- SEED DATA COMPLETE
 -- ============================================================
 -- ============================================================
--- Login Credentials (password: password123 for all users)
+-- Login Credentials (password: P@ssword123 for all users)
 -- Organizations: Tasky Inc., Acme Corp., Nimbus Technologies, Vertex Solutions, BrightPath Labs
--- Total: 5 orgs | 200 users | 45 projects | 444 tasks
+-- Total: 5 orgs | 200 users | 49 projects | 464 tasks
 -- See the `user` table for full login list (email + employee_code).
 -- ============================================================

@@ -265,11 +265,8 @@
                   <q-item-section avatar>
                     <q-avatar>
                       <img
-                        :src="
-                          user.avatar_url ||
-                          `https://i.pravatar.cc/150?img=${user.id}`
-                        "
-                      />
+                      :src="user.avatar || `https://i.pravatar.cc/150?img=${user.id}`"
+                    />
                     </q-avatar>
                   </q-item-section>
 
@@ -348,16 +345,56 @@
       </div>
       <div class="row q-col-gutter-md q-mt-md">
         <div class="col-12 col-md-4 graph-card">
-          <ResourceUtilizationChart :resources="resources" />
+          <UpcomingDeadlineRisks />
         </div>
 
         <div class="col-12 col-md-4 graph-card">
-          <ActiveTasksChart :resources="resources" />
+          <TaskStatusDistribution />
         </div>
 
         <div class="col-12 col-md-4 graph-card">
           <WorkloadScatterChart :resources="resources" />
         </div>
+      </div>
+
+      <!-- Project Timeline / Gantt -->
+      <div class="q-mt-md">
+        <q-card class="full-width">
+          <q-card-section class="q-pb-sm">
+            <div class="row items-center justify-between">
+              <div>
+                <div class="text-h6 text-weight-bold">Project Timeline</div>
+                <div class="text-caption text-grey-6">
+                  Project schedule, tasks, dependencies and resources
+                </div>
+              </div>
+
+              <q-spinner-dots
+                v-if="
+                  pmTaskStore.loading ||
+                  projectStore.loading ||
+                  resourceStore.loading
+                "
+                size="24px"
+              />
+            </div>
+          </q-card-section>
+
+          <q-card-section class="q-pt-none">
+            <DhtmlxGanttTimeline
+              v-model:search-query="searchQuery"
+              v-model:scale="scale"
+              v-model:group-by-project="groupByProject"
+              v-model:show-extra-columns="showExtraColumns"
+              v-model:show-dependencies="showDependencies"
+              :tasks="timelineTasks"
+              :projects="timelineProjects"
+              :resources="timelineResources"
+              title="Project Timeline"
+              @task-click="openTask"
+            />
+          </q-card-section>
+        </q-card>
       </div>
     </q-tab-panel>
 
@@ -1260,6 +1297,10 @@ import { useAuthStore } from '../stores/authStore';
 import { getAuthHeaders, readApiResponse } from '../services/api';
 import { useDashboardStore } from '../stores/dashboardStore';
 import { useAnalyticsStore } from '../stores/analyticsStore';
+import { usePmTaskStore } from '../stores/pmTaskStore';
+import { useProjectStore } from '../stores/projectStore';
+import { useResourceStore } from '../stores/resourceStore';
+import DhtmlxGanttTimeline from '../components/DhtmlxGanttTimeline.vue';
 import EmployeePerformanceReport from '../components/EmployeePerformanceReport.vue';
 import DailyLogReviewDialog from '../components/DailyLogReviewDialog.vue';
 import ProjectPerformanceTable from '../components/ProjectPerformanceTable.vue';
@@ -1292,6 +1333,9 @@ const authStore = useAuthStore();
 const { logout } = authStore;
 const dashboardStore = useDashboardStore();
 const analyticsStore = useAnalyticsStore();
+const pmTaskStore = usePmTaskStore();
+const projectStore = useProjectStore();
+const resourceStore = useResourceStore();
 
 const searchQuery = ref('');
 const teamSearchQuery = ref('');
@@ -1306,6 +1350,52 @@ const loadingCompleted = ref(false);
 const selectedTask = ref<any>(null);
 const showTaskDetailDialog = ref(false);
 
+// Gantt timeline state — same data pipeline as the working Calendar page.
+const scale = ref<'hour' | 'day' | 'week' | 'month'>('week');
+const groupByProject = ref(true);
+const showExtraColumns = ref(false);
+const showDependencies = ref(false);
+
+
+const timelineTasks = computed(() => pmTaskStore.tasks.map((task: any) => ({
+  ...task,
+  task_id: task.task_id ?? task.id,
+  project_id: task.project_id ?? task.projectId,
+  assignees: task.assignees || [],
+  predecessor_task_ids: Array.from(
+    new Set(
+      [
+        ...(Array.isArray(task.predecessor_task_ids)
+          ? task.predecessor_task_ids
+          : []),
+        ...(Array.isArray(task.dependsOn)
+          ? task.dependsOn.map((dependency: any) => dependency.depends_on_id)
+          : []),
+      ]
+        .map((id) => Number(id))
+        .filter((id) => Number.isInteger(id) && id > 0),
+    ),
+  ),
+})));
+
+const timelineProjects = computed(() => projectStore.projects.map((project: any) => ({
+  ...project,
+  project_id: project.project_id ?? project.id,
+})));
+
+const timelineResources = computed(() => resourceStore.resources.map((resource: any) => ({
+  ...resource,
+  user_id: resource.user_id ?? resource.id,
+  name: resource.name ?? `${resource.first_name || ''} ${resource.last_name || ''}`.trim(),
+})));
+
+const openTask = (task: any) => {
+  if (task?.id) {
+    // Keep this consistent with the working Calendar page.
+    window.location.href = `/dashboard/tasks?open=${task.id}`;
+  }
+};
+
 onMounted(() => {
   console.log('Project Manager Dashboard mounted');
   console.log('Auth store user:', authStore.currentUser);
@@ -1318,6 +1408,13 @@ analyticsStore.loadAll();
   fetchCompletedReviews();
   fetchPendingDailyLogs();
   fetchResources();
+
+  // Load the same task/project/resource sources used by the working Calendar Gantt.
+  void Promise.all([
+    pmTaskStore.fetchTasks(),
+    projectStore.fetchProjects(),
+    resourceStore.fetchResources(),
+  ]);
 });
 
 async function fetchResources() {
@@ -1546,7 +1643,7 @@ function showEmployeePerformance(user: any) {
 }
 
 .command-center-tabs :deep(.q-tab) {
-  min-width: 150px;
+  min-width: 120px;
   padding-inline: 22px;
 }
 

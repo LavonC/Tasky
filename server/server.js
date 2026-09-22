@@ -1353,14 +1353,24 @@ app.get('/api/users', authenticateToken, async (req, res) => {
       let rows;
       try {
         [rows] = await connection.execute(
-          'SELECT u.id, u.employee_code, u.first_name, u.last_name, u.email, u.phone, u.points, r.name as role_name, r.access_level FROM user u JOIN role r ON u.role_id = r.id WHERE u.org_id = ?',
-          [orgId]
-        );
+  `SELECT u.id, u.employee_code, u.first_name, u.last_name,
+          u.email, u.phone, u.points, u.avatar,
+          r.name as role_name, r.access_level
+   FROM user u
+   JOIN role r ON u.role_id = r.id
+   WHERE u.org_id = ?`,
+  [orgId]
+);
       } catch (colErr) {
         [rows] = await connection.execute(
-          'SELECT u.id, u.employee_code, u.first_name, u.last_name, u.email, u.phone, r.name as role_name, r.access_level FROM user u JOIN role r ON u.role_id = r.id WHERE u.org_id = ?',
-          [orgId]
-        );
+  `SELECT u.id, u.employee_code, u.first_name, u.last_name,
+          u.email, u.phone, u.points, u.avatar,
+          r.name as role_name, r.access_level
+   FROM user u
+   JOIN role r ON u.role_id = r.id
+   WHERE u.org_id = ?`,
+  [orgId]
+);
         rows.forEach((r) => {
           r.points = 0;
         });

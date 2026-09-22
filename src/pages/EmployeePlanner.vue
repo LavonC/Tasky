@@ -8,7 +8,163 @@
          CALENDAR VIEW
     ========================================================= -->
 
-    <div class="calendar-container q-mt-xl">
+    <div class="calendar-container q-mt-sm">
+
+<div class="row q-col-gutter-md q-mb-md">
+        <!-- STATUS -->
+
+        <div class="col-12 col-md-5">
+          <q-card flat bordered class="compact-info-card">
+            <div class="q-pa-md">
+              <div class="row items-center justify-between">
+                <div>
+                  <div class="section-kicker">SELECTED DAY</div>
+
+                  <div class="selected-date">
+                    {{ selectedDateFormatted }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- STATUS OPTIONS -->
+
+              <div class="compact-status-grid q-mt-md">
+                <div
+                  v-for="option in dayStatusOptions"
+                  :key="option.value"
+                  class="compact-status-option"
+                  :class="{
+                    'compact-status-active': selectedDayStatus === option.value,
+                  }"
+                  @click="selectDayStatus(option.value)"
+                >
+                  <q-icon :name="option.icon" size="16px" />
+
+                  <span>
+                    {{ option.label }}
+                  </span>
+                </div>
+              </div>
+
+              <div
+                v-if="selectedDayCompliance?.status === 'submitted'"
+                class="text-positive text-weight-bold flex items-center justify-center q-gutter-x-sm q-mt-md"
+              >
+                <q-icon name="check_circle" size="sm" /> <span>Submitted for Review</span>
+              </div>
+              <div
+                v-else-if="selectedDayCompliance?.status === 'reviewed'"
+                class="text-primary text-weight-bold flex items-center justify-center q-mt-md"
+              >
+                <div class="flex items-center q-gutter-x-sm">
+                  <q-icon name="verified" size="sm" /> <span>Reviewed by PM</span>
+                </div>
+              </div>
+              <q-btn
+                v-else
+                unelevated
+                dense
+                no-caps
+                color="primary"
+                class="full-width q-mt-md"
+                label="Save Day Status"
+                @click="submitDayToPM"
+              />
+            </div>
+          </q-card>
+        </div>
+
+        <!-- ACTIVITY -->
+
+        <div class="col-12 col-md-7">
+          <q-card flat bordered class="compact-info-card">
+            <div class="q-pa-md">
+              <div class="row items-center justify-between">
+                <div>
+                  <div class="section-kicker">WORK ACTIVITY</div>
+
+                  <div class="selected-date">
+                    {{ selectedDayActivity.length }}
+                    {{ selectedDayActivity.length === 1 ? 'task' : 'tasks' }}
+                    logged
+                  </div>
+                </div>
+
+                <div class="row items-center q-gutter-x-sm">
+                  <div v-if="selectedDayActivity.length" class="text-caption text-grey-6">
+                    {{ totalHours(selectedDayActivity) }}h total
+                  </div>
+                  <q-btn
+                    unelevated
+                    dense
+                    no-caps
+                    color="primary"
+                    icon="add"
+                    label="Add Log"
+                    @click="openCreateLogDialog"
+                    class="q-px-sm"
+                  />
+                </div>
+              </div>
+
+              <div v-if="selectedDayActivity.length" class="compact-activity-list q-mt-sm">
+                <div v-for="log in selectedDayActivity" :key="log.id" class="compact-activity-row">
+                  <div class="activity-task-icon">
+                    <q-icon
+                      :name="log.taskTitle === 'Manual Entry' ? 'edit_note' : 'task_alt'"
+                      size="15px"
+                    />
+                  </div>
+
+                  <div class="col">
+                    <div class="compact-task-name">
+                      {{ log.taskTitle || 'Manual Entry' }}
+                      <q-icon v-if="isTaskAffectedByLeave(log, selectedDate)" name="warning" color="red" size="14px" class="q-ml-xs" />
+                    </div>
+
+                    <div v-if="log.project" class="text-caption text-grey-6">
+                      {{ log.project }}
+                    </div>
+
+                    <div v-if="log.note" class="text-caption text-grey-5 q-mt-xs log-note-text">
+                      {{ log.note }}
+                    </div>
+                  </div>
+
+                  <div v-if="log.progress > 0" class="compact-progress">
+                    <div class="text-caption">{{ log.progress }}%</div>
+
+                    <q-linear-progress
+                      :value="log.progress / 100"
+                      rounded
+                      :color="isTaskAffectedByLeave(log, selectedDate) ? 'red' : 'primary'"
+                      size="4px"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="compact-empty">
+                <q-icon name="event_note" size="25px" />
+
+                <span> No work logged for this day </span>
+                <q-btn
+                  unelevated
+                  no-caps
+                  color="primary"
+                  icon="add"
+                  label="Add Work Entry"
+                  class="q-mt-md"
+                  @click="openCreateLogDialog"
+                />
+              </div>
+
+              <!-- Submit to PM moved to Save Day Status above -->
+            </div>
+          </q-card>
+        </div>
+      </div>
+
       <q-card flat bordered class="calendar-card">
         <!-- HEADER -->
         <CalendarToolbar
@@ -175,160 +331,7 @@
            SELECTED DAY
       ======================================================== -->
 
-      <div class="row q-col-gutter-md q-mt-md">
-        <!-- STATUS -->
-
-        <div class="col-12 col-md-5">
-          <q-card flat bordered class="compact-info-card">
-            <div class="q-pa-md">
-              <div class="row items-center justify-between">
-                <div>
-                  <div class="section-kicker">SELECTED DAY</div>
-
-                  <div class="selected-date">
-                    {{ selectedDateFormatted }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- STATUS OPTIONS -->
-
-              <div class="compact-status-grid q-mt-md">
-                <div
-                  v-for="option in dayStatusOptions"
-                  :key="option.value"
-                  class="compact-status-option"
-                  :class="{
-                    'compact-status-active': selectedDayStatus === option.value,
-                  }"
-                  @click="selectDayStatus(option.value)"
-                >
-                  <q-icon :name="option.icon" size="16px" />
-
-                  <span>
-                    {{ option.label }}
-                  </span>
-                </div>
-              </div>
-
-              <div
-                v-if="selectedDayCompliance?.status === 'submitted'"
-                class="text-positive text-weight-bold flex items-center justify-center q-gutter-x-sm q-mt-md"
-              >
-                <q-icon name="check_circle" size="sm" /> <span>Submitted for Review</span>
-              </div>
-              <div
-                v-else-if="selectedDayCompliance?.status === 'reviewed'"
-                class="text-primary text-weight-bold flex items-center justify-center q-mt-md"
-              >
-                <div class="flex items-center q-gutter-x-sm">
-                  <q-icon name="verified" size="sm" /> <span>Reviewed by PM</span>
-                </div>
-              </div>
-              <q-btn
-                v-else
-                unelevated
-                dense
-                no-caps
-                color="primary"
-                class="full-width q-mt-md"
-                label="Save Day Status"
-                @click="submitDayToPM"
-              />
-            </div>
-          </q-card>
-        </div>
-
-        <!-- ACTIVITY -->
-
-        <div class="col-12 col-md-7">
-          <q-card flat bordered class="compact-info-card">
-            <div class="q-pa-md">
-              <div class="row items-center justify-between">
-                <div>
-                  <div class="section-kicker">WORK ACTIVITY</div>
-
-                  <div class="selected-date">
-                    {{ selectedDayActivity.length }}
-                    {{ selectedDayActivity.length === 1 ? 'task' : 'tasks' }}
-                    logged
-                  </div>
-                </div>
-
-                <div class="row items-center q-gutter-x-sm">
-                  <div v-if="selectedDayActivity.length" class="text-caption text-grey-6">
-                    {{ totalHours(selectedDayActivity) }}h total
-                  </div>
-                  <q-btn
-                    unelevated
-                    dense
-                    no-caps
-                    color="primary"
-                    icon="add"
-                    label="Add Log"
-                    @click="openCreateLogDialog"
-                    class="q-px-sm"
-                  />
-                </div>
-              </div>
-
-              <div v-if="selectedDayActivity.length" class="compact-activity-list q-mt-sm">
-                <div v-for="log in selectedDayActivity" :key="log.id" class="compact-activity-row">
-                  <div class="activity-task-icon">
-                    <q-icon
-                      :name="log.taskTitle === 'Manual Entry' ? 'edit_note' : 'task_alt'"
-                      size="15px"
-                    />
-                  </div>
-
-                  <div class="col">
-                    <div class="compact-task-name">
-                      {{ log.taskTitle || 'Manual Entry' }}
-                      <q-icon v-if="isTaskAffectedByLeave(log, selectedDate)" name="warning" color="red" size="14px" class="q-ml-xs" />
-                    </div>
-
-                    <div v-if="log.project" class="text-caption text-grey-6">
-                      {{ log.project }}
-                    </div>
-
-                    <div v-if="log.note" class="text-caption text-grey-5 q-mt-xs log-note-text">
-                      {{ log.note }}
-                    </div>
-                  </div>
-
-                  <div v-if="log.progress > 0" class="compact-progress">
-                    <div class="text-caption">{{ log.progress }}%</div>
-
-                    <q-linear-progress
-                      :value="log.progress / 100"
-                      rounded
-                      :color="isTaskAffectedByLeave(log, selectedDate) ? 'red' : 'primary'"
-                      size="4px"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div v-else class="compact-empty">
-                <q-icon name="event_note" size="25px" />
-
-                <span> No work logged for this day </span>
-                <q-btn
-                  unelevated
-                  no-caps
-                  color="primary"
-                  icon="add"
-                  label="Add Work Entry"
-                  class="q-mt-md"
-                  @click="openCreateLogDialog"
-                />
-              </div>
-
-              <!-- Submit to PM moved to Save Day Status above -->
-            </div>
-          </q-card>
-        </div>
-      </div>
+      
     </div>
 
     <!-- =========================================================
