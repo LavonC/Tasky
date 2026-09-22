@@ -35,9 +35,9 @@ export default function analyticsRoutes(pool) {
           SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) AS active_projects,
           SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_projects,
           ROUND(AVG(progress), 1) AS avg_progress
-        FROM project p WHERE p.org_id = ? AND p.created_by = ?${projectPeriodFilter}
+        FROM project p WHERE p.org_id = ? AND p.status = 'active'${projectPeriodFilter}
       `,
-        [orgId, pmId],
+        [orgId],
       );
 
       const [taskStats] = await pool.execute(
@@ -48,9 +48,9 @@ export default function analyticsRoutes(pool) {
           SUM(CASE WHEN t.status NOT IN ('completed') AND t.deadline < CURDATE() THEN 1 ELSE 0 END) AS overdue_tasks,
           ROUND(AVG(t.progress), 1) AS avg_task_progress
         FROM task t JOIN project p ON p.id = t.project_id
-        WHERE p.org_id = ? AND p.created_by = ?${taskPeriodFilter}
+        WHERE p.org_id = ?${taskPeriodFilter}
       `,
-        [orgId, pmId],
+        [orgId],
       );
 
       const [teamStats] = await pool.execute(
@@ -121,14 +121,17 @@ export default function analyticsRoutes(pool) {
           COUNT(t.id) AS total_tasks,
           SUM(CASE WHEN t.status = 'completed' THEN 1 ELSE 0 END) AS completed_tasks,
           SUM(CASE WHEN t.status IN ('in-progress', 'not-started') THEN 1 ELSE 0 END) AS pending_tasks,
-          SUM(CASE WHEN t.deadline < CURDATE() AND t.status != 'completed' THEN 1 ELSE 0 END) AS overdue_tasks
+          SUM(CASE WHEN t.deadline < CURDATE() AND t.status != 'completed' THEN 1 ELSE 0 END) AS overdue_tasks,
+          COALESCE(SUM(t.actual_effort), 0) AS total_hours_logged,
+          COALESCE(SUM(t.expected_effort), 0) AS total_estimated_hours,
+          ROUND(CASE WHEN COUNT(t.id) > 0 THEN (SUM(CASE WHEN t.status = 'completed' THEN 1 ELSE 0 END) / COUNT(t.id)) * 100 ELSE 0 END, 1) AS assigned_completion_rate
         FROM project p
         LEFT JOIN task t ON t.project_id = p.id${taskPeriodFilter}
-        WHERE p.org_id = ? AND p.created_by = ?${projectPeriodFilter}
+        WHERE p.org_id = ? AND p.status = 'active'${projectPeriodFilter}
         GROUP BY p.id
         ORDER BY p.end_date ASC
       `,
-        [orgId, pmId],
+        [orgId],
       );
 
       res.json({ success: true, projects });
@@ -152,10 +155,10 @@ export default function analyticsRoutes(pool) {
           COUNT(*) AS count
         FROM task t
         JOIN project p ON p.id = t.project_id
-        WHERE p.org_id = ? AND p.created_by = ?
+        WHERE p.org_id = ? 
         GROUP BY t.status
       `,
-        [orgId, pmId],
+        [orgId],
       );
 
       const [priorityDistribution] = await pool.execute(
@@ -165,15 +168,15 @@ export default function analyticsRoutes(pool) {
           COUNT(*) AS count
         FROM task t
         JOIN project p ON p.id = t.project_id
-        WHERE p.org_id = ? AND p.created_by = ?
+        WHERE p.org_id = ? 
         GROUP BY t.priority
       `,
-        [orgId, pmId],
+        [orgId],
       );
 
       const [total] = await pool.execute(
-        `SELECT COUNT(*) AS total FROM task t JOIN project p ON p.id = t.project_id WHERE p.org_id = ? AND p.created_by = ?`,
-        [orgId, pmId],
+        `SELECT COUNT(*) AS total FROM task t JOIN project p ON p.id = t.project_id WHERE p.org_id = ? `,
+        [orgId],
       );
 
       res.json({
@@ -206,11 +209,11 @@ export default function analyticsRoutes(pool) {
           ) days
         ) d
         LEFT JOIN task t ON DATE(t.completed_at) = d.day
-          AND t.project_id IN (SELECT id FROM project WHERE org_id = ? AND created_by = ?)
+          AND t.project_id IN (SELECT id FROM project WHERE org_id = ? )
         GROUP BY d.day
         ORDER BY d.day ASC
       `,
-        [orgId, pmId],
+        [orgId],
       );
 
       res.json({ success: true, trend });
@@ -273,12 +276,12 @@ export default function analyticsRoutes(pool) {
           END AS risk_level
         FROM task t
         JOIN project p ON p.id = t.project_id
-        WHERE p.org_id = ? AND p.created_by = ?
+        WHERE p.org_id = ? 
           AND t.status NOT IN ('completed')
           AND t.deadline <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
         ORDER BY t.deadline ASC
       `,
-        [orgId, pmId],
+        [orgId],
       );
 
       res.json({ success: true, risks });
@@ -307,10 +310,10 @@ export default function analyticsRoutes(pool) {
           COALESCE((SELECT SUM(t3.expected_effort) FROM task t3 WHERE t3.project_id = p.id), 0) AS total_estimated_hours,
           DATEDIFF(p.end_date, CURDATE()) AS days_remaining
         FROM project p
-        WHERE p.org_id = ? AND p.created_by = ?
+        WHERE p.org_id = ? AND p.status = 'active'
         ORDER BY p.created_at DESC
       `,
-        [orgId, pmId],
+        [orgId],
       );
 
       res.json({ success: true, projects });

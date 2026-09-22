@@ -40,6 +40,7 @@ import { useD3Resize } from '../composables/useD3Resize';
 interface ActivityData {
   activity_date: string;
   activity_count: number;
+  day_status?: string;
 }
 
 interface Props {
@@ -88,14 +89,14 @@ function renderHeatmap() {
   const rowHeight = (height - margin.top - margin.bottom) / days.length;
 
   // Create activity map
-  const activityMap = new Map<string, number>();
+  const activityMap = new Map<string, { count: number; status: string }>();
   props.data.forEach((item) => {
     const date = new Date(`${item.activity_date}T00:00:00Z`);
     const dayIndex = date.getDay();
     const adjustedDayIndex = dayIndex === 0 ? 6 : dayIndex - 1; // Convert to Mon-Sun (0-6)
     const weekIndex = Math.floor((date.getTime() - firstMonday.getTime()) / (7 * 24 * 60 * 60 * 1000));
     const key = `${weekIndex}-${adjustedDayIndex}`;
-    activityMap.set(key, item.activity_count);
+    activityMap.set(key, { count: item.activity_count, status: item.day_status || 'no-entry' });
   });
 
   // Color scale
@@ -109,10 +110,18 @@ function renderHeatmap() {
   for (let week = 0; week < weeks; week++) {
     for (let day = 0; day < days.length; day++) {
       const key = `${week}-${day}`;
-      const activity = activityMap.get(key) || 0;
+      const activityData = activityMap.get(key) || { count: 0, status: 'no-entry' };
 
       const x = margin.left + week * cellSize;
       const y = margin.top + day * rowHeight;
+
+      // Red color for leave days
+      let fillColor = '#f0f0f0';
+      if (activityData.status === 'leave') {
+        fillColor = '#ef5350'; // Red for leave
+      } else if (activityData.count > 0) {
+        fillColor = colorScale(activityData.count);
+      }
 
       svg
         .append('rect')
@@ -120,7 +129,7 @@ function renderHeatmap() {
         .attr('y', y)
         .attr('width', cellSize - 2)
         .attr('height', rowHeight - 2)
-        .attr('fill', activity > 0 ? colorScale(activity) : '#f0f0f0')
+        .attr('fill', fillColor)
         .attr('rx', 3)
         .attr('stroke', '#e0e0e0')
         .attr('stroke-width', 1)
@@ -132,7 +141,7 @@ function renderHeatmap() {
           d3.select(this).attr('stroke', '#e0e0e0').attr('stroke-width', 1);
         })
         .append('title')
-        .text(`${days[day]}: ${activity} activities`);
+        .text(`${days[day]}: ${activityData.count} activities${activityData.status === 'leave' ? ' (Leave)' : ''}`);
     }
   }
 

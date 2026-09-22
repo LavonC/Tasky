@@ -81,6 +81,17 @@
                 dense
                 class="q-mt-xs"
               />
+              <q-btn
+                flat
+                round
+                dense
+                icon="lightbulb"
+                color="amber"
+                @click="showRecommendations"
+                :loading="loadingRecommendations"
+              >
+                <q-tooltip>View top 3 recommendations</q-tooltip>
+              </q-btn>
             </div>
             <div class="col-3">
               <q-input
@@ -137,6 +148,48 @@
       </q-card-section>
     </q-card>
   </q-dialog>
+
+  <!-- Recommendations Dialog -->
+  <q-dialog v-model="showRecommendationsDialog">
+    <q-card style="min-width: 400px">
+      <q-card-section>
+        <div class="text-h6">💡 Top 3 Recommendations</div>
+        <div class="text-caption text-grey-7">Based on role match, workload, and project fit</div>
+      </q-card-section>
+
+      <q-card-section class="q-pt-none">
+        <q-list separator>
+          <q-item
+            v-for="rec in recommendations"
+            :key="rec.user_id"
+            clickable
+            @click="selectRecommendation(rec.user_id)"
+            class="q-py-md"
+          >
+            <q-item-section avatar>
+              <q-avatar>
+                <img :src="rec.avatar || `https://i.pravatar.cc/150?img=${rec.user_id}`" />
+              </q-avatar>
+            </q-item-section>
+            <q-item-section>
+              <q-item-label class="text-weight-bold">{{ rec.name }}</q-item-label>
+              <q-item-label caption>{{ rec.reasons[0] }}</q-item-label>
+              <q-item-label caption class="text-grey-6 q-mt-xs">
+                Utilization: {{ Math.round(100 - rec.utilization) }}% available · {{ rec.active_task_count }} active tasks
+              </q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-btn flat round dense icon="check" color="primary" />
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn flat label="Cancel" color="grey" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup lang="ts">
@@ -163,6 +216,9 @@ const authStore = useAuthStore();
 const isOpen = ref(props.modelValue);
 const isEdit = ref(false);
 const loading = ref(false);
+const loadingRecommendations = ref(false);
+const showRecommendationsDialog = ref(false);
+const recommendations = ref<any[]>([]);
 
 const projectOptions = computed(() => {
   return projectStore.projects.map((p) => ({ label: p.name, value: p.id }));
@@ -295,6 +351,44 @@ watch([() => form.value.auto_assign, () => form.value.resources_needed], async (
 watch(isOpen, (val) => {
   emit('update:modelValue', val);
 });
+
+const showRecommendations = async () => {
+  loadingRecommendations.value = true;
+  try {
+    const response = await fetch('http://localhost:3007/api/pm/schedule/recommend-preview', {
+      method: 'POST',
+      headers: taskStore.getHeaders(),
+      body: JSON.stringify({
+        project_id: form.value.project_id,
+        title: form.value.title,
+        description: form.value.description,
+      }),
+    });
+    const data = await response.json();
+    if (data.success && data.recommendations) {
+      recommendations.value = data.recommendations.slice(0, 3);
+      showRecommendationsDialog.value = true;
+    } else {
+      $q.notify({
+        type: 'warning',
+        message: 'No recommendations available',
+      });
+    }
+  } catch (err) {
+    console.error('Error fetching recommendations:', err);
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to fetch recommendations',
+    });
+  } finally {
+    loadingRecommendations.value = false;
+  }
+};
+
+const selectRecommendation = (userId: number) => {
+  form.value.assignee_ids = [userId];
+  showRecommendationsDialog.value = false;
+};
 
 const onSubmit = async () => {
   loading.value = true;

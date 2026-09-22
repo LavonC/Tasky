@@ -50,7 +50,7 @@ export interface Task {
   priority?: string | null;
   status?: string | null;
   schedules?: Array<{ schedule_date: string; allocated_hours: number | string }>;
-  assignees?: Array<{ first_name?: string; last_name?: string }>;
+  assignees?: Array<{ first_name?: string; last_name?: string; employee_code?: string }>;
   assigned_resource_ids?: number[];
   predecessor_task_ids?: number[];
   is_external?: boolean;
@@ -571,7 +571,7 @@ function applyColumnsConfig() {
 function configureGanttEngine() {
   gantt.plugins({
     marker: true,
-    tooltip: false,
+    tooltip: true,
   });
 
   gantt.config.date_format = '%Y-%m-%d %H:%i:%s';
@@ -666,17 +666,29 @@ gantt.setWorkTime({
       );
     }
 
+    // Get employee initials from assignees
+    const assignees = task.assignees || [];
+    const initials = assignees.length > 0 
+      ? assignees.map((a: any) => {
+          const first = a.first_name || '';
+          const last = a.last_name || '';
+          return (first.charAt(0) + last.charAt(0)).toUpperCase();
+        }).join(', ')
+      : '';
+
     const segments = task.segments || [];
     if (segments.length === 0) {
       const pClass = `bar-p-${(task.priority || 'medium').toLowerCase()}`;
       const sClass = `bar-s-${(task.status || 'scheduled').toLowerCase().replace('_', '-')}`;
       const assignee = task.assignee_name ? ` (${escapeHtml(task.assignee_name)})` : '';
+      const initialsBadge = initials ? `<span class="segment-initials-badge">${initials}</span>` : '';
       return (
         `<div class="gantt-segments-container">` +
         `<div class="gantt-segment-pill ${pClass} ${sClass}" style="left: 0; width: 100%;">` +
         `<div class="segment-progress-fill" style="width: ${pct}%;"></div>` +
         `<span class="segment-pct-badge">${pct}%</span>` +
         `<span class="segment-title ellipsis">${text}${assignee}</span>` +
+        initialsBadge +
         `</div>` +
         `</div>`
       );
@@ -720,17 +732,20 @@ gantt.setWorkTime({
           ? `<span class="segment-hours-badge">${seg.allocatedHours}h</span>`
           : '';
 
+      const initialsBadge = initials ? `<span class="segment-initials-badge">${initials}</span>` : '';
+
       let innerContent: string;
       if (segWidth >= 120) {
         const assignee = task.assignee_name ? ` (${escapeHtml(task.assignee_name)})` : '';
         innerContent =
           `<span class="segment-pct-badge">${pct}%</span>` +
           `<span class="segment-title ellipsis">${text}${assignee}</span>` +
-          hoursBadge;
+          hoursBadge +
+          initialsBadge;
       } else if (segWidth >= 60) {
-        innerContent = `<span class="segment-pct-badge">${pct}%</span>` + hoursBadge;
+        innerContent = `<span class="segment-pct-badge">${pct}%</span>` + hoursBadge + initialsBadge;
       } else {
-        innerContent = hoursBadge || `<span class="segment-pct-badge">${pct}%</span>`;
+        innerContent = initialsBadge || hoursBadge || `<span class="segment-pct-badge">${pct}%</span>`;
       }
 
       return (
@@ -760,11 +775,26 @@ gantt.setWorkTime({
     return 'dhtmlx-grid-row-task';
   };
 
-  // Tooltip Template with Segments Breakdown
+  // Tooltip Template with Employee Name and Progress
   
-  // Hover cards are intentionally disabled; task details are opened from the
-  // task page instead of appearing over the timeline.
-  (gantt.templates as any).tooltip_text = () => '';
+  (gantt.templates as any).tooltip_text = (start: Date, end: Date, task: DhtmlxGanttTaskItem) => {
+    const pct = Math.round((task.progress || 0) * 100);
+    const text = escapeHtml(task.text || '');
+    
+    // Get employee names from assignees
+    const assignees = task.assignees || [];
+    const employeeNames = assignees.length > 0
+      ? assignees.map((a: any) => `${a.first_name || ''} ${a.last_name || ''}`.trim()).join(', ')
+      : 'Unassigned';
+    
+    return (
+      `<div class="gantt-tooltip">` +
+      `<div class="tooltip-title">${text}</div>` +
+      `<div class="tooltip-info">Employee: ${employeeNames}</div>` +
+      `<div class="tooltip-info">Progress: ${pct}%</div>` +
+      `</div>`
+    );
+  };
 
   // Add Today Marker
   try {
@@ -996,6 +1026,7 @@ function buildGanttDataset() {
           status: t.status,
           project_name: p.name,
           assignee_name: resourceObj?.name,
+          assignees: t.assignees || [],
           type: 'task',
           segments,
           is_external: Boolean(t.is_external),
@@ -1060,6 +1091,7 @@ function buildGanttDataset() {
         status: t.status,
         project_name: p?.name || '—',
         assignee_name: resourceObj?.name,
+        assignees: t.assignees || [],
         type: 'task',
         segments,
         is_external: Boolean(t.is_external),
@@ -1735,6 +1767,20 @@ defineExpose({
       margin-left: auto;
     }
 
+    .segment-initials-badge {
+      position: relative;
+      z-index: 2;
+      background: rgba(0, 0, 0, 0.3);
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      line-height: 1.2;
+      margin-left: 4px;
+    }
+
     /* 1. Red (Critical Priority) */
     &.bar-p-critical {
       background: #ef4444;
@@ -1800,6 +1846,29 @@ defineExpose({
       padding: 1px 4px;
       border-radius: 4px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  /* Tooltip */
+  .gantt_tooltip {
+    background: #1e293b;
+    color: #ffffff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    max-width: 250px;
+
+    .tooltip-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    .tooltip-info {
+      font-size: 11px;
+      margin-bottom: 2px;
+      color: #cbd5e1;
     }
   }
 }

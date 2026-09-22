@@ -147,6 +147,7 @@ const timelineTasks = computed(() => pmTaskStore.tasks.map((task: any) => ({
   ...task,
   task_id: task.task_id ?? task.id,
   project_id: task.project_id ?? task.projectId,
+  assignees: task.assignees || [],
 })));
 const timelineProjects = computed(() => projectStore.projects.map((project: any) => ({
   ...project,

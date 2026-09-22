@@ -116,31 +116,6 @@
       </div>
     </div>
 
-    <!-- Overall Performance Meter -->
-    <div class="bg-white q-pa-md shadow-1 q-mb-lg rounded-borders">
-      <div class="text-subtitle1 text-weight-bold q-mb-md">Overall Performance</div>
-      <div class="row items-center justify-center">
-        <PerformanceMeter
-          :value="analyticsStore.overview?.taskCompletionRate || 0"
-          label="Task Completion"
-          width="250px"
-          height="150px"
-        />
-        <PerformanceMeter
-          :value="analyticsStore.overview?.avgProjectProgress || 0"
-          label="Project Progress"
-          width="250px"
-          height="150px"
-        />
-        <PerformanceMeter
-          :value="analyticsStore.overview?.avgUtilization || 0"
-          label="Team Utilization"
-          width="250px"
-          height="150px"
-        />
-      </div>
-    </div>
-
     <!-- Main Content Split -->
     <div class="row q-col-gutter-lg">
       <!-- Left Column -->
@@ -209,13 +184,67 @@ const logout = () => {
   router.replace('/auth/login');
 };
 
-const exportReport = () => {
+const exportReport = async () => {
   exporting.value = true;
   try {
+    // Fetch fresh data directly - do NOT rely on store state
+    const token = sessionStorage.getItem('tasky_token');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+    
+    // Fetch overview data
+    const overviewResponse = await fetch(
+      `http://localhost:3007/api/pm/analytics/overview?period=${encodeURIComponent(filterMonth.value)}`,
+      { headers }
+    );
+    const overviewData = await overviewResponse.json();
+    
+    if (!overviewData.success || !overviewData.overview) {
+      throw new Error('Failed to fetch overview data');
+    }
+    
+    // Fetch project performance data
+    const projectResponse = await fetch(
+      'http://localhost:3007/api/pm/analytics/project-performance',
+      { headers }
+    );
+    const projectData = await projectResponse.json();
+    
+    if (!projectData.success || !projectData.projects) {
+      throw new Error('Failed to fetch project performance data');
+    }
+    
+    // Use the fresh response data directly
+    const overview = overviewData.overview;
+    const projects = projectData.projects;
+    
     const generatedAt = new Date().toLocaleString();
-    const overview = analyticsStore.overview || {};
-    const rows = analyticsStore.projectPerformance.map((project: any) => `<tr><td><strong>${project.name || 'Unnamed project'}</strong></td><td>${project.status || '—'}</td><td>${Math.round(project.progress || 0)}%</td><td>${project.total_tasks || 0}</td><td>${project.completed_tasks || 0}</td><td>${project.overdue_tasks || 0}</td><td>${project.total_hours_logged || 0}h / ${project.total_estimated_hours || 0}h</td></tr>`).join('');
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>TASKY Analytics Report</title><style>body{font:14px Arial;color:#263238;margin:48px}header{border-bottom:4px solid #3949ab;padding-bottom:18px;margin-bottom:28px}h1{color:#283593;margin:0 0 8px}.meta{color:#607d8b}.metrics{display:flex;gap:12px;margin:22px 0}.metric{border:1px solid #e0e5ef;border-radius:8px;padding:14px;min-width:130px}.metric b{display:block;font-size:22px;color:#3949ab;margin-top:6px}table{width:100%;border-collapse:collapse;margin-top:18px}th{background:#3949ab;color:white;text-align:left}th,td{padding:11px;border:1px solid #e0e5ef}tr:nth-child(even){background:#f6f8fc}footer{margin-top:36px;color:#78909c;font-size:12px}</style></head><body><header><h1>TASKY Analytics Report</h1><div class="meta">Reporting period: ${filterMonth.value} · Generated: ${generatedAt}</div></header><div class="metrics"><div class="metric">Total projects<b>${overview.totalProjects || 0}</b></div><div class="metric">Completion rate<b>${overview.taskCompletionRate || 0}%</b></div><div class="metric">Avg. progress<b>${overview.avgProjectProgress || 0}%</b></div><div class="metric">Team utilization<b>${overview.avgUtilization || 0}%</b></div></div><h2>Project performance</h2><table><thead><tr><th>Project</th><th>Status</th><th>Progress</th><th>Total tasks</th><th>Completed</th><th>Overdue</th><th>Hours logged / estimated</th></tr></thead><tbody>${rows || '<tr><td colspan="7">No project performance data available.</td></tr>'}</tbody></table><footer>Prepared by TASKY · This report is generated from the workspace analytics dashboard.</footer></body></html>`;
+    
+    // Helper function to show proper values instead of unknown
+    const formatValue = (value: any, defaultValue = 'N/A', suffix = '', isCount = false) => {
+      if (value === null || value === undefined || value === '' || value === 'Unknown') return defaultValue;
+      if (isCount) return `${value}${suffix}`; // Allow 0 for counts
+      if (value === 0) return defaultValue; // Replace 0 with N/A for percentages/rates
+      return `${value}${suffix}`;
+    };
+    
+    const rows = projects.map((project: any) => {
+      const completionRate = project.total_tasks > 0 
+        ? Math.round((project.completed_tasks / project.total_tasks) * 100) 
+        : 0;
+      return `<tr><td><strong>${project.name || 'Unnamed project'}</strong></td>
+      <td>${project.status || '—'}</td>
+      <td>${formatValue(Math.round(project.progress), 'N/A', '%')}</td>
+      <td>${formatValue(project.total_tasks, '0', '', true)}</td>
+      <td>${formatValue(project.completed_tasks, '0', '', true)}</td>
+      <td>${formatValue(completionRate, '0', '%')}</td>
+      <td>${formatValue(project.overdue_tasks, '0', '', true)}</td>
+      <td>${formatValue(project.total_hours_logged, '0', 'h', true)} / ${formatValue(project.total_estimated_hours, '0', 'h', true)}</td></tr>`;
+    }).join('');
+    
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>TASKY Analytics Report</title><style>body{font:14px Arial;color:#263238;margin:48px}header{border-bottom:4px solid #3949ab;padding-bottom:18px;margin-bottom:28px}h1{color:#283593;margin:0 0 8px}.meta{color:#607d8b}.metrics{display:flex;gap:12px;margin:22px 0}.metric{border:1px solid #e0e5ef;border-radius:8px;padding:14px;min-width:130px}.metric b{display:block;font-size:22px;color:#3949ab;margin-top:6px}table{width:100%;border-collapse:collapse;margin-top:18px}th{background:#3949ab;color:white;text-align:left}th,td{padding:11px;border:1px solid #e0e5ef}tr:nth-child(even){background:#f6f8fc}footer{margin-top:36px;color:#78909c;font-size:12px}</style></head><body><header><h1>TASKY Analytics Report</h1><div class="meta">Reporting period: ${filterMonth.value} · Generated: ${generatedAt}</div></header><div class="metrics"><div class="metric">Total active projects<b>${formatValue(overview.total_projects, '0', '', true)}</b></div><div class="metric">Completion rate<b>${formatValue(overview.taskCompletionRate, '0', '%')}</b></div><div class="metric">Avg. progress<b>${formatValue(overview.avgProjectProgress, '0', '%')}</b></div><div class="metric">Team utilization<b>${formatValue(overview.avgUtilization, '0', '%')}</b></div></div><h2>Project Performance Details</h2><table><thead><tr><th>Project</th><th>Status</th><th>Progress</th><th>Total Tasks</th><th>Completed</th><th>Assigned Completion Rate</th><th>Overdue</th><th>Hours logged / estimated</th></tr></thead><tbody>${rows || '<tr><td colspan="8">No project performance data available.</td></tr>'}</tbody></table><footer>Prepared by TASKY · This report is generated from the workspace analytics dashboard.</footer></body></html>`;
     const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -224,6 +253,9 @@ const exportReport = () => {
     link.click();
     URL.revokeObjectURL(url);
     $q.notify({ type: 'positive', message: 'Analytics report exported' });
+  } catch (error) {
+    console.error('Export error:', error);
+    $q.notify({ type: 'negative', message: 'Failed to export report: ' + (error as Error).message });
   } finally {
     exporting.value = false;
   }

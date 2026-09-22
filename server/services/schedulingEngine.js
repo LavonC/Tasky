@@ -69,6 +69,7 @@ export async function getOrgResourceWorkloads(pool, orgId) {
       u.professional_role,
       r.name AS role_name,
       r.access_level,
+      u.professional_role,
       COUNT(DISTINCT t.id) AS active_task_count,
       COALESCE(SUM(
         CASE WHEN t.id IS NOT NULL AND ta2.active_assignee_count > 0
@@ -88,7 +89,7 @@ export async function getOrgResourceWorkloads(pool, orgId) {
     ) ta2 ON ta2.task_id = t.id
     WHERE u.org_id = ? AND u.is_active = 1 AND r.access_level = 'employee'
     GROUP BY u.id, u.first_name, u.last_name, u.employee_code, u.email, u.avatar,
-             u.phone, u.skills, u.max_hours_per_week, u.professional_role, r.name, r.access_level
+             u.phone, u.skills, u.max_hours_per_week, u.professional_role, r.name, r.access_level, u.professional_role
   `,
     [orgId],
   );
@@ -107,77 +108,105 @@ export async function getOrgResourceWorkloads(pool, orgId) {
 }
 
 /**
- * Auto-assign: Score and rank resources for a task.
+ * Auto-assign: Score and rank resources for a task based on role matching.
  * Scoring factors:
+ *   - Role match (must match task type to professional role)
  *   - Available capacity (lower workload = higher score)
  *   - Project involvement (already on project = bonus for context)
  *   - Task load (fewer active tasks = higher score)
  */
-export async function recommendResources(pool, orgId, taskId, excludeUserIds = []) {
-  // Get task details
-  const [taskRows] = await pool.execute('SELECT * FROM task WHERE id = ?', [taskId]);
-  if (taskRows.length === 0) return [];
-  const task = taskRows[0];
+export async function recommendResources(pool, orgId, taskId, excludeUserIds = [], tempTask = null) {
+  let task;
+  if (taskId) {
+    // Get task details from database
+    const [taskRows] = await pool.execute('SELECT * FROM task WHERE id = ?', [taskId]);
+    if (taskRows.length === 0) return [];
+    task = taskRows[0];
+  } else if (tempTask) {
+    // Use temporary task object (for preview)
+    task = tempTask;
+  } else {
+    return [];
+  }
 
   // Get all available employees in the org
   const resources = await getOrgResourceWorkloads(pool, orgId);
 
-  // Get who is already assigned to this task
-  const [existingAssignments] = await pool.execute(
-    'SELECT user_id FROM task_assignment WHERE task_id = ? AND is_active = 1',
-    [taskId],
-  );
-  const assignedIds = new Set(existingAssignments.map((a) => a.user_id));
+  // Get who is already assigned to this task (only if task exists in DB)
+  let assignedIds = new Set();
+  if (taskId) {
+    const [existingAssignments] = await pool.execute(
+      'SELECT user_id FROM task_assignment WHERE task_id = ? AND is_active = 1',
+      [taskId],
+    );
+    assignedIds = new Set(existingAssignments.map((a) => a.user_id));
+  }
 
   // Get project involvement: find users currently active on this project
-  const [projectAssignments] = await pool.execute(
-    `SELECT DISTINCT ta.user_id 
-     FROM task_assignment ta 
-     JOIN task t ON t.id = ta.task_id 
-     WHERE t.project_id = ? AND ta.is_active = 1`,
-    [task.project_id]
-  );
-  const projectUserIds = new Set(projectAssignments.map((a) => a.user_id));
+  let projectUserIds = new Set();
+  if (task.project_id) {
+    const [projectAssignments] = await pool.execute(
+      `SELECT DISTINCT ta.user_id
+       FROM task_assignment ta
+       JOIN task t ON t.id = ta.task_id
+       WHERE t.project_id = ? AND ta.is_active = 1`,
+      [task.project_id]
+    );
+    projectUserIds = new Set(projectAssignments.map((a) => a.user_id));
+  }
 
   // Build keyword set from task title + description for skill matching
   const taskText = `${task.title || ''} ${task.description || ''}`.toLowerCase();
 
+  // Determine required role based on task type/keywords
+  const requiredRole = determineRequiredRole(taskText);
+  console.log('Auto-assign task:', task.title, 'Required role:', requiredRole, 'Task text:', taskText);
+  console.log('Available resources:', resources.map(r => ({ name: r.name, role: r.professional_role, utilization: r.utilization })));
+
   // Score each resource
   const excludeSet = new Set(excludeUserIds);
   const scored = resources
-    .filter((r) => !assignedIds.has(r.user_id) && !excludeSet.has(r.user_id))
+    .filter((r) => {
+      // Must match required role if one is determined
+      if (requiredRole && r.professional_role !== requiredRole) {
+        console.log('Filtered out:', r.name, '- role:', r.professional_role, '- required:', requiredRole);
+        return false;
+      }
+      // If no specific role required, still filter out 'other' roles (managers, etc.)
+      if (!requiredRole && r.professional_role === 'other') {
+        console.log('Filtered out (other role):', r.name, '- role:', r.professional_role);
+        return false;
+      }
+      // Exclude already assigned or explicitly excluded
+      return !assignedIds.has(r.user_id) && !excludeSet.has(r.user_id);
+    })
     .map((r) => {
       let score = 0;
 
-      // Capacity score (0-40 points): lower utilization = higher score
-      const capacityScore = Math.max(0, 40 - r.utilization * 0.4);
+      // Role match score (0-30 points): exact role match
+      if (requiredRole && r.professional_role === requiredRole) {
+        score += 30;
+      }
+
+      // Capacity score (0-30 points): lower utilization = higher score
+      const capacityScore = Math.max(0, 30 - r.utilization * 0.3);
       score += capacityScore;
 
-      // Project involvement score (0-15 points)
+      // Project involvement score (0-20 points)
       const isOnProject = projectUserIds.has(r.user_id);
-      score += isOnProject ? 15 : 0;
+      score += isOnProject ? 20 : 0;
 
-      // Task load score (0-15 points): fewer tasks = higher score
-      const taskLoadScore = Math.max(0, 15 - r.active_task_count * 2.5);
+      // Task load score (0-20 points): fewer tasks = higher score
+      const taskLoadScore = Math.max(0, 20 - r.active_task_count * 2);
       score += taskLoadScore;
 
-      // Skill match score (0-20 points): match user skills against task title/description
-      let skillScore = 0;
-      if (r.skills && taskText.length > 0) {
-        const userSkills = (typeof r.skills === 'string'
-          ? r.skills.split(',')
-          : Array.isArray(r.skills) ? r.skills : []
-        ).map((s) => s.trim().toLowerCase());
-        const matches = userSkills.filter((skill) => skill && taskText.includes(skill));
-        skillScore = Math.min(20, matches.length * 7);
-      }
-      score += skillScore;
-
       return {
+        id: r.user_id,
         user_id: r.user_id,
         name: `${r.first_name} ${r.last_name}`,
         employee_code: r.employee_code,
         role_name: r.role_name,
+        professional_role: r.professional_role,
         avatar: r.avatar,
         utilization: r.utilization,
         active_task_count: r.active_task_count,
@@ -185,21 +214,45 @@ export async function recommendResources(pool, orgId, taskId, excludeUserIds = [
         score: Math.round(score * 100) / 100,
 
         reasons: [
+          `Role: ${r.professional_role || 'other'}`,
           `Capacity: ${Math.round(100 - r.utilization)}% available`,
           `Current tasks: ${r.active_task_count}`,
           ...(isOnProject ? ['Already involved in this project'] : []),
-          ...(skillScore > 0 ? [`Skill match score: ${skillScore}`] : []),
         ],
       };
     })
     .sort((a, b) => {
       // Primary: lowest utilization (least worked) always wins
       if (a.utilization !== b.utilization) return a.utilization - b.utilization;
-      // Secondary: higher composite score (skills/project fit)
+      // Secondary: higher composite score (project fit)
       return b.score - a.score;
     });
 
+  console.log('Scored resources after sorting:', scored);
+  if (scored.length > 0) {
+    console.log('Selected:', scored[0].name, '- utilization:', scored[0].utilization, '- role:', scored[0].professional_role);
+  }
   return scored;
+}
+
+/**
+ * Determine the required professional role based on task keywords
+ */
+function determineRequiredRole(taskText) {
+  const keywords = {
+    developer: ['code', 'api', 'database', 'backend', 'frontend', 'react', 'vue', 'angular', 'node', 'javascript', 'typescript', 'python', 'java', 'developer', 'programming', 'software', 'application', 'web', 'mobile', 'test', 'testing', 'bug', 'fix', 'debug', 'implement', 'build', 'integrate', 'deploy'],
+    designer: ['design', 'ui', 'ux', 'figma', 'sketch', 'prototype', 'wireframe', 'mockup', 'visual', 'graphic', 'brand', 'logo', 'icon', 'color', 'layout', 'interface', 'user experience', 'user interface', 'interaction', 'style', 'theme'],
+    business_analyst: ['business', 'requirement', 'analysis', 'spec', 'document', 'workflow', 'process', 'user story', 'acceptance', 'stakeholder', 'research', 'market', 'report', 'presentation', 'meeting', 'requirements', 'gather', 'analyze'],
+    qa_engineer: ['qa', 'quality', 'assurance', 'test', 'testing', 'bug', 'defect', 'validation', 'verification', 'automated', 'manual', 'regression', 'performance', 'security', 'quality assurance'],
+  };
+
+  for (const [role, roleKeywords] of Object.entries(keywords)) {
+    if (roleKeywords.some((keyword) => taskText.includes(keyword))) {
+      return role;
+    }
+  }
+
+  return null; // No specific role required, can assign to any
 }
 
 /**

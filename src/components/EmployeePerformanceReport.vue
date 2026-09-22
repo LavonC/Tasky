@@ -50,25 +50,6 @@
           <div class="row q-col-gutter-md q-pa-md">
         <!-- Left Column: Stats & Charts -->
         <div class="col-8 column q-gutter-y-md">
-          <!-- Overall Performance Meter -->
-          <q-card flat bordered class="bg-white">
-            <q-card-section>
-              <div class="text-subtitle1 text-weight-bold q-mb-md">Overall Performance</div>
-              <div class="row items-center justify-center">
-                <div ref="meterChart" style="width: 300px; height: 200px"></div>
-                <div class="column q-ml-xl">
-                  <div class="text-caption text-grey-7">Performance Score</div>
-                  <div class="text-h4 text-weight-bold" :class="`text-${performanceColor}`">
-                    {{ performanceData.overallScore || 0 }}%
-                  </div>
-                  <div class="text-caption text-grey-6 q-mt-sm">
-                    Based on task completion, timeliness, and quality
-                  </div>
-                </div>
-              </div>
-            </q-card-section>
-          </q-card>
-
           <!-- Task Status Distribution -->
           <q-card flat bordered class="bg-white">
             <q-card-section>
