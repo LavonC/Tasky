@@ -128,7 +128,7 @@
         <!-- TASK -->
 
         <template #body-cell-task="props">
-          <q-td :props="props" class="cursor-pointer" @click="viewTask(props.row)">
+          <q-td :props="props">
             <div class="row items-center no-wrap">
               <q-avatar
                 size="42px"
@@ -272,26 +272,6 @@
             <q-btn flat round icon="more_horiz" color="grey-7">
               <q-menu>
                 <q-list style="min-width: 190px">
-                  <!-- VIEW -->
-
-                  <q-item clickable v-close-popup @click="viewTask(props.row)">
-                    <q-item-section avatar>
-                      <q-icon name="visibility" />
-                    </q-item-section>
-
-                    <q-item-section> View Task </q-item-section>
-                  </q-item>
-
-                  <!-- EDIT -->
-
-                  <q-item clickable v-close-popup @click="openEditSubtasks(props.row)">
-                    <q-item-section avatar>
-                      <q-icon name="edit" />
-                    </q-item-section>
-
-                    <q-item-section> Edit Subtasks </q-item-section>
-                  </q-item>
-
                   <!-- MANAGE -->
 
                   <q-item clickable v-close-popup @click="openManage(props.row)">
@@ -353,10 +333,6 @@
               <q-btn flat round dense icon="more_horiz" color="grey-6">
                 <q-menu>
                   <q-list>
-                    <q-item clickable v-close-popup @click="openEditSubtasks(task)">
-                      <q-item-section> Edit Subtasks </q-item-section>
-                    </q-item>
-
                     <q-item clickable v-close-popup @click="openManage(task)">
                       <q-item-section> Manage Progress </q-item-section>
                     </q-item>
@@ -3375,7 +3351,7 @@ async function submitInterrupt() {
 
 function openEditDeadline(task: Task) {
   selectedTask.value = task;
-  editDeadlineValue.value = task.deadline ? task.deadline.split('T')[0] : '';
+  editDeadlineValue.value = task.deadline ? (task.deadline.split('T')[0] || '') : '';
   showEditDeadlineDialog.value = true;
 }
 

@@ -324,20 +324,26 @@ const analyticsStore = useAnalyticsStore();
 const exportReport = () => {
   const projects = analyticsStore.projectProgress || [];
   
+  // Helper function to show proper values instead of unknown or 0
+  const formatValue = (value: any, defaultValue = 'N/A') => {
+    if (value === null || value === undefined || value === '' || value === 'Unknown') return defaultValue;
+    return value;
+  };
+  
   let content = 'Project Name,Status,Progress\n';
   projects.forEach((p: any) => {
-    const name = p.project_name || p.name || 'Unknown';
-    const status = p.status || 'Unknown';
-    const progress = p.progress || 0;
+    const name = formatValue(p.project_name || p.name, 'Unnamed Project');
+    const status = formatValue(p.status, 'Not Specified');
+    const progress = p.progress !== null && p.progress !== undefined ? p.progress : 0;
     content += `"${name}","${status}",${progress}\n`;
   });
 
   content += '\nDeadline Risks\nTask,Risk,Days Remaining\n';
   const risks = analyticsStore.deadlineRisks || [];
   risks.forEach((r: any) => {
-    const taskTitle = r.task_title || r.title || 'Unknown';
-    const riskLevel = r.risk_level || 'Unknown';
-    const days = r.days_until !== undefined ? r.days_until : 0;
+    const taskTitle = formatValue(r.task_title || r.title, 'Unnamed Task');
+    const riskLevel = formatValue(r.risk_level, 'Not Specified');
+    const days = r.days_until !== undefined && r.days_until !== null ? r.days_until : 'N/A';
     content += `"${taskTitle}","${riskLevel}",${days}\n`;
   });
 

@@ -94,19 +94,19 @@ async function calculatePerformance(pool, userId, rangeName) {
   );
 
   const [activityRows] = await pool.query(
-    `SELECT activity_date, COUNT(*) AS activity_count
+    `SELECT activity_date, COUNT(*) AS activity_count, day_status
      FROM (
-       SELECT log_date AS activity_date FROM daily_work_log
-       WHERE user_id = ? AND log_date >= ? AND log_date < ?
-       UNION ALL
-       SELECT DATE(created_at) AS activity_date FROM progress_update
-       WHERE user_id = ? AND created_at >= ? AND created_at < ?
-       UNION ALL
-       SELECT log_date AS activity_date FROM daily_log_compliance
+       SELECT log_date AS activity_date, day_status FROM daily_log_compliance
        WHERE user_id = ? AND log_date >= ? AND log_date < ?
          AND status IN ('logged', 'late', 'submitted', 'reviewed')
+       UNION ALL
+       SELECT log_date AS activity_date, 'worked' AS day_status FROM daily_work_log
+       WHERE user_id = ? AND log_date >= ? AND log_date < ?
+       UNION ALL
+       SELECT DATE(created_at) AS activity_date, 'worked' AS day_status FROM progress_update
+       WHERE user_id = ? AND created_at >= ? AND created_at < ?
      ) activities
-     GROUP BY activity_date ORDER BY activity_date`,
+     GROUP BY activity_date, day_status ORDER BY activity_date`,
     [userId, range.start, range.end, userId, range.start, range.end, userId, range.start, range.end],
   );
 
@@ -260,7 +260,11 @@ const efficiency = estimatedHours
     dailyActivity: Array.from({ length: range.durationDays }, (_, index) => {
       const date = formatDate(addDays(range.startDate, index));
       const activity = activityRows.find((row) => formatDate(new Date(row.activity_date)) === date);
-      return { activity_date: date, activity_count: activity ? number(activity.activity_count) : 0 };
+      return { 
+        activity_date: date, 
+        activity_count: activity ? number(activity.activity_count) : 0,
+        day_status: activity ? activity.day_status : 'no-entry'
+      };
     }),
     qualityMetrics,
     priorityPerformance,

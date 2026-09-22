@@ -107,8 +107,6 @@ const statCards = computed(() => {
   return [
     { label: 'Task Completion Rate', value: summary.completionRate, suffix: '%', description: 'Of assigned tasks', icon: 'check_circle', color: 'positive', background: '#e8f5e9', sparklineData: [] },
     { label: 'On-Time Rate', value: summary.onTimeRate, suffix: '%', description: 'Completed on schedule', icon: 'schedule', color: 'info', background: '#e3f2fd', sparklineData: [] },
-    { label: 'Focus Score', value: summary.focusScore, suffix: '%', description: 'Weekdays with recorded activity', icon: 'local_fire_department', color: 'warning', background: '#fff3e0', sparklineData: [] },
-    { label: 'Efficiency', value: summary.efficiency, suffix: '%', description: 'Work vs estimated effort', icon: 'speed', color: 'primary', background: '#e3f2fd', sparklineData: [] },
   ];
 });
 

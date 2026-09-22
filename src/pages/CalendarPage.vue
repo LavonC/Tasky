@@ -148,6 +148,7 @@ const timelineTasks = computed(() => pmTaskStore.tasks.map((task: any) => ({
   ...task,
   task_id: task.task_id ?? task.id,
   project_id: task.project_id ?? task.projectId,
+  assignees: task.assignees || [],
   predecessor_task_ids: Array.from(
     new Set(
       [

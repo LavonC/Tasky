@@ -135,87 +135,28 @@ function renderChart() {
     });
 
   /*
-   * LINE
+   * BARS
    */
-  const line = d3
-    .line<{ day: string; completed: number }>()
-    .x((d) => x(d.day) ?? 0)
-    .y((d) => y(d.completed))
-    .curve(d3.curveMonotoneX);
+  const barWidth = Math.min((width - margin.left - margin.right) / data.length * 0.6, 40);
 
-  /*
-   * AREA UNDER LINE
-   */
-  const area = d3
-    .area<{ day: string; completed: number }>()
-    .x((d) => x(d.day) ?? 0)
-    .y0(height - margin.bottom)
-    .y1((d) => y(d.completed))
-    .curve(d3.curveMonotoneX);
-
-  /*
-   * GRADIENT
-   */
-  const gradient = svg
-    .append('defs')
-    .append('linearGradient')
-    .attr('id', 'trendGradient')
-    .attr('x1', '0%')
-    .attr('x2', '0%')
-    .attr('y1', '0%')
-    .attr('y2', '100%');
-
-  gradient
-    .append('stop')
-    .attr('offset', '0%')
-    .attr('stop-color', '#5b7cfa')
-    .attr('stop-opacity', 0.25);
-
-  gradient
-    .append('stop')
-    .attr('offset', '100%')
-    .attr('stop-color', '#5b7cfa')
-    .attr('stop-opacity', 0.02);
-
-  /*
-   * AREA
-   */
   svg
-    .append('path')
-    .datum(data)
-    .attr('fill', 'url(#trendGradient)')
-    .attr('d', area);
-
-  /*
-   * LINE
-   */
-  svg
-    .append('path')
-    .datum(data)
-    .attr('fill', 'none')
-    .attr('stroke', '#3949ab')
-    .attr('stroke-width', 2)
-    .attr('stroke-linecap', 'round')
-    .attr('stroke-linejoin', 'round')
-    .attr('d', line);
-
-  /*
-   * POINTS
-   */
-  svg
-    .selectAll('.point')
+    .selectAll('.bar')
     .data(data)
     .enter()
-    .append('circle')
-    .attr('cx', (d) => x(d.day) ?? 0)
-    .attr('cy', (d) => y(d.completed))
-    .attr('r', 2.5)
+    .append('rect')
+    .attr('class', 'bar')
+    .attr('x', (d) => (x(d.day) ?? 0) - barWidth / 2)
+    .attr('y', (d) => y(d.completed))
+    .attr('width', barWidth)
+    .attr('height', (d) => (height - margin.bottom) - y(d.completed))
     .attr('fill', '#3949ab')
     .attr('stroke', isDark ? '#1d2930' : 'white')
-    .attr('stroke-width', 1.5);
+    .attr('stroke-width', 1.5)
+    .attr('rx', 4)
+    .attr('ry', 4);
 
   /*
-   * VALUES ABOVE POINTS
+   * VALUES ABOVE BARS
    */
   svg
     .selectAll('.value-label')

@@ -48,9 +48,7 @@
       <q-tab-panels v-model="activeTab" animated class="bg-transparent" style="flex: 1 1 0; overflow-y: auto;">
         <q-tab-panel name="performance" class="q-pa-none">
           <div class="row q-col-gutter-md q-pa-md">
-            <!-- Left Column: Stats & Charts -->
             <div class="col-8 column q-gutter-y-md">
-              <!-- Task Status Distribution -->
               <q-card flat bordered class="bg-white">
                 <q-card-section>
                   <div class="text-subtitle1 text-weight-bold q-mb-md">Task Status Distribution</div>
@@ -75,7 +73,6 @@
                 </q-card-section>
               </q-card>
 
-              <!-- Weekly Progress Chart -->
               <q-card flat bordered class="bg-white">
                 <q-card-section>
                   <div class="text-subtitle1 text-weight-bold q-mb-md">
@@ -86,9 +83,7 @@
               </q-card>
             </div>
 
-            <!-- Right Column: Overall Performance + Details -->
             <div class="col-4 column q-gutter-y-md">
-              <!-- Overall Performance Meter -->
               <q-card flat bordered class="bg-white">
                 <q-card-section>
                   <div class="text-subtitle1 text-weight-bold q-mb-md">Overall Performance</div>
@@ -107,7 +102,6 @@
                 </q-card-section>
               </q-card>
 
-              <!-- Summary Stats -->
               <q-card flat bordered class="bg-white">
                 <q-card-section>
                   <div class="text-subtitle1 text-weight-bold q-mb-md">Summary</div>
@@ -141,7 +135,6 @@
                 </q-card-section>
               </q-card>
 
-              <!-- Recent Tasks -->
               <q-card flat bordered class="bg-white">
                 <q-card-section>
                   <div class="text-subtitle1 text-weight-bold q-mb-sm">Recent Tasks</div>
