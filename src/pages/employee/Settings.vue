@@ -99,15 +99,7 @@
                   />
                 </q-item-section>
               </q-item>
-              <q-item>
-                <q-item-section>
-                  <q-item-label>Task Reminders</q-item-label>
-                  <q-item-label caption>Get reminded of deadlines</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle v-model="taskReminders" color="dark" />
-                </q-item-section>
-              </q-item>
+
             </q-list>
           </q-card-section>
         </q-card>
@@ -177,7 +169,7 @@ const newPassword = ref('');
 const confirmPassword = ref('');
 const darkMode = ref(false);
 const emailNotifications = ref(true);
-const taskReminders = ref(true);
+
 const resigning = ref(false);
 const changingPassword = ref(false);
 
