@@ -174,19 +174,7 @@
           </q-td>
         </template>
 
-        <!-- SUBTASKS -->
 
-        <template #body-cell-subtasks="props">
-          <q-td :props="props">
-            <div class="subtask-count">
-              <q-icon name="checklist" size="17px" class="q-mr-xs" />
-
-              {{ completedSubtasks(props.row) }}
-              /
-              {{ props.row.subtasks.length }}
-            </div>
-          </q-td>
-        </template>
 
         <!-- PRIORITY -->
 
@@ -208,23 +196,7 @@
           </q-td>
         </template>
 
-        <!-- STATUS -->
 
-        <template #body-cell-status="props">
-          <q-td :props="props">
-            <q-chip
-              dense
-              square
-              :style="{
-                background: statusStyle(props.row.status).bg,
-
-                color: statusStyle(props.row.status).color,
-              }"
-            >
-              {{ props.row.status }}
-            </q-chip>
-          </q-td>
-        </template>
 
         <!-- PROGRESS -->
 
@@ -2645,15 +2617,6 @@ const columns = [
     sortable: true,
   },
 
-  {
-    name: 'subtasks',
-
-    label: 'SUBTASKS',
-
-    field: 'subtasks',
-
-    align: 'left' as const,
-  },
 
   {
     name: 'priority',
@@ -2665,15 +2628,6 @@ const columns = [
     align: 'left' as const,
   },
 
-  {
-    name: 'status',
-
-    label: 'STATUS',
-
-    field: 'status',
-
-    align: 'left' as const,
-  },
 
   {
     name: 'progress',
