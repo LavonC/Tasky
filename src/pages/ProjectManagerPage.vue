@@ -305,7 +305,7 @@
 
                       <div class="q-ml-md">
                         <div class="column">
-                          <div class="attention-title" style="color: #2e7d32">Team Members</div>
+                          <div class="attention-title" >Team Members</div>
 
                           <div class="attention-subtitle" style="color: #558b5a">
                             All users in your organization
