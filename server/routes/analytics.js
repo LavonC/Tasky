@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { getOrgResourceWorkloads } from '../services/schedulingEngine.js';
 const router = Router();
 
 function getPeriodFilter(column, period) {
@@ -63,22 +64,14 @@ export default function analyticsRoutes(pool) {
       );
 
       // Calculate team utilization
-      const [utilizationStats] = await pool.execute(
-        `
-        SELECT ROUND(AVG(utilization), 1) AS avg_utilization
-        FROM (
-          SELECT
-            u.id,
-            COALESCE(SUM(t.expected_effort * (100 - t.progress) / 100) / u.max_hours_per_week * 100, 0) AS utilization
-          FROM user u
-          LEFT JOIN task_assignment ta ON ta.user_id = u.id AND ta.is_active = 1
-          LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started','in-progress','blocked')
-          WHERE u.org_id = ? AND u.is_active = 1 AND u.role_id IN (SELECT id FROM role WHERE access_level = 'employee')
-          GROUP BY u.id, u.max_hours_per_week
-        ) AS util
-      `,
-        [orgId],
-      );
+      const resources = await getOrgResourceWorkloads(pool, orgId);
+
+const avgUtilization =
+  resources.length > 0
+    ? resources.reduce((sum, resource) => {
+        return sum + Number(resource.utilization || 0);
+      }, 0) / resources.length
+    : 0;
 
       res.json({
         success: true,
@@ -90,7 +83,7 @@ export default function analyticsRoutes(pool) {
             ? Math.round((taskStats[0].completed_tasks / taskStats[0].total_tasks) * 100)
             : 0,
           avgProjectProgress: projectStats[0].avg_progress || 0,
-          avgUtilization: utilizationStats[0].avg_utilization || 0,
+          avgUtilization: Math.round(avgUtilization * 10) / 10,
         },
       });
     } catch (error) {
