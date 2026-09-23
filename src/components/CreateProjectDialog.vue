@@ -113,7 +113,6 @@ const loading = ref(false);
 const statusOptions = [
   { label: 'Planning', value: 'planning' },
   { label: 'Active', value: 'active' },
-  { label: 'On Hold', value: 'on-hold' },
   { label: 'Completed', value: 'completed' },
 ];
 
