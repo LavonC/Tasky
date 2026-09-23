@@ -386,8 +386,7 @@ const statusOptions = [
   { label: 'All Statuses', value: 'all' },
   { label: 'Not Started', value: 'not-started' },
   { label: 'In Progress', value: 'in-progress' },
-  { label: 'Completed (Reviewed)', value: 'completed-reviewed' },
-  { label: 'Blocked', value: 'blocked' },
+  { label: 'Completed', value: 'completed' },
 ];
 
 const priorityOptions = [
