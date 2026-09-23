@@ -77,10 +77,15 @@
                   <q-item-label class="text-weight-bold"
                     >{{ project.name }} (Project)</q-item-label
                   >
-                  <q-item-label caption
-                    >Project is delayed by {{ project.days_delayed }} days.
-                    {{ project.overdue_tasks }} overdue task(s).</q-item-label
-                  >
+                  <q-item-label caption>
+                    <template v-if="project.days_delayed > 0">
+                      Project is delayed by {{ project.days_delayed }} days.
+                    </template>
+                    <template v-else>
+                      Project tasks are falling behind schedule.
+                    </template>
+                    {{ project.overdue_tasks }} overdue task(s).
+                  </q-item-label>
                 </q-item-section>
                 <q-item-section side>
                   <q-btn

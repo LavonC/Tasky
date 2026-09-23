@@ -23,7 +23,7 @@ export async function calculateResourceWorkload(pool, userId) {
       COUNT(DISTINCT t.project_id) AS project_count
     FROM user u
     LEFT JOIN task_assignment ta ON ta.user_id = u.id AND ta.is_active = 1
-    LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started', 'in-progress', 'blocked', 'in-review', 'on-hold')
+    LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started', 'in-progress', 'blocked')
     LEFT JOIN (
       SELECT task_id, COUNT(*) AS active_assignee_count
       FROM task_assignment WHERE is_active = 1 GROUP BY task_id
@@ -45,7 +45,7 @@ export async function calculateResourceWorkload(pool, userId) {
 
   return {
     ...workload,
-    utilization: Math.round(utilization * 100) / 100,
+    utilization: Math.round(utilization),
     status: utilization > 100 ? 'overloaded' : utilization > 80 ? 'near-capacity' : 'available',
   };
 }
@@ -82,7 +82,7 @@ export async function getOrgResourceWorkloads(pool, orgId) {
     FROM user u
     JOIN role r ON r.id = u.role_id
     LEFT JOIN task_assignment ta ON ta.user_id = u.id AND ta.is_active = 1
-    LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started', 'in-progress', 'blocked', 'in-review', 'on-hold')
+    LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started', 'in-progress', 'blocked')
     LEFT JOIN (
       SELECT task_id, COUNT(*) AS active_assignee_count
       FROM task_assignment WHERE is_active = 1 GROUP BY task_id
@@ -100,7 +100,7 @@ export async function getOrgResourceWorkloads(pool, orgId) {
       maxHours > 0 ? (r.weekly_required_hours / maxHours) * 100 : 0;
     return {
       ...r,
-      utilization: Math.round(utilization * 100) / 100,
+      utilization: Math.round(utilization),
       workload_status:
         utilization > 100 ? 'overloaded' : utilization > 80 ? 'near-capacity' : 'available',
     };
@@ -436,7 +436,7 @@ export async function rebalanceWorkloads(pool, orgId, dryRun = false) {
                (SELECT COUNT(*) FROM task_assignment WHERE task_id = t.id AND is_active = 1) as active_assignee_count
         FROM task t
         JOIN task_assignment ta ON ta.task_id = t.id AND ta.user_id = ? AND ta.is_active = 1
-        WHERE t.status IN ('not-started', 'in-progress', 'blocked', 'in-review', 'on-hold')
+        WHERE t.status IN ('not-started', 'in-progress', 'blocked')
         ORDER BY FIELD(t.priority, 'low', 'medium', 'high', 'critical'), t.progress ASC
       `,
         [resource.user_id],

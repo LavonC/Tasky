@@ -23,7 +23,7 @@ export default function resourceRoutes(pool) {
           FROM task t
           JOIN task_assignment ta ON ta.task_id = t.id AND ta.user_id = ? AND ta.is_active = 1
           JOIN project p ON p.id = t.project_id
-          WHERE t.status IN ('not-started','in-progress','blocked')
+          WHERE t.status IN ('not-started', 'in-progress', 'blocked')
         `,
           [r.user_id],
         );
@@ -83,7 +83,7 @@ export default function resourceRoutes(pool) {
         JOIN task t ON t.id = ta.task_id
         JOIN project p ON p.id = t.project_id
         LEFT JOIN task_review tr ON tr.task_id = t.id
-        WHERE ta.user_id = ? AND ta.is_active = 1 AND t.status IN ('not-started','in-progress','blocked')
+        WHERE ta.user_id = ? AND ta.is_active = 1 AND t.status IN ('not-started', 'in-progress', 'blocked')
         ORDER BY FIELD(t.priority,'critical','high','medium','low'), t.deadline ASC
       `,
         [userId],
@@ -116,7 +116,7 @@ export default function resourceRoutes(pool) {
         JOIN task_assignment ta ON ta.task_id = t.id AND ta.user_id = ? AND ta.is_active = 1
         JOIN project p ON p.id = t.project_id
         LEFT JOIN (SELECT task_id, COUNT(*) AS cnt FROM task_assignment WHERE is_active=1 GROUP BY task_id) ta2 ON ta2.task_id = t.id
-        WHERE t.status IN ('not-started','in-progress','blocked')
+        WHERE t.status IN ('not-started', 'in-progress', 'blocked')
         GROUP BY p.id, p.name, p.color
       `,
         [userId],
@@ -126,10 +126,10 @@ export default function resourceRoutes(pool) {
       let totalWeeklyHours = 0;
       for (const wp of workloadByProject) {
         totalWeeklyHours += Number(wp.hours);
-        wp.hours = Math.round(Number(wp.hours));
+        wp.hours = Number(wp.hours);
       }
 
-      const utilization = user.max_hours_per_week > 0 ? (totalWeeklyHours / user.max_hours_per_week) * 100 : 0;
+      const utilization = user.max_hours_per_week > 0 ? Math.round((totalWeeklyHours / user.max_hours_per_week) * 100) : 0;
 
       // Daily log compliance
       const [compliance] = await pool.execute(
@@ -183,7 +183,7 @@ export default function resourceRoutes(pool) {
           FROM task t
           JOIN task_assignment ta ON ta.task_id = t.id AND ta.user_id = ? AND ta.is_active = 1
           JOIN project p ON p.id = t.project_id
-          WHERE t.status IN ('not-started','in-progress','blocked')
+          WHERE t.status IN ('not-started', 'in-progress', 'blocked')
         `,
           [r.user_id],
         );
@@ -213,7 +213,7 @@ export default function resourceRoutes(pool) {
         FROM user u
         JOIN role r ON r.id = u.role_id
         LEFT JOIN task_assignment ta ON ta.user_id = u.id AND ta.is_active = 1
-        LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started','in-progress','blocked')
+        LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started', 'in-progress', 'blocked')
         LEFT JOIN (SELECT task_id, COUNT(*) AS cnt FROM task_assignment WHERE is_active=1 GROUP BY task_id) ta2 ON ta2.task_id = t.id
         WHERE u.org_id = ? AND u.is_active = 1 AND r.access_level = 'employee'
         GROUP BY u.id, u.first_name, u.last_name, u.avatar, r.name, u.max_hours_per_week
@@ -234,7 +234,7 @@ export default function resourceRoutes(pool) {
         FROM user u
         JOIN role r ON r.id = u.role_id
         LEFT JOIN task_assignment ta ON ta.user_id = u.id AND ta.is_active = 1
-        LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started','in-progress','blocked')
+        LEFT JOIN task t ON t.id = ta.task_id AND t.status IN ('not-started', 'in-progress', 'blocked')
         LEFT JOIN (SELECT task_id, COUNT(*) AS cnt FROM task_assignment WHERE is_active=1 GROUP BY task_id) ta2 ON ta2.task_id = t.id
         WHERE u.org_id = ? AND u.is_active = 1 AND r.access_level = 'employee'
         GROUP BY u.id, u.first_name, u.last_name, u.avatar, r.name, u.max_hours_per_week
