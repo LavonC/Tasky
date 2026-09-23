@@ -1,5 +1,5 @@
 <template>
-  <div class="analytics-table bg-white q-pa-md shadow-1 q-mb-md" style="border-radius: 12px">
+  <div class="analytics-table bg-white q-pa-md shadow-1 q-mb-md" style="border-radius: 12px; height: 100%; display: flex; flex-direction: column;">
     <div class="row items-center justify-between q-mb-sm">
       <div class="text-subtitle1 text-weight-bold">Project Performance Summary</div>
       <q-btn
@@ -19,10 +19,11 @@
       :rows="analyticsStore.projectPerformance"
       :columns="columns"
       row-key="id"
+      class="col"
       flat
       dense
-      :pagination="{ rowsPerPage: 10 }"
-  :rows-per-page-options="[3, 5, 7, 10, 0]"
+      v-model:pagination="pagination"
+      :rows-per-page-options="[3, 5, 7, 10, 0]"
       :loading="analyticsStore.loading"
     >
       <template v-slot:loading>
@@ -107,10 +108,16 @@
 <script setup lang="ts">
 import type { QTableProps } from 'quasar';
 import { useRouter } from 'vue-router';
+import { ref } from 'vue';
 import { useAnalyticsStore } from '../stores/analyticsStore';
 
 const router = useRouter();
 const analyticsStore = useAnalyticsStore();
+
+const pagination = ref({
+  page: 1,
+  rowsPerPage: 10
+});
 
 const columns: QTableProps['columns'] = [
   { name: 'project', label: 'Project', field: 'name', align: 'left' },
