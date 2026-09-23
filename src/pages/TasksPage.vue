@@ -63,10 +63,11 @@
         <div class="text-caption text-grey-7">Overdue</div>
       </div>
       <div class="row items-center">
-        <q-icon name="block" color="orange" size="20px" class="q-mr-xs" />
-        <div class="text-weight-bold text-orange q-mr-sm">{{ taskStore.stats.blocked || 0 }}</div>
-        <div class="text-caption text-grey-7">Blocked</div>
+        <q-icon name="o_check_circle" color="green" size="20px" class="q-mr-xs" />
+        <div class="text-weight-bold text-green q-mr-sm">{{ taskStore.stats.completed || 0 }}</div>
+        <div class="text-caption text-grey-7">Completed</div>
       </div>
+
     </div>
 
     <!-- Toolbar -->
@@ -191,19 +192,20 @@
     />
     </div>
 
-    <div class="row q-col-gutter-lg">
+    <div class="row q-col-gutter-lg items-stretch">
       <!-- Left Column -->
-      <div class="col-5 column">
-        <ProjectProgressWidget />
+      <div class="col-5">
+        <ProjectProgressWidget style="height: 100%; margin-bottom: 0;" />
       </div>
 
       <!-- Right Column -->
-      <div class="col-4 column">
-        <TaskStatusDistribution />
+      <div class="col-4">
+        <TaskStatusDistribution style="height: 100%; margin-bottom: 0;" />
       </div>
 
-      <div class="col-3 column">
+      <div class="col-3">
         <ProjectSummary
+          style="height: 100%; margin-bottom: 0;"
           :projects="analyticsStore.projectProgress"
           :deadline-risks="analyticsStore.deadlineRisks"
           :in-progress-tasks="analyticsStore.taskDistribution?.status?.['in-progress'] || 0"
@@ -309,8 +311,6 @@ import SendCommentDialog from '../components/SendCommentDialog.vue';
 import { useOrgStore } from '../stores/orgStore';
 import { useAnalyticsStore } from '../stores/analyticsStore';
 
-import { exportFile } from 'quasar';
-
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
@@ -323,44 +323,54 @@ const analyticsStore = useAnalyticsStore();
 
 const exportReport = () => {
   const projects = analyticsStore.projectProgress || [];
-  
-  // Helper function to show proper values instead of unknown or 0
-  const formatValue = (value: any, defaultValue = 'N/A') => {
-    if (value === null || value === undefined || value === '' || value === 'Unknown') return defaultValue;
-    return value;
-  };
-  
-  let content = 'Project Name,Status,Progress\n';
-  projects.forEach((p: any) => {
-    const name = formatValue(p.project_name || p.name, 'Unnamed Project');
-    const status = formatValue(p.status, 'Not Specified');
-    const progress = p.progress !== null && p.progress !== undefined ? p.progress : 0;
-    content += `"${name}","${status}",${progress}\n`;
-  });
-
-  content += '\nDeadline Risks\nTask,Risk,Days Remaining\n';
   const risks = analyticsStore.deadlineRisks || [];
-  risks.forEach((r: any) => {
-    const taskTitle = formatValue(r.task_title || r.title, 'Unnamed Task');
-    const riskLevel = formatValue(r.risk_level, 'Not Specified');
-    const days = r.days_until !== undefined && r.days_until !== null ? r.days_until : 'N/A';
-    content += `"${taskTitle}","${riskLevel}",${days}\n`;
-  });
 
-  const status = exportFile('project-report.csv', content, 'text/csv');
-  if (status !== true) {
-    $q.notify({
-      message: 'Browser denied file download',
-      color: 'negative',
-      icon: 'warning'
-    });
-  } else {
-    $q.notify({
-      message: 'Report downloaded successfully',
-      color: 'positive',
-      icon: 'check'
-    });
-  }
+  const escapeHtml = (value: unknown) => {
+    const text =
+      typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+        ? String(value)
+        : '';
+
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  const formatValue = (value: unknown, defaultValue = 'N/A') => {
+    if (value === null || value === undefined || value === '' || value === 'Unknown') {
+      return defaultValue;
+    }
+    return escapeHtml(value);
+  };
+
+  const projectRows = projects
+    .map((project: any) => {
+      const progress = project.progress !== null && project.progress !== undefined ? `${project.progress}%` : 'N/A';
+      return `<tr><td><strong>${formatValue(project.project_name || project.name, 'Unnamed Project')}</strong></td><td>${formatValue(project.status, 'Not Specified')}</td><td>${escapeHtml(progress)}</td></tr>`;
+    })
+    .join('');
+
+  const riskRows = risks
+    .map((risk: any) => {
+      const days = risk.days_until !== undefined && risk.days_until !== null ? risk.days_until : 'N/A';
+      return `<tr><td>${formatValue(risk.task_title || risk.title, 'Unnamed Task')}</td><td>${formatValue(risk.risk_level, 'Not Specified')}</td><td>${escapeHtml(days)}</td></tr>`;
+    })
+    .join('');
+
+  const generatedAt = new Date().toLocaleString();
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>TASKY Project Report</title><style>body{font:14px Arial;color:#263238;margin:48px}header{border-bottom:4px solid #3949ab;padding-bottom:18px;margin-bottom:28px}h1{color:#283593;margin:0 0 8px}.meta{color:#607d8b}.metrics{display:flex;gap:12px;margin:22px 0}.metric{border:1px solid #e0e5ef;border-radius:8px;padding:14px;min-width:130px}.metric b{display:block;font-size:22px;color:#3949ab;margin-top:6px}table{width:100%;border-collapse:collapse;margin:18px 0 28px}th{background:#3949ab;color:white;text-align:left}th,td{padding:11px;border:1px solid #e0e5ef}tr:nth-child(even){background:#f6f8fc}footer{margin-top:36px;color:#78909c;font-size:12px}</style></head><body><header><h1>TASKY Project Report</h1><div class="meta">Generated: ${escapeHtml(generatedAt)}</div></header><div class="metrics"><div class="metric">Projects<b>${projects.length}</b></div><div class="metric">Deadline risks<b>${risks.length}</b></div><div class="metric">In-progress tasks<b>${escapeHtml(analyticsStore.overview?.taskDistribution?.status?.['in-progress'] ?? 0)}</b></div></div><h2>Project Progress</h2><table><thead><tr><th>Project</th><th>Status</th><th>Progress</th></tr></thead><tbody>${projectRows || '<tr><td colspan="3">No project progress data available.</td></tr>'}</tbody></table><h2>Deadline Risks</h2><table><thead><tr><th>Task</th><th>Risk</th><th>Days Remaining</th></tr></thead><tbody>${riskRows || '<tr><td colspan="3">No deadline risks identified.</td></tr>'}</tbody></table><footer>Prepared by TASKY from the project manager task dashboard.</footer></body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `tasky-project-report-${new Date().toISOString().slice(0, 10)}.html`;
+  link.click();
+  URL.revokeObjectURL(url);
+  $q.notify({ type: 'positive', message: 'Project report exported' });
 };
 
 const filters = ref({

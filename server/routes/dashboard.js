@@ -14,11 +14,11 @@ export default function dashboardRoutes(pool) {
         SELECT COUNT(DISTINCT p.id) AS count
         FROM project p
         JOIN task t ON t.project_id = p.id
-        WHERE p.org_id = ? AND p.created_by = ? AND p.status IN ('active','planning')
+        WHERE p.org_id = ? AND p.status IN ('active','planning')
           AND t.status NOT IN ('completed')
           AND t.deadline < CURDATE()
       `,
-        [orgId, pmId],
+        [orgId],
       );
 
       // Overloaded resources
@@ -49,11 +49,11 @@ export default function dashboardRoutes(pool) {
         `
         SELECT COUNT(*) AS count FROM task t
         JOIN project p ON p.id = t.project_id
-        WHERE p.org_id = ? AND p.created_by = ?
+        WHERE p.org_id = ?
           AND t.status NOT IN ('completed')
           AND t.deadline < CURDATE()
       `,
-        [orgId, pmId],
+        [orgId],
       );
 
       // Pending reviews: employees who haven't submitted daily log today
@@ -70,9 +70,9 @@ export default function dashboardRoutes(pool) {
       const [totalProjects] = await pool.execute(
         `
         SELECT COUNT(*) AS count FROM project
-        WHERE org_id = ? AND created_by = ? AND status IN ('active','planning')
+        WHERE org_id = ? AND status IN ('active','planning')
         `,
-        [orgId, pmId],
+        [orgId],
       );
 
       // In Progress Tasks
@@ -80,9 +80,9 @@ export default function dashboardRoutes(pool) {
         `
         SELECT COUNT(*) AS count FROM task t
         JOIN project p ON p.id = t.project_id
-        WHERE p.org_id = ? AND p.created_by = ? AND t.status = 'in-progress'
+        WHERE p.org_id = ? AND t.status = 'in-progress'
         `,
-        [orgId, pmId],
+        [orgId],
       );
 
       const [loggedToday] = await pool.execute(
@@ -128,11 +128,11 @@ export default function dashboardRoutes(pool) {
           (SELECT COUNT(*) FROM task t2 WHERE t2.project_id = p.id AND t2.status NOT IN ('completed') AND t2.deadline < CURDATE()) AS overdue_tasks
         FROM project p
         JOIN task t ON t.project_id = p.id
-        WHERE p.org_id = ? AND p.created_by = ? AND p.status IN ('active','planning')
+        WHERE p.org_id = ? AND p.status IN ('active','planning')
           AND t.status NOT IN ('completed') AND t.deadline < CURDATE()
         ORDER BY overdue_tasks DESC
       `,
-        [orgId, pmId],
+        [orgId],
       );
 
       // Overloaded resources
@@ -168,12 +168,12 @@ export default function dashboardRoutes(pool) {
           (SELECT COUNT(*) FROM task_dependency td WHERE td.depends_on_id = t.id) AS blocking_count
         FROM task t
         JOIN project p ON p.id = t.project_id
-        WHERE p.org_id = ? AND p.created_by = ?
+        WHERE p.org_id = ?
           AND t.status NOT IN ('completed') AND t.deadline < CURDATE()
         ORDER BY t.priority = 'critical' DESC, t.priority = 'high' DESC, days_overdue DESC
         LIMIT 10
       `,
-        [orgId, pmId],
+        [orgId],
       );
 
       res.json({

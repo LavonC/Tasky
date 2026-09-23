@@ -31,9 +31,9 @@ export default function taskRoutes(pool) {
         FROM task t
         JOIN project p ON p.id = t.project_id
         LEFT JOIN project_phase pp ON pp.id = t.phase_id
-        WHERE p.org_id = ? AND p.created_by = ?
+        WHERE p.org_id = ?
       `;
-      const params = [orgId, pmId];
+      const params = [orgId];
 
       if (project && project !== 'all') {
         query += ' AND t.project_id = ?';
@@ -114,12 +114,12 @@ export default function taskRoutes(pool) {
         SELECT t.*, p.name AS project_name, p.color AS project_color
         FROM task t
         JOIN project p ON p.id = t.project_id
-        WHERE p.org_id = ? AND p.created_by = ? 
+        WHERE p.org_id = ? 
           AND t.status != 'completed'
           AND t.id NOT IN (SELECT task_id FROM task_assignment WHERE is_active = 1)
         ORDER BY t.deadline ASC
       `,
-        [orgId, pmId]
+        [orgId]
       );
 
       res.json({ success: true, tasks });
