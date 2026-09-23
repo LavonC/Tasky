@@ -180,10 +180,9 @@
 
    <!-- Original Section Tabs + Collapse -->
 <div class="bottom-section">
-  <div
-    class="row items-center full-width"
-    style="flex: 0 0 auto"
-  >
+
+  <div class="bottom-tabs-row">
+
     <q-tabs
       v-model="activeTab"
       dense
@@ -197,6 +196,7 @@
       <q-tab name="completed" label="Completed" icon="check_circle" />
       <q-tab name="insights" label="Insights" icon="insights" />
     </q-tabs>
+
   </div>
 
   <q-tab-panels
@@ -1640,11 +1640,22 @@ function showEmployeePerformance(user: any) {
 
 .command-center-tabs {
   width: 100%;
+  min-width: 0;
+}
+
+.command-center-tabs :deep(.q-tabs__content) {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
 }
 
 .command-center-tabs :deep(.q-tab) {
-  min-width: 120px;
+  min-width: 0;
+  width: 100%;
   padding-inline: 22px;
+  justify-content: center;
 }
 
 .graph-card {
@@ -1661,10 +1672,22 @@ function showEmployeePerformance(user: any) {
 
 .bottom-section {
   margin-top: 16px;
+  width: 100%;
+  min-width: 0;
+  align-self: stretch;
+}
+
+.bottom-tabs-row {
+  width: 100%;
+  min-width: 0;
+  display: block;
+  flex: 0 0 auto;
 }
 
 .bottom-tab-panels {
   margin-top: 16px;
+  width: 100%;
+  min-width: 0;
 }
 
 .bottom-tab-panels :deep(.q-tab-panel) {

@@ -238,13 +238,6 @@ const employeeSubmissions = ref<any[]>([]);
 const employeeLogsByDate = ref<any>({});
 const activeTab = ref('performance');
 
-function getDateKey(dateStr: string): string {
-  if (!dateStr) return '';
-  const iso = new Date(dateStr).toISOString();
-  const parts = iso.split('T');
-  return parts && parts.length > 0 ? (parts[0] as string) : '';
-}
-
 const meterChart = ref<HTMLElement>();
 const pieChart = ref<HTMLElement>();
 const barChart = ref<HTMLElement>();
@@ -432,8 +425,14 @@ function renderBarChart() {
 
   const svg = d3.select(container).append('svg').attr('width', width).attr('height', height);
 
-  const weeklyData = performanceData.value.weeklyProgress || [];
-  const maxHours = d3.max(weeklyData, (d: any) => d.hours) || 40;
+  const rawWeeklyData = performanceData.value.weeklyProgress || [];
+  const weeklyData = Array.from({ length: 8 }, (_, index) => ({
+    week: `W${index + 1}`,
+    assigned: Number(rawWeeklyData[index]?.assigned || 0),
+    completed: Number(rawWeeklyData[index]?.completed || 0),
+    progress: Number(rawWeeklyData[index]?.progress || 0),
+  }));
+  const maxTasks = Math.max(1, d3.max(weeklyData, (d: any) => d.assigned) || 0);
 
   const x = d3
     .scaleBand()
@@ -443,7 +442,7 @@ function renderBarChart() {
 
   const y = d3
     .scaleLinear()
-    .domain([0, maxHours as number])
+    .domain([0, maxTasks])
     .range([height - margin.bottom, margin.top]);
 
   svg
@@ -460,10 +459,11 @@ function renderBarChart() {
     .call(d3.axisLeft(y) as any);
 
   svg
-    .selectAll('rect')
+    .selectAll('.completed-bar')
     .data(weeklyData)
     .enter()
     .append('rect')
+    .attr('class', 'completed-bar')
     .attr('x', (d: any) => x(d.week) || 0)
     .attr('y', height - margin.bottom)
     .attr('width', x.bandwidth())
@@ -471,8 +471,9 @@ function renderBarChart() {
     .attr('fill', '#2196f3')
     .transition()
     .duration(1000)
-    .attr('y', (d: any) => y(d.hours))
-    .attr('height', (d: any) => height - margin.bottom - y(d.hours));
+    .attr('y', (d: any) => y(d.completed))
+    .attr('height', (d: any) => height - margin.bottom - y(d.completed));
+
 }
 </script>
 

@@ -1577,6 +1577,7 @@ app.get('/api/pm/employee-performance/:userId', async (req, res) => {
       const [weeklyRows] = await connection.execute(
         `SELECT 
            YEARWEEK(log_date, 1) as week_num, 
+           MIN(log_date) as week_start,
            SUM(hours_spent) as hours 
          FROM daily_work_log 
          WHERE user_id = ? AND log_date >= DATE_SUB(CURDATE(), INTERVAL 8 WEEK) 
@@ -1585,14 +1586,55 @@ app.get('/api/pm/employee-performance/:userId', async (req, res) => {
         [userId]
       );
       
-      const weeklyProgress = weeklyRows.map(r => ({
-        week: 'W' + String(r.week_num).slice(-2),
-        hours: parseFloat(r.hours)
-      }));
-      
-      if (weeklyProgress.length === 0) {
-         weeklyProgress.push({ week: 'Current', hours: 0 });
-      }
+      const [weeklyTaskRows] = await connection.execute(
+        `SELECT ta.assigned_at, t.completed_at
+         FROM task t
+         JOIN task_assignment ta ON t.id = ta.task_id
+         WHERE ta.user_id = ? AND ta.is_active = 1
+           AND (ta.assigned_at >= DATE_SUB(CURDATE(), INTERVAL 8 WEEK)
+             OR (t.completed_at IS NOT NULL AND t.completed_at >= DATE_SUB(CURDATE(), INTERVAL 8 WEEK)))`,
+        [userId]
+      );
+
+      const startOfWeek = (date) => {
+        const result = new Date(date);
+        result.setHours(0, 0, 0, 0);
+        const day = result.getDay();
+        result.setDate(result.getDate() - (day === 0 ? 6 : day - 1));
+        return result;
+      };
+      const currentWeek = startOfWeek(new Date());
+      const weeklyProgress = Array.from({ length: 8 }, (_, index) => {
+        const weekStart = new Date(currentWeek);
+        weekStart.setDate(currentWeek.getDate() - (7 * (7 - index)));
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 7);
+        const hoursRow = weeklyRows.find((row) => startOfWeek(row.week_start).getTime() === weekStart.getTime());
+        return {
+          week: `W${index + 1}`,
+          assigned: 0,
+          completed: 0,
+          hours: hoursRow ? parseFloat(hoursRow.hours) : 0,
+          progress: 0,
+          weekStart,
+          weekEnd,
+        };
+      });
+
+      weeklyTaskRows.forEach((task) => {
+        const assignedAt = task.assigned_at ? new Date(task.assigned_at) : null;
+        const completedAt = task.completed_at ? new Date(task.completed_at) : null;
+        weeklyProgress.forEach((week) => {
+          if (assignedAt >= week.weekStart && assignedAt < week.weekEnd) week.assigned += 1;
+          if (completedAt >= week.weekStart && completedAt < week.weekEnd) week.completed += 1;
+        });
+      });
+
+      weeklyProgress.forEach((week) => {
+        week.progress = week.assigned > 0 ? Math.round((week.completed / week.assigned) * 100) : 0;
+        delete week.weekStart;
+        delete week.weekEnd;
+      });
 
       // 5. Recent Tasks
       const [recentTasksRows] = await connection.execute(

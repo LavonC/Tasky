@@ -202,6 +202,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
 import StatCard from '../components/StatCard.vue';
 import ProjectListCard from '../components/ProjectListCard.vue';
+import { getThemeStorageKey } from '../services/theme';
 
 const $q = useQuasar();
 const authStore = useAuthStore();
@@ -211,11 +212,11 @@ const darkMode = ref(false);
 const setDarkMode = (value: boolean) => {
   darkMode.value = value;
   $q.dark.set(value);
-  localStorage.setItem('tasky_dark_mode', String(value));
+  sessionStorage.setItem(getThemeStorageKey(authStore.user?.id), String(value));
 };
 
 onMounted(() => {
-  darkMode.value = localStorage.getItem('tasky_dark_mode') === 'true';
+  darkMode.value = sessionStorage.getItem(getThemeStorageKey(authStore.user?.id)) === 'true';
   $q.dark.set(darkMode.value);
   if (projectStore.projects.length === 0) {
     projectStore.fetchProjects();

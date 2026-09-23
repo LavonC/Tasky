@@ -177,6 +177,7 @@ import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useAuthStore } from '@/stores/authStore';
+import { getThemeStorageKey } from '@/services/theme';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -189,7 +190,7 @@ const notificationStore = useNotificationStore();
 const unreadNotifications = computed(() => notificationStore.unreadCount);
 
 onMounted(() => {
-  $q.dark.set(localStorage.getItem('tasky_dark_mode') === 'true');
+  $q.dark.set(sessionStorage.getItem(getThemeStorageKey(authStore.user?.id)) === 'true');
   void notificationStore.fetchNotifications();
 });
 

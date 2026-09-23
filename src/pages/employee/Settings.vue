@@ -131,6 +131,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from '../../stores/authStore';
+import { getThemeStorageKey } from '../../services/theme';
 
 defineOptions({
   name: 'EmployeeSettings',
@@ -155,7 +156,7 @@ const resigning = ref(false);
 const changingPassword = ref(false);
 
 onMounted(() => {
-  darkMode.value = localStorage.getItem('tasky_dark_mode') === 'true';
+  darkMode.value = sessionStorage.getItem(getThemeStorageKey(authStore.user?.id)) === 'true';
   $q.dark.set(darkMode.value);
   if (authStore.user) {
     firstName.value = authStore.user.firstName || '';
@@ -197,7 +198,7 @@ async function resign() {
 function setDarkMode(value: boolean) {
   darkMode.value = value;
   $q.dark.set(value);
-  localStorage.setItem('tasky_dark_mode', String(value));
+  sessionStorage.setItem(getThemeStorageKey(authStore.user?.id), String(value));
 }
 
 async function saveProfile() {

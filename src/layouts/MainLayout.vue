@@ -401,6 +401,7 @@ import { useQuasar } from 'quasar';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotificationStore } from '@/stores/notificationStore';
 import UserHeader from '@/components/PageHeaderEmp.vue';
+import { getThemeStorageKey } from '@/services/theme';
 
 const route = useRoute();
 
@@ -417,7 +418,7 @@ const leftDrawerOpen = ref(true);
 const sidebarCollapsed = ref(false);
 
 onMounted(() => {
-  $q.dark.set(localStorage.getItem('tasky_dark_mode') === 'true');
+  $q.dark.set(sessionStorage.getItem(getThemeStorageKey(authStore.user?.id)) === 'true');
   void notificationStore.fetchNotifications();
 });
 

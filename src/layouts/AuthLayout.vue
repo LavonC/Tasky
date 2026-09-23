@@ -145,11 +145,12 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useQuasar } from 'quasar';
+import { getStoredUserId, getThemeStorageKey } from '../services/theme';
 
 const $q = useQuasar();
 
 onMounted(() => {
-  $q.dark.set(localStorage.getItem('tasky_dark_mode') === 'true');
+  $q.dark.set(sessionStorage.getItem(getThemeStorageKey(getStoredUserId())) === 'true');
 });
 </script>
 
