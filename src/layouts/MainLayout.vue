@@ -172,7 +172,7 @@
             </q-item-section>
 
             <q-item-section v-if="!sidebarCollapsed" class="text-body2 text-weight-medium">
-              Collapse
+              
             </q-item-section>
           </q-item>
         </q-list>
