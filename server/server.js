@@ -1449,9 +1449,10 @@ app.put('/api/pm/reviews/:id/finalize', async (req, res) => {
   }
 });
 
-// GET /api/pm/tasks/completed - Get all completed tasks for PM (Authentication removed for testing)
+// GET /api/pm/tasks/completed - Get all completed tasks for PM
 app.get('/api/pm/tasks/completed', async (req, res) => {
   try {
+    const orgId = req.user.org_id;
     const connection = await pool.getConnection();
     try {
       const [tasks] = await connection.execute(
@@ -1463,9 +1464,10 @@ app.get('/api/pm/tasks/completed', async (req, res) => {
         JOIN project p ON p.id = t.project_id
         JOIN task_assignment ta ON ta.task_id = t.id AND ta.is_active = 1
         JOIN user u ON u.id = ta.user_id
-        WHERE t.status = 'completed'
+        WHERE t.status = 'completed' AND p.org_id = ?
         ORDER BY t.completed_at DESC
-        `
+        `,
+        [orgId]
       );
       res.json({ success: true, tasks });
     } finally {
