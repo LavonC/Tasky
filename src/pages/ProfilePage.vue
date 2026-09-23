@@ -108,6 +108,7 @@
           v-for="project in projectStore.projects"
           :key="project.id"
           :project="project"
+          @click="goToProject(project)"
         />
         <div v-if="projectStore.projects.length === 0" class="text-center text-grey-6 q-pa-xl">
           <q-icon name="folder_off" size="48px" class="q-mb-sm" />
@@ -197,6 +198,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
@@ -204,6 +206,7 @@ import StatCard from '../components/StatCard.vue';
 import ProjectListCard from '../components/ProjectListCard.vue';
 import { getThemeStorageKey } from '../services/theme';
 
+const router = useRouter();
 const $q = useQuasar();
 const authStore = useAuthStore();
 const projectStore = useProjectStore();
@@ -222,6 +225,10 @@ onMounted(() => {
     projectStore.fetchProjects();
   }
 });
+
+const goToProject = (project: any) => {
+  router.push({ path: '/dashboard/projects', query: { open: project.id } });
+};
 
 const avgProgress = computed(() => {
   if (projectStore.projects.length === 0) return 0;
