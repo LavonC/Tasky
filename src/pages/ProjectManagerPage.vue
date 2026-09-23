@@ -77,10 +77,15 @@
                   <q-item-label class="text-weight-bold"
                     >{{ project.name }} (Project)</q-item-label
                   >
-                  <q-item-label caption
-                    >Project is delayed by {{ project.days_delayed }} days.
-                    {{ project.overdue_tasks }} overdue task(s).</q-item-label
-                  >
+                  <q-item-label caption>
+                    <template v-if="project.days_delayed > 0">
+                      Project is delayed by {{ project.days_delayed }} days.
+                    </template>
+                    <template v-else>
+                      Project tasks are falling behind schedule.
+                    </template>
+                    {{ project.overdue_tasks }} overdue task(s).
+                  </q-item-label>
                 </q-item-section>
                 <q-item-section side>
                   <q-btn
@@ -401,7 +406,7 @@
     <!-- Performance Tab -->
     <q-tab-panel name="performance" class="q-pa-none">
       <div class="row q-col-gutter-md">
-        <div class="col-12 graph-card">
+        <div class="col-12 graph-card ">
           <ProjectPerformanceTable />
         </div>
       </div>
@@ -436,7 +441,7 @@
         </div>
       </div>
       <div class="row q-col-gutter-md">
-        <div class="col-12 graph-card">
+        <div class="col-12 graph-card project-performance-card">
           <ProjectPerformanceTable />
         </div>
       </div>
@@ -1917,6 +1922,10 @@ function showEmployeePerformance(user: any) {
 :global(body.body--dark) .q-dialog .q-card {
   background: #1d2930 !important;
   color: #edf2f7 !important;
+}
+
+.project-performance-card {
+  min-height: 350px;
 }
 
 </style>

@@ -75,16 +75,24 @@
           style="font-size: 10px; min-width: 50px; display: flex; justify-content: center"
         />
       </div>
-      <q-pagination
+      <div
         v-if="totalPages > 1"
-        v-model="currentPage"
-        :max="totalPages"
-        max-pages="5"
-        direction-links
-        boundary-links
-        size="sm"
-        class="self-center q-mt-sm"
-      />
+        class="row items-center justify-center q-mt-md"
+      >
+        <q-pagination
+          v-model="currentPage"
+          :max="totalPages"
+          :max-pages="5"
+          direction-links
+          boundary-links
+          size="sm"
+          color="grey-6"
+          active-color="primary"
+          text-color="grey-8"
+          active-text-color="white"
+          class="resource-pagination"
+        />
+      </div>
     </div>
 
     <div v-else class="text-center text-grey-6 q-pa-md text-caption">
@@ -158,3 +166,25 @@ const getBadgeTextColor = (level: string) => {
   color: #edf2f7 !important;
 }
 </style>
+
+
+.resource-pagination {
+  color: var(--q-dark-page);
+}
+
+.body--dark .resource-pagination {
+  color: #cfd3dc;
+}
+
+.body--dark .resource-pagination :deep(.q-btn) {
+  color: #cfd3dc;
+}
+
+.body--dark .resource-pagination :deep(.q-btn--active) {
+  background: var(--q-primary);
+  color: white;
+}
+
+.body--dark .resource-pagination :deep(.q-btn--disabled) {
+  color: #666b75 !important;
+}

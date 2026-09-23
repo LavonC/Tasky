@@ -198,11 +198,11 @@
       </div>
 
       <!-- Right Column -->
-      <div class="col-3 column">
+      <div class="col-4 column">
         <TaskStatusDistribution />
       </div>
 
-      <div class="col-4 column">
+      <div class="col-3 column">
         <ProjectSummary
           :projects="analyticsStore.projectProgress"
           :deadline-risks="analyticsStore.deadlineRisks"

@@ -109,22 +109,23 @@
     </div>
 
     <!-- Main Content Split -->
-    <div class="row q-col-gutter-lg">
-      <!-- Left Column -->
-      <div class="col-8 column">
-        <ProjectProgressWidget />
-        <ResourceWorkloadTable :compact="true" class="q-mb-md" />
-        <ProjectPerformanceTable />
-      </div>
+<div class="row q-col-gutter-lg">
+  <!-- Left Column -->
+  <div class="col-8 analytics-column">
+    <ProjectProgressWidget />
+    <ResourceWorkloadTable :compact="true" />
+    <ProjectPerformanceTable />
+  </div>
 
-      <!-- Right Column -->
-      <div class="col-4 column">
-      <TaskCompletionTrend :data="analyticsStore.completionTrend" />
-        <TaskStatusDistribution />
-        <TaskPriorityDistribution />
-        <UpcomingDeadlineRisks />
-      </div>
-    </div>
+  <!-- Right Column -->
+  <div class="col-4 analytics-column">
+    <TaskCompletionTrend :data="analyticsStore.completionTrend" />
+    <TaskStatusDistribution />
+    <TaskPriorityDistribution />
+    <UpcomingDeadlineRisks />
+    <WorkloadScatterChart :resources="resourceStore.resources" />
+  </div>
+</div>
   </q-page>
 </template>
 
@@ -134,6 +135,7 @@ import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from '../stores/authStore';
 import { useAnalyticsStore } from '../stores/analyticsStore';
+import { useResourceStore } from '../stores/resourceStore';
 import StatCard from '../components/StatCard.vue';
 import ProjectProgressWidget from '../components/ProjectProgressWidget.vue';
 import ResourceWorkloadTable from '../components/ResourceWorkloadTable.vue';
@@ -143,10 +145,12 @@ import TaskPriorityDistribution from '../components/TaskPriorityDistribution.vue
 import UpcomingDeadlineRisks from '../components/UpcomingDeadlineRisks.vue';
 import PerformanceMeter from '../components/PerformanceMeter.vue';
 import TaskCompletionTrend from '../components/TaskCompletionTrend.vue';
+import WorkloadScatterChart from '../components/WorkloadScatterChart.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const analyticsStore = useAnalyticsStore();
+const resourceStore = useResourceStore();
 const $q = useQuasar();
 
 const searchQuery = ref('');
@@ -155,6 +159,7 @@ const exporting = ref(false);
 
 onMounted(() => {
   analyticsStore.loadAll('this_month');
+  resourceStore.fetchResources();
 });
 
 watch(filterMonth, (period) => {
@@ -284,4 +289,11 @@ const exportReport = async () => {
   --analytics-scrollbar-thumb: #46555e;
   --analytics-scrollbar-thumb-hover: #5b6c76;
 }
+
+.analytics-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 </style>

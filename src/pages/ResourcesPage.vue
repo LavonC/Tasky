@@ -409,6 +409,7 @@ const getUtilizationColor = (utilization: number) => {
 
 const getStatusColor = (status: string) => {
   if (status === 'overloaded') return 'red';
+  if (status === 'near-capacity') return 'orange';
   return 'green';
 };
 

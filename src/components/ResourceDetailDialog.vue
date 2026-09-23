@@ -284,7 +284,7 @@
                     class="q-mr-sm"
                     :style="`width: 12px; height: 12px; border-radius: 50%; background-color: var(--q-${wp.color || 'indigo'})`"
                   ></div>
-                  <span class="text-weight-medium text-primary">{{ wp.name }}</span>
+                  <span class="text-weight-medium workload-project-name">{{ wp.name }}</span>
                 </div>
                 <div class="text-grey-8 text-weight-bold">{{ Math.round(wp.hours) }}h</div>
               </div>
@@ -754,4 +754,13 @@ const executeReassignment = async () => {
 .hover-bg-grey-1:hover {
   background-color: #f5f5f5 !important;
 }
+
+.workload-project-name {
+  color: #1f2937;
+}
+
+.body--dark .workload-project-name {
+  color: #f5f5f5;
+}
+
 </style>
