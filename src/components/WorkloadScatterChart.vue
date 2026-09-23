@@ -1,5 +1,5 @@
 <template>
-  <q-card flat bordered class="q-pa-md bg-white workload-card">
+  <q-card flat bordered class="q-pa-lg bg-white workload-card">
     <div class="text-subtitle1 text-weight-bold">
       Workload vs Utilization
     </div>
@@ -162,7 +162,7 @@ const highUtilizationCount = computed(() => {
 
 .scatter-container {
   position: relative;
-  height: 135px;
+  height: 130px;
   padding: 5px 5px 10px 42px;
 }
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="analytics-card bg-white q-pa-md shadow-1 q-mb-md" style="border-radius: 12px">
+  <div class="analytics-card bg-white q-pa-lg shadow-1 q-mb-md" style="border-radius: 12px">
     <div class="text-subtitle1 text-weight-bold q-mb-lg">
       Task Status Distribution
     </div>

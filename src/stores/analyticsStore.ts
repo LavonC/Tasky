@@ -137,6 +137,7 @@ export const useAnalyticsStore = defineStore('analytics', {
               completed_tasks,
               completion_rate,
               overdue_tasks: Number(project.overdue_tasks) || 0,
+              at_risk_tasks: Number(project.at_risk_tasks) || 0,
               team_size: Number(project.team_size) || 0,
               total_hours_logged: Number(project.total_hours_logged) || 0,
               total_estimated_hours: Number(project.total_estimated_hours) || 0,

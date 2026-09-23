@@ -201,7 +201,7 @@ onBeforeUnmount(() => {
 .trend-card {
   background: #ffffff;
   color: #111111;
-  padding: 20px 18px 14px;
+  padding: 24px 18px 24px;
   border-radius: 12px;
   border: 1px solid #e5eaf0;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
@@ -243,7 +243,7 @@ onBeforeUnmount(() => {
 
 .chart-container {
   width: 100%;
-  height: 120px;
+  height: 115px;
   overflow: hidden;
 }
 </style>

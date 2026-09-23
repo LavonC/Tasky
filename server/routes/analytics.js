@@ -298,6 +298,7 @@ const avgUtilization =
           (SELECT COUNT(*) FROM task t WHERE t.project_id = p.id) AS total_tasks,
           (SELECT COUNT(*) FROM task t WHERE t.project_id = p.id AND t.status = 'completed') AS completed_tasks,
           (SELECT COUNT(*) FROM task t WHERE t.project_id = p.id AND t.status NOT IN ('completed') AND t.deadline < CURDATE()) AS overdue_tasks,
+          (SELECT COUNT(*) FROM task t WHERE t.project_id = p.id AND t.risk_status = 'at-risk') AS at_risk_tasks,
           (SELECT COUNT(DISTINCT ta.user_id) FROM task t2 JOIN task_assignment ta ON ta.task_id = t2.id AND ta.is_active = 1 WHERE t2.project_id = p.id) AS team_size,
           COALESCE((SELECT SUM(t3.actual_effort) FROM task t3 WHERE t3.project_id = p.id), 0) AS total_hours_logged,
           COALESCE((SELECT SUM(t3.expected_effort) FROM task t3 WHERE t3.project_id = p.id), 0) AS total_estimated_hours,

@@ -1,5 +1,5 @@
 <template>
-  <div class="analytics-card bg-white q-pa-md shadow-1" style="border-radius: 12px">
+  <div class="analytics-card bg-white q-pa-lg shadow-1" style="border-radius: 12px">
     <div class="row items-center justify-between q-mb-md">
       <div class="text-subtitle1 text-weight-bold">Upcoming Deadline Risks</div>
       <q-btn
