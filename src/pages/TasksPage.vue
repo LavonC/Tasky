@@ -62,6 +62,11 @@
         <div class="text-weight-bold text-red q-mr-sm">{{ taskStore.stats.overdue || 0 }}</div>
         <div class="text-caption text-grey-7">Overdue</div>
       </div>
+      <div class="row items-center">
+        <q-icon name="o_check_circle" color="green" size="20px" class="q-mr-xs" />
+        <div class="text-weight-bold text-green q-mr-sm">{{ taskStore.stats.completed || 0 }}</div>
+        <div class="text-caption text-grey-7">Completed</div>
+      </div>
 
     </div>
 
