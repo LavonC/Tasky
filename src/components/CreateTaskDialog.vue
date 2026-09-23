@@ -65,34 +65,38 @@
               />
             </div>
             <div class="col-4">
-              <q-input
-                v-model="form.resources_needed"
-                label="Resources Needed"
-                type="number"
-                outlined
-                dense
-                min="1"
-                :readonly="!form.auto_assign"
-                :rules="[(val) => val > 0 || 'Must be > 0']"
-              />
-              <q-toggle
-                v-model="form.auto_assign"
-                label="Smart Auto Assign"
-                dense
-                class="q-mt-xs"
-              />
-              <q-btn
-                flat
-                round
-                dense
-                icon="lightbulb"
-                color="amber"
-                @click="showRecommendations"
-                :loading="loadingRecommendations"
-              >
-                <q-tooltip>View top 3 recommendations</q-tooltip>
-              </q-btn>
-            </div>
+  <q-input
+    v-model="form.resources_needed"
+    label="Resources Needed"
+    type="number"
+    outlined
+    dense
+    min="1"
+    :readonly="!form.auto_assign"
+    :rules="[(val) => val > 0 || 'Must be > 0']"
+  />
+
+  <div class="row items-center no-wrap q-mt-xs">
+    <q-toggle
+      v-model="form.auto_assign"
+      label="Smart Auto Assign"
+      dense
+    />
+
+    <q-btn
+      flat
+      round
+      dense
+      icon="lightbulb"
+      color="amber"
+      @click="showRecommendations"
+      :loading="loadingRecommendations"
+      class="q-ml-xs"
+    >
+      <q-tooltip>View top 3 recommendations</q-tooltip>
+    </q-btn>
+  </div>
+</div>
             <div class="col-3">
               <q-input
                 v-model="form.deadline"
