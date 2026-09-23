@@ -146,7 +146,7 @@
           >
             <q-menu>
               <q-list style="min-width: 150px">
-                <q-item clickable v-close-popup @click="$emit('edit', project)">
+                <q-item clickable v-close-popup @click="$emit('edit', project)" :disable="project.status === 'completed'">
                   <q-item-section avatar><q-icon name="edit" size="sm" /></q-item-section>
                   <q-item-section>Edit Project</q-item-section>
                 </q-item>
@@ -216,30 +216,22 @@ const formattedPriority = computed(() => {
 
 const statusColor = computed(() => {
   const status = props.project.computed_status || props.project.status;
-  if (status === 'on-going') return 'blue-1';
-  if (status === 'not-started') return 'grey-2';
+  if (status === 'active') return 'blue-1';
+  if (status === 'planning') return 'grey-2';
   if (status === 'completed') return 'green-1';
-  if (status === 'delayed') return 'red-1';
-  if (status === 'pending-completion') return 'orange-1';
+  if (status === 'all-tasks-complete') return 'orange-1';
 
-  if (props.project.status === 'active') return 'blue-1';
-  if (props.project.status === 'planning') return 'grey-2';
-  if (props.project.status === 'completed') return 'green-1';
-  return 'orange-1';
+  return 'grey-2';
 });
 
 const statusTextColor = computed(() => {
   const status = props.project.computed_status || props.project.status;
-  if (status === 'on-going') return 'blue';
-  if (status === 'not-started') return 'grey-8';
+  if (status === 'active') return 'blue';
+  if (status === 'planning') return 'grey-8';
   if (status === 'completed') return 'green';
-  if (status === 'delayed') return 'red';
-  if (status === 'pending-completion') return 'orange';
+  if (status === 'all-tasks-complete') return 'orange';
 
-  if (props.project.status === 'active') return 'blue';
-  if (props.project.status === 'planning') return 'grey-8';
-  if (props.project.status === 'completed') return 'green';
-  return 'orange';
+  return 'grey-8';
 });
 
 const formattedStatus = computed(() => {

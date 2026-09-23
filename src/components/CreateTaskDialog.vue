@@ -225,7 +225,9 @@ const showRecommendationsDialog = ref(false);
 const recommendations = ref<any[]>([]);
 
 const projectOptions = computed(() => {
-  return projectStore.projects.map((p) => ({ label: p.name, value: p.id }));
+  return projectStore.projects
+    .filter((p) => p.status !== 'completed' || (isEdit.value && p.id == props.taskToEdit?.project_id))
+    .map((p) => ({ label: p.name, value: p.id }));
 });
 
 const resourceOptions = computed(() => {

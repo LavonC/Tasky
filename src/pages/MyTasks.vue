@@ -330,7 +330,9 @@ const currentEmployee = computed(() => taskStore.currentEmployeeData);
 const projectsList = computed(() => taskStore.projectsList);
 
 const projectOptions = computed(() =>
-  projectsList.value.map((p) => ({ label: p.name, value: p.id })),
+  projectsList.value
+    .filter((p: any) => p.status !== 'completed')
+    .map((p) => ({ label: p.name, value: p.id })),
 );
 
 const myTasks = computed(() => {

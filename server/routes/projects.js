@@ -64,14 +64,12 @@ export default function projectRoutes(pool) {
       projects.forEach((proj) => {
         if (proj.status === 'completed') {
           proj.computed_status = 'completed';
-        } else if (proj.total_tasks > 0 && proj.completed_tasks === proj.total_tasks) {
-          proj.computed_status = 'pending-completion';
-        } else if (proj.overdue_task_count > 0) {
-          proj.computed_status = 'delayed';
-        } else if (proj.total_tasks === 0 || proj.progress == 0) {
-          proj.computed_status = 'not-started';
+        } else if (proj.progress == 100) {
+          proj.computed_status = 'all-tasks-complete';
+        } else if (proj.progress > 0) {
+          proj.computed_status = 'active';
         } else {
-          proj.computed_status = 'on-going';
+          proj.computed_status = 'planning';
         }
       });
 
@@ -166,14 +164,12 @@ export default function projectRoutes(pool) {
       // Compute dynamic project status
       if (project.status === 'completed') {
         project.computed_status = 'completed';
-      } else if (project.total_tasks > 0 && project.completed_tasks === project.total_tasks) {
-        project.computed_status = 'pending-completion';
-      } else if (tasks.some((t) => t.status !== 'completed' && new Date(t.deadline) < new Date())) {
-        project.computed_status = 'delayed';
-      } else if (project.total_tasks === 0 || project.progress == 0) {
-        project.computed_status = 'not-started';
+      } else if (project.progress == 100) {
+        project.computed_status = 'all-tasks-complete';
+      } else if (project.progress > 0) {
+        project.computed_status = 'active';
       } else {
-        project.computed_status = 'on-going';
+        project.computed_status = 'planning';
       }
 
       res.json({
@@ -270,7 +266,7 @@ export default function projectRoutes(pool) {
           pmId,
           name,
           description || null,
-          status || 'planning',
+          'planning',
           priority || 'medium',
           color || '#1976D2',
           start_date,
@@ -294,7 +290,18 @@ export default function projectRoutes(pool) {
     try {
       const orgId = req.user.org_id;
       const projectId = req.params.id;
-      const { name, description, status, priority, color, start_date, end_date } = req.body;
+      
+      const [existing] = await pool.execute('SELECT * FROM project WHERE id = ? AND org_id = ?', [projectId, orgId]);
+      if (existing.length === 0) return res.status(404).json({ success: false, error: 'Project not found' });
+      const p = existing[0];
+
+      const name = req.body.name !== undefined ? req.body.name : p.name;
+      const description = req.body.description !== undefined ? req.body.description : p.description;
+      const status = req.body.status !== undefined ? req.body.status : p.status;
+      const priority = req.body.priority !== undefined ? req.body.priority : p.priority;
+      const color = req.body.color !== undefined ? req.body.color : p.color;
+      const start_date = req.body.start_date !== undefined ? req.body.start_date : p.start_date;
+      const end_date = req.body.end_date !== undefined ? req.body.end_date : p.end_date;
 
       await pool.execute(
         `UPDATE project SET name=?, description=?, status=?, priority=?, color=?, start_date=?, end_date=?

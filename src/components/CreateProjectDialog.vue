@@ -28,18 +28,7 @@
           />
 
           <div class="row q-col-md" style="gap:20px;">
-            <div class="col-6">
-              <q-select
-                v-model="form.status"
-                :options="statusOptions"
-                label="Status"
-                outlined
-                dense
-                emit-value
-                map-options
-              />
-            </div>
-            <div class="col-5">
+            <div class="col-12">
               <q-select
                 v-model="form.priority"
                 :options="priorityOptions"
@@ -110,12 +99,6 @@ const isOpen = ref(props.modelValue);
 const isEdit = ref(false);
 const loading = ref(false);
 
-const statusOptions = [
-  { label: 'Planning', value: 'planning' },
-  { label: 'Active', value: 'active' },
-  { label: 'Completed', value: 'completed' },
-];
-
 const priorityOptions = [
   { label: 'Critical', value: 'critical' },
   { label: 'High', value: 'high' },
@@ -126,7 +109,6 @@ const priorityOptions = [
 const form = ref({
   name: '',
   description: '',
-  status: 'planning',
   priority: 'medium',
   start_date: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
   end_date: '',
@@ -143,7 +125,6 @@ watch(
         form.value = {
           name: props.projectToEdit.name,
           description: props.projectToEdit.description || '',
-          status: props.projectToEdit.status,
           priority: props.projectToEdit.priority,
           start_date: props.projectToEdit.start_date
             ? new Date(new Date(props.projectToEdit.start_date).getTime() - (new Date(props.projectToEdit.start_date).getTimezoneOffset() * 60000)).toISOString().split('T')[0] || ''
@@ -160,7 +141,6 @@ watch(
         form.value = {
           name: '',
           description: '',
-          status: 'planning',
           priority: 'medium',
           start_date: new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0],
           end_date: new Date(nextMonth.getTime() - (nextMonth.getTimezoneOffset() * 60000)).toISOString().split('T')[0] || '',

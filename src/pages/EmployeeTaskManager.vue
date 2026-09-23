@@ -2261,10 +2261,12 @@ const fetchProjects = async () => {
 };
 
 const createProjectOptions = computed(() =>
-  projects.value.map((p: any) => ({
-    label: p.name,
-    value: p.id,
-  })),
+  projects.value
+    .filter((p: any) => p.status !== 'completed')
+    .map((p: any) => ({
+      label: p.name,
+      value: p.id,
+    })),
 );
 
 // Watch for tab changes and reset status filter when switching to completed tab
