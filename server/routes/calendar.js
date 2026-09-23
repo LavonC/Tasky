@@ -16,9 +16,9 @@ export default function calendarRoutes(pool) {
           p.name AS project_name, p.color AS project_color
         FROM task t
         JOIN project p ON p.id = t.project_id
-        WHERE p.org_id = ? AND p.created_by = ?
+        WHERE p.org_id = ?
       `;
-      const params = [orgId, pmId];
+      const params = [orgId];
 
       if (project_id) {
         query += ' AND p.id = ?';

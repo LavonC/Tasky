@@ -168,17 +168,18 @@ export default function schedulingRoutes(pool) {
   router.get('/suggestions', async (req, res) => {
     try {
       const pmId = req.user.id;
+      const orgId = req.user.org_id;
 
       // Fetch AI/Rule-based suggestions stored in the DB (or generated on the fly)
       // The seed data has a table for this, let's just fetch from there
       const [suggestions] = await pool.execute(
         `
         SELECT * FROM ai_suggestion
-        WHERE project_id IN (SELECT id FROM project WHERE created_by = ?)
+        WHERE project_id IN (SELECT id FROM project WHERE org_id = ?)
         ORDER BY created_at DESC
         LIMIT 10
       `,
-        [pmId],
+        [orgId],
       );
 
       res.json({ success: true, suggestions });

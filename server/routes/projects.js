@@ -17,9 +17,9 @@ export default function projectRoutes(pool) {
           (SELECT COUNT(*) FROM task t WHERE t.project_id = p.id AND t.status NOT IN ('completed') AND t.deadline < CURDATE()) AS overdue_task_count,
           DATEDIFF(p.end_date, CURDATE()) AS days_left
         FROM project p
-        WHERE p.org_id = ? AND p.created_by = ?
+        WHERE p.org_id = ?
       `;
-      const params = [orgId, pmId];
+      const params = [orgId];
 
       if (status && status !== 'all') {
         query += ' AND p.status = ?';
