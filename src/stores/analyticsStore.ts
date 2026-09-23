@@ -125,17 +125,24 @@ export const useAnalyticsStore = defineStore('analytics', {
         });
         const data = await response.json();
         if (data.success) {
-          this.projectPerformance = data.projects.map((project: any) => ({
-            ...project,
-            progress: Number(project.progress) || 0,
-            total_tasks: Number(project.total_tasks) || 0,
-            completed_tasks: Number(project.completed_tasks) || 0,
-            overdue_tasks: Number(project.overdue_tasks) || 0,
-            team_size: Number(project.team_size) || 0,
-            total_hours_logged: Number(project.total_hours_logged) || 0,
-            total_estimated_hours: Number(project.total_estimated_hours) || 0,
-            days_remaining: Number(project.days_remaining) || 0,
-          }));
+          this.projectPerformance = data.projects.map((project: any) => {
+            const total_tasks = Number(project.total_tasks) || 0;
+            const completed_tasks = Number(project.completed_tasks) || 0;
+            const completion_rate = total_tasks > 0 ? Math.round((completed_tasks / total_tasks) * 100) : 0;
+
+            return {
+              ...project,
+              progress: Number(project.progress) || 0,
+              total_tasks,
+              completed_tasks,
+              completion_rate,
+              overdue_tasks: Number(project.overdue_tasks) || 0,
+              team_size: Number(project.team_size) || 0,
+              total_hours_logged: Number(project.total_hours_logged) || 0,
+              total_estimated_hours: Number(project.total_estimated_hours) || 0,
+              days_remaining: Number(project.days_remaining) || 0,
+            };
+          });
         }
       } catch (err: any) {
         this.error = err.message;
