@@ -1,9 +1,8 @@
 <template>
-  <q-page class="q-pa-lg text-black" style="background:#f8f9fa">
+  <q-page class="q-pa-lg text-black" style="background: #f8f9fa">
     <!-- Header -->
     <div class="row items-center justify-between q-mb-md">
-      <div class="row items-center">
-        </div>
+      <div class="row items-center"></div>
     </div>
 
     <div class="row q-col-gutter-md">
@@ -16,7 +15,9 @@
           <q-card-section>
             <div class="column items-center q-mb-md">
               <q-avatar size="100px">
-                <img :src="avatar || authStore.user?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
+                <img
+                  :src="avatar || authStore.user?.avatar || 'https://cdn.quasar.dev/img/avatar.png'"
+                />
               </q-avatar>
               <q-input
                 v-model="avatar"
@@ -31,7 +32,12 @@
             <q-input v-model="lastName" label="Last Name" outlined class="q-mb-md" />
             <q-input v-model="email" label="Email" outlined class="q-mb-md" />
             <q-input v-model="phone" label="Phone" outlined class="q-mb-md" />
-            <q-btn color="primary" label="Save Changes" @click="saveProfile" class="full-width" />
+            <q-btn
+              :color="$q.dark.isActive ? 'blue-10' : 'primary'"
+              label="Save Changes"
+              @click="saveProfile"
+              class="full-width"
+            />
           </q-card-section>
         </q-card>
 
@@ -40,11 +46,29 @@
             <div class="text-h6 text-weight-bold">Change Password</div>
           </q-card-section>
           <q-card-section>
-            <q-input v-model="currentPassword" label="Current Password" type="password" outlined class="q-mb-md" />
-            <q-input v-model="newPassword" label="New Password" type="password" outlined class="q-mb-md" />
-            <q-input v-model="confirmPassword" label="Confirm New Password" type="password" outlined class="q-mb-md" />
+            <q-input
+              v-model="currentPassword"
+              label="Current Password"
+              type="password"
+              outlined
+              class="q-mb-md"
+            />
+            <q-input
+              v-model="newPassword"
+              label="New Password"
+              type="password"
+              outlined
+              class="q-mb-md"
+            />
+            <q-input
+              v-model="confirmPassword"
+              label="Confirm New Password"
+              type="password"
+              outlined
+              class="q-mb-md"
+            />
             <q-btn
-              color="primary"
+              :color="$q.dark.isActive ? 'blue-10' : 'primary'"
               label="Update Password"
               class="full-width"
               :loading="changingPassword"
@@ -68,16 +92,11 @@
                   <q-item-label caption>Uses dark theme</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle :model-value="darkMode" color="dark" @update:model-value="setDarkMode" />
-                </q-item-section>
-              </q-item>
-              <q-item>
-                <q-item-section>
-                  <q-item-label>Email Notifications</q-item-label>
-                  <q-item-label caption>Receive email updates</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle v-model="emailNotifications" color="dark" />
+                  <q-toggle
+                    :model-value="darkMode"
+                    color="dark"
+                    @update:model-value="setDarkMode"
+                  />
                 </q-item-section>
               </q-item>
               <q-item>
@@ -98,7 +117,14 @@
             <div class="text-h6 text-weight-bold">Account Actions</div>
           </q-card-section>
           <q-card-section>
-            <q-btn color="red" label="Logout" @click="logout" class="full-width" />
+            <q-btn
+              color="negative"
+              outline
+              icon="logout"
+              label="Log Out"
+              @click="logout"
+              class="full-width"
+            />
           </q-card-section>
         </q-card>
 
@@ -106,13 +132,13 @@
           <q-card-section>
             <div class="text-h6 text-weight-bold text-negative">Delete account</div>
             <div class="text-caption text-grey-7 q-mt-xs">
-              Your account will be permanently deleted and your access will be removed. Your completed work history is retained under a generic project manager.
+              Your account will be permanently deleted and your access will be removed. Your
+              completed work history is retained under a generic project manager.
             </div>
           </q-card-section>
           <q-card-section>
             <q-btn
-              color="negative"
-              outline
+              color="red"
               icon="delete"
               label="Delete my account"
               class="full-width"
@@ -172,7 +198,7 @@ function confirmResignation() {
     title: 'Delete Account?',
     message: 'Your account will be permanently deleted and you will be signed out immediately.',
     cancel: true,
-    ok: { label: 'Delete', color: 'negative' },
+    ok: { label: 'Delete', color: 'red' },
   }).onOk(() => resign());
 }
 
@@ -185,11 +211,15 @@ async function resign() {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
     const result = await response.json();
-    if (!response.ok || !result.success) throw new Error(result.error || 'Unable to delete account');
+    if (!response.ok || !result.success)
+      throw new Error(result.error || 'Unable to delete account');
     $q.notify({ type: 'positive', message: 'Your account has been deleted.' });
     logout();
   } catch (error) {
-    $q.notify({ type: 'negative', message: error instanceof Error ? error.message : 'Unable to delete account' });
+    $q.notify({
+      type: 'negative',
+      message: error instanceof Error ? error.message : 'Unable to delete account',
+    });
   } finally {
     resigning.value = false;
   }
@@ -238,11 +268,19 @@ async function saveProfile() {
 async function changePassword() {
   if (!authStore.user?.id) return;
   if (!currentPassword.value || !newPassword.value) {
-    $q.notify({ type: 'negative', message: 'Enter your current and new passwords', position: 'top' });
+    $q.notify({
+      type: 'negative',
+      message: 'Enter your current and new passwords',
+      position: 'top',
+    });
     return;
   }
   if (newPassword.value.length < 8) {
-    $q.notify({ type: 'negative', message: 'New password must be at least 8 characters', position: 'top' });
+    $q.notify({
+      type: 'negative',
+      message: 'New password must be at least 8 characters',
+      position: 'top',
+    });
     return;
   }
   if (newPassword.value !== confirmPassword.value) {
@@ -251,7 +289,11 @@ async function changePassword() {
   }
 
   changingPassword.value = true;
-  const result = await authStore.changePassword(authStore.user.id, currentPassword.value, newPassword.value);
+  const result = await authStore.changePassword(
+    authStore.user.id,
+    currentPassword.value,
+    newPassword.value,
+  );
   changingPassword.value = false;
 
   if (result.success) {
@@ -260,7 +302,11 @@ async function changePassword() {
     confirmPassword.value = '';
     $q.notify({ type: 'positive', message: 'Password changed successfully', position: 'top' });
   } else {
-    $q.notify({ type: 'negative', message: result.error || 'Failed to change password', position: 'top' });
+    $q.notify({
+      type: 'negative',
+      message: result.error || 'Failed to change password',
+      position: 'top',
+    });
   }
 }
 
@@ -271,5 +317,9 @@ function logout() {
 </script>
 
 <style scoped>
-.settings-card { border-radius: 14px; border-color: #e5eaf0; box-shadow: 0 7px 20px rgba(32, 54, 83, .05); }
+.settings-card {
+  border-radius: 14px;
+  border-color: #e5eaf0;
+  box-shadow: 0 7px 20px rgba(32, 54, 83, 0.05);
+}
 </style>

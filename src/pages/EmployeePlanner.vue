@@ -1,5 +1,5 @@
 <template>
-  <q-page class="planner-page q-pa-md" style="background:#f8f9fa">
+  <q-page class="planner-page q-pa-md" style="background: #f8f9fa">
     <!-- =========================================================
          HEADER
     ========================================================= -->
@@ -9,8 +9,7 @@
     ========================================================= -->
 
     <div class="calendar-container q-mt-sm">
-
-<div class="row q-col-gutter-md q-mb-md">
+      <div class="row q-col-gutter-md q-mb-md">
         <!-- STATUS -->
 
         <div class="col-12 col-md-5">
@@ -57,7 +56,19 @@
                 class="text-primary text-weight-bold flex items-center justify-center q-mt-md"
               >
                 <div class="flex items-center q-gutter-x-sm">
-                  <q-icon name="verified" size="sm" /> <span>Reviewed by PM</span>
+                  <q-icon
+                    :color="$q.dark.isActive ? 'blue-10' : 'primary'"
+                    name="verified"
+                    size="sm"
+                  />
+                  <span
+                    :class="{
+                      'text-blue-10': $q.dark.isActive,
+                      'text-primary': !$q.dark.isActive,
+                    }"
+                  >
+                    Reviewed by PM
+                  </span>
                 </div>
               </div>
               <q-btn
@@ -65,7 +76,7 @@
                 unelevated
                 dense
                 no-caps
-                color="primary"
+                :color="$q.dark.isActive ? 'blue-10' : 'primary'"
                 class="full-width q-mt-md"
                 label="Save Day Status"
                 @click="submitDayToPM"
@@ -98,7 +109,7 @@
                     unelevated
                     dense
                     no-caps
-                    color="primary"
+                    :color="$q.dark.isActive ? 'blue-10' : 'primary'"
                     icon="add"
                     label="Add Log"
                     @click="openCreateLogDialog"
@@ -119,7 +130,13 @@
                   <div class="col">
                     <div class="compact-task-name">
                       {{ log.taskTitle || 'Manual Entry' }}
-                      <q-icon v-if="isTaskAffectedByLeave(log, selectedDate)" name="warning" color="red" size="14px" class="q-ml-xs" />
+                      <q-icon
+                        v-if="isTaskAffectedByLeave(log, selectedDate)"
+                        name="warning"
+                        color="red"
+                        size="14px"
+                        class="q-ml-xs"
+                      />
                     </div>
 
                     <div v-if="log.project" class="text-caption text-grey-6">
@@ -137,21 +154,28 @@
                     <q-linear-progress
                       :value="log.progress / 100"
                       rounded
-                      :color="isTaskAffectedByLeave(log, selectedDate) ? 'red' : 'primary'"
+                      :color="
+                        isTaskAffectedByLeave(log, selectedDate)
+                          ? 'red'
+                          : $q.dark.isActive
+                            ? 'blue-12'
+                            : 'primary'
+                      "
                       size="4px"
                     />
                   </div>
                 </div>
               </div>
 
-              <div v-else class="compact-empty">
+              <div v-else class="compact-empty column items-center">
                 <q-icon name="event_note" size="25px" />
 
-                <span> No work logged for this day </span>
+                <span class="q-mt-xs"> No work logged for this day </span>
+
                 <q-btn
                   unelevated
                   no-caps
-                  color="primary"
+                  :color="$q.dark.isActive ? 'blue-10' : 'primary'"
                   icon="add"
                   label="Add Work Entry"
                   class="q-mt-md"
@@ -283,26 +307,16 @@
                 @click.stop="openLeaveImpactDialog(day.date)"
               >
                 <q-icon name="warning" size="11px" color="red" />
-                <span class="text-negative" style="font-size: 10px;">Leave Impact</span>
-                <q-linear-progress
-                  :value="1"
-                  color="red"
-                  size="2px"
-                  class="q-mt-xs"
-                />
+                <span class="text-negative" style="font-size: 10px">Leave Impact</span>
+                <q-linear-progress :value="1" color="red" size="2px" class="q-mt-xs" />
               </div>
 
               <!-- MISSED WORK INDICATOR -->
 
               <div v-if="isDayMissedWork(day.date)" class="calendar-missed-work">
                 <q-icon name="warning" size="11px" color="red" />
-                <span class="text-negative" style="font-size: 10px;">Hurry up — Missed work</span>
-                <q-linear-progress
-                  :value="1"
-                  color="red"
-                  size="2px"
-                  class="q-mt-xs"
-                />
+                <span class="text-negative" style="font-size: 10px">Hurry up — Missed work</span>
+                <q-linear-progress :value="1" color="red" size="2px" class="q-mt-xs" />
               </div>
 
               <!-- LOG COUNT -->
@@ -330,8 +344,6 @@
       <!-- =======================================================
            SELECTED DAY
       ======================================================== -->
-
-      
     </div>
 
     <!-- =========================================================
@@ -358,7 +370,12 @@
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup />
-          <q-btn color="primary" label="Submit" @click="submitWorkLog" :loading="isSubmittingLog" />
+          <q-btn
+            :color="$q.dark.isActive ? 'blue-10' : 'primary'"
+            label="Submit"
+            @click="submitWorkLog"
+            :loading="isSubmittingLog"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -378,7 +395,13 @@
         </q-card-section>
 
         <q-card-actions align="center">
-          <q-btn flat no-caps color="primary" label="Done" v-close-popup />
+          <q-btn
+            flat
+            no-caps
+            :color="$q.dark.isActive ? 'blue-12' : 'primary'"
+            label="Done"
+            v-close-popup
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -402,19 +425,20 @@
               Deadline: {{ formatDate(parseDate(selectedAffectedTask.deadline)) }}
             </div>
             <div class="text-caption text-negative q-mt-xs">
-              Leave period: {{ selectedAffectedTask.leave_start }} to {{ selectedAffectedTask.leave_end }}
+              Leave period: {{ selectedAffectedTask.leave_start }} to
+              {{ selectedAffectedTask.leave_end }}
             </div>
           </div>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup />
           <q-btn
-            color="primary"
+            :color="$q.dark.isActive ? 'blue-12' : 'primary'"
             label="Set Deadline"
             @click="openSetDeadlineDialog"
           />
           <q-btn
-            color="secondary"
+            :color="$q.dark.isActive ? 'blue-10' : 'lime-5'"
             label="Automate It"
             @click="automateDeadline"
             :loading="automatingDeadline"
@@ -444,7 +468,10 @@
           <q-list separator>
             <q-item v-for="task in affectedTasks" :key="task.id">
               <q-item-section avatar>
-                <q-icon :name="task.deadline_on_leave ? 'warning' : 'info'" :color="task.deadline_on_leave ? 'red' : 'primary'" />
+                <q-icon
+                  :name="task.deadline_on_leave ? 'warning' : 'info'"
+                  :color="task.deadline_on_leave ? 'red' : $q.dark.isActive ? 'blue-12' : 'primary'"
+                />
               </q-item-section>
               <q-item-section>
                 <q-item-label>{{ task.title }}</q-item-label>
@@ -469,8 +496,8 @@
         <q-card-actions align="right">
           <q-btn flat label="Close" v-close-popup />
           <q-btn
-            v-if="affectedTasks.some(t => t.deadline_on_leave)"
-            color="primary"
+            v-if="affectedTasks.some((t) => t.deadline_on_leave)"
+            :color="$q.dark.isActive ? 'blue-10' : 'primary'"
             label="Set Deadline"
             @click="handleDeadlineOnLeaveTask"
           />
@@ -487,12 +514,17 @@
         <q-card-section>
           <div class="text-h6">Set New Deadline</div>
         </q-card-section>
-        <q-card-section>
+        <q-card-section align="center">
           <q-date v-model="newDeadline" mask="YYYY-MM-DD" />
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup />
-          <q-btn color="primary" label="Save" @click="saveNewDeadline" :loading="automatingDeadline" />
+          <q-btn
+            :color="$q.dark.isActive ? 'blue-10' : 'primary'"
+            label="Save"
+            @click="saveNewDeadline"
+            :loading="automatingDeadline"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -1068,11 +1100,15 @@ function hasLeaveImpact(dateString: string): boolean {
   if (!dateString || !isDayAffectedByLeave(dateString)) return false;
 
   const checkDate = new Date(dateString);
-  
+
   for (const task of affectedTasks.value) {
     const taskDeadline = new Date(task.deadline);
     if (taskDeadline.toDateString() === checkDate.toDateString()) {
-      if (task.status !== 'completed' && task.status !== 'Completed' && Number(task.progress) < 100) {
+      if (
+        task.status !== 'completed' &&
+        task.status !== 'Completed' &&
+        Number(task.progress) < 100
+      ) {
         return true;
       }
     }
@@ -1122,9 +1158,13 @@ function isTaskAffectedByLeave(log: any, dateString: string): boolean {
     if (task.id === log.task_id || task.title === log.taskTitle) {
       const taskDeadline = new Date(task.deadline);
       const checkDate = new Date(dateString);
-      
+
       if (taskDeadline.toDateString() === checkDate.toDateString()) {
-        if (task.status !== 'completed' && task.status !== 'Completed' && Number(task.progress) < 100) {
+        if (
+          task.status !== 'completed' &&
+          task.status !== 'Completed' &&
+          Number(task.progress) < 100
+        ) {
           return true;
         }
       }
@@ -1542,7 +1582,7 @@ async function openLeaveImpactDialog(dateString: string) {
 function handleDeadlineOnLeaveTask() {
   showLeaveImpactDialog.value = false;
   // Find the first task with deadline on leave
-  const taskWithDeadlineOnLeave = affectedTasks.value.find(t => t.deadline_on_leave);
+  const taskWithDeadlineOnLeave = affectedTasks.value.find((t) => t.deadline_on_leave);
   if (taskWithDeadlineOnLeave) {
     selectedAffectedTask.value = taskWithDeadlineOnLeave;
     showDeadlineOnLeaveDialog.value = true;
@@ -1665,7 +1705,6 @@ async function automateDeadline() {
   border-radius: var(--radius-lg);
 }
 
-
 .calendar-kicker,
 .section-kicker,
 .section-title {
@@ -1708,7 +1747,7 @@ async function automateDeadline() {
 }
 
 .activity-stat {
-  color: #7c3aed;
+  color: #2127dd;
   background: #f3e8ff;
 }
 
@@ -1800,7 +1839,7 @@ async function automateDeadline() {
 
 .calendar-cell:hover {
   transform: translateY(-1px);
-  border-color: #c9c6f6;
+  border-color: #c6d6f6;
   box-shadow: var(--shadow-sm);
 }
 
@@ -1833,7 +1872,7 @@ async function automateDeadline() {
 }
 
 .today-cell {
-  border: 2px solid #7c3aed;
+  border: 2px solid #1c2cbe;
 }
 
 .calendar-day-number {
@@ -1842,14 +1881,14 @@ async function automateDeadline() {
 }
 
 .today-number {
-  color: #7c3aed;
+  color: #1c2cbe;
 }
 
 .today-pill {
   padding: 2px 4px;
   border-radius: 3px;
-  background: #f3e8ff;
-  color: #7c3aed;
+  background: #e8f6ff;
+  color: #1c2cbe;
   font-size: 7px;
   font-weight: 800;
 }
@@ -1904,7 +1943,7 @@ async function automateDeadline() {
   width: 11px;
   height: 2px;
   border-radius: 3px;
-  background: #7c3aed;
+  background: #2615c6;
 }
 
 .calendar-leave-impact {
@@ -1931,7 +1970,8 @@ async function automateDeadline() {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -1973,9 +2013,9 @@ async function automateDeadline() {
 }
 
 .compact-status-active {
-  color: #7c3aed;
-  background: #f3e8ff;
-  border-color: #7c3aed;
+  color: #1f4ecf;
+  background: #e8eaff;
+  border-color: #485bef;
   font-weight: 700;
 }
 
@@ -1999,8 +2039,9 @@ async function automateDeadline() {
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  color: #7c3aed;
-  background: #f3e8ff;
+
+  color: #0c3fb7;
+  background: #d6edff;
 }
 
 .compact-task-name {
@@ -2049,8 +2090,8 @@ async function automateDeadline() {
 
 .date-chip-active {
   color: white;
-  background: #6c63ff;
-  border-color: #6c63ff;
+  background: #2f25e6;
+  border-color: #4339f8;
 }
 
 .date-chip-number {
@@ -2115,7 +2156,6 @@ async function automateDeadline() {
   color: #64748b;
 }
 
-
 /* =========================================================
    DARK MODE — EMPLOYEE PLANNER
    One consolidated dark-mode layer. Keep all light-mode
@@ -2170,7 +2210,7 @@ async function automateDeadline() {
 }
 
 :global(body.body--dark) .weekend-heading {
-  color: #91a2ad !important;
+  color: #a0d7fc !important;
 }
 
 /* Month stat icons */

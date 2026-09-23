@@ -1,5 +1,5 @@
 <template>
-  <q-page class="q-pa-md" style="background:#f8f9fa">
+  <q-page class="q-pa-md" style="background: #f8f9fa">
     <div class="text-h5 text-weight-bold q-mb-md full-width"></div>
 
     <q-tabs
@@ -27,25 +27,57 @@
             <q-list separator v-if="completedTasks.length > 0">
               <q-item v-for="task in completedTasks" :key="task.id" class="q-py-md">
                 <q-item-section avatar>
-                  <q-icon :name="getTaskReviewStatus(task.id) === 'review-done' ? 'check_circle' : 'pending'" :color="getTaskReviewStatus(task.id) === 'review-done' ? 'green' : 'orange'" size="32px" />
+                  <q-icon
+                    :name="
+                      getTaskReviewStatus(task.id) === 'review-done' ? 'check_circle' : 'pending'
+                    "
+                    :color="getTaskReviewStatus(task.id) === 'review-done' ? 'green' : 'orange'"
+                    size="32px"
+                  />
                 </q-item-section>
                 <q-item-section>
                   <q-item-label class="text-weight-bold">{{ task.title }}</q-item-label>
-                  <q-item-label caption>Project: {{ getProjectName(task.project_id) }}</q-item-label>
+                  <q-item-label caption
+                    >Project: {{ getProjectName(task.project_id) }}</q-item-label
+                  >
                   <q-item-label caption>Progress: {{ task.progress }}%</q-item-label>
                   <q-item-label caption v-if="getTaskReviewStatus(task.id)">
-                    <q-badge :color="getTaskReviewStatus(task.id) === 'review-done' ? 'green' : 'orange'">
-                      {{ getTaskReviewStatus(task.id) === 'review-done' ? 'Review Completed' : 'In Review' }}
+                    <q-badge
+                      :color="getTaskReviewStatus(task.id) === 'review-done' ? 'green' : 'orange'"
+                    >
+                      {{
+                        getTaskReviewStatus(task.id) === 'review-done'
+                          ? 'Review Completed'
+                          : 'In Review'
+                      }}
                     </q-badge>
-                    <span v-if="getTaskReviewComment(task.id)" class="q-ml-sm">"{{ getTaskReviewComment(task.id) }}"</span>
+                    <span v-if="getTaskReviewComment(task.id)" class="q-ml-sm"
+                      >"{{ getTaskReviewComment(task.id) }}"</span
+                    >
                   </q-item-label>
                   <q-item-label caption v-if="getTaskPoints(task.id)">
                     <q-badge color="amber" :label="`+${getTaskPoints(task.id)} pts`" />
                   </q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-btn v-if="!getTaskReviewStatus(task.id)" color="primary" label="Put for Review" size="sm" @click="openSubmitReviewDialog(task)" />
-                  <q-btn v-else color="grey" label="Reviewed" size="sm" disable />
+                  <q-btn
+                    v-if="!getTaskReviewStatus(task.id)"
+                    :color="$q.dark.isActive ? 'blue-10' : 'primary'"
+                    label="Put for Review"
+                    size="sm"
+                    @click="openSubmitReviewDialog(task)"
+                  />
+                  <!--             <q-badge
+                    v-else
+                    :color="getTaskReviewStatus(task.id) === 'review-done' ? 'green' : 'green-5'"
+                    :label="
+                      getTaskReviewStatus(task.id) === 'review-done'
+                        ? 'Review Completed'
+                        : 'In Review'
+                    "
+                    size="sm"
+                    :disable="getTaskReviewStatus(task.id) !== 'review-done'"
+                  /> -->
                 </q-item-section>
               </q-item>
             </q-list>
@@ -92,7 +124,7 @@
                 </q-item-section>
                 <q-item-section side>
                   <q-btn
-                    color="purple"
+                    color="blue-10"
                     label="Review"
                     size="sm"
                     @click="openReviewDialog(review)"
@@ -198,7 +230,19 @@
           <q-item
             v-for="(employee, index) in leaderboard"
             :key="employee.id"
-            :class="{ 'bg-amber-1': index === 0, 'bg-blue-1': employee.id === authStore.user?.id }"
+            :class="{
+              'bg-amber-1': index == 0,
+
+              'bg-blue-1':
+                !$q.dark.isActive &&
+                index !== 0 &&
+                String(employee.id) === String(authStore.user?.id),
+
+              'bg-blue-grey-8':
+                $q.dark.isActive &&
+                index !== 0 &&
+                String(employee.id) === String(authStore.user?.id),
+            }"
             class="q-py-md"
           >
             <q-item-section avatar>
@@ -272,9 +316,7 @@
             >
               <template v-if="reviewerOptions.length === 0" v-slot:no-option>
                 <q-item>
-                  <q-item-section class="text-grey">
-                    No colleagues available
-                  </q-item-section>
+                  <q-item-section class="text-grey"> No colleagues available </q-item-section>
                 </q-item>
               </template>
             </q-select>
@@ -364,7 +406,7 @@ const completedTasks = computed(() => {
     (task) =>
       task.status === 'completed' ||
       task.status === 'in-review' ||
-      (task.status === 'in-progress' && task.progress === 100)
+      (task.status === 'in-progress' && task.progress === 100),
   );
 });
 
@@ -396,9 +438,7 @@ async function fetchTasks() {
   if (!authStore.user?.id) return;
 
   try {
-    const response = await fetch(
-      `http://localhost:3001/api/tasks/employee/${authStore.user.id}`,
-    );
+    const response = await fetch(`http://localhost:3001/api/tasks/employee/${authStore.user.id}`);
     const data = await response.json();
     if (data.success) {
       myTasks.value = data.tasks;
@@ -410,9 +450,12 @@ async function fetchTasks() {
 
 async function fetchProjects() {
   try {
-    const response = await fetch(`http://localhost:3001/api/employee/${authStore.user?.id}/projects`, {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    });
+    const response = await fetch(
+      `http://localhost:3001/api/employee/${authStore.user?.id}/projects`,
+      {
+        headers: { Authorization: `Bearer ${authStore.token}` },
+      },
+    );
     const data = await response.json();
     if (data.success) {
       projects.value = data.projects;
@@ -448,9 +491,12 @@ async function fetchAssignedReviews() {
     if (authStore.token && authStore.token !== 'undefined' && authStore.token !== 'null') {
       headers['Authorization'] = `Bearer ${authStore.token}`;
     }
-    const response = await fetch('http://localhost:3001/api/employee/reviews/pending?user_id=' + authStore.user.id, {
-      headers,
-    });
+    const response = await fetch(
+      'http://localhost:3001/api/employee/reviews/pending?user_id=' + authStore.user.id,
+      {
+        headers,
+      },
+    );
     const data = await response.json();
     if (data.success) {
       assignedReviews.value = data.reviews;
@@ -470,14 +516,16 @@ async function fetchReviewHistory() {
     }
     const response = await fetch(
       `http://localhost:3001/api/employee/reviews/history?user_id=${authStore.user.id}`,
-      { headers }
+      { headers },
     );
     const data = await response.json();
     if (data.success) {
       reviewHistory.value = data.reviews;
       // taskReviews: only rows where current user is the task owner (for status badges)
       const myId = Number(authStore.user?.id);
-      taskReviews.value = data.reviews.filter((r: any) => Number(r.task_owner_id) === myId || r.task_owner_id === undefined);
+      taskReviews.value = data.reviews.filter(
+        (r: any) => Number(r.task_owner_id) === myId || r.task_owner_id === undefined,
+      );
     }
   } catch (error) {
     console.error('Error fetching review history:', error);
@@ -546,7 +594,7 @@ async function submitForReview() {
     const data = await taskStore.submitTaskForReview(
       selectedTask.value.id,
       completionComment.value,
-      selectedReviewer.value
+      selectedReviewer.value,
     );
 
     if (data.success) {
@@ -578,7 +626,7 @@ async function approveReview() {
   try {
     const data = await taskStore.approveTaskReview(
       selectedReviewTask.value.id,
-      reviewComment.value
+      reviewComment.value,
     );
 
     if (data.success) {
@@ -589,7 +637,10 @@ async function approveReview() {
 
       // Show success notification with points earned
       if (data.reviewerPoints) {
-        Notify.create({ type: 'positive', message: `Congratulations! You earned ${data.reviewerPoints} points for reviewing this task!` });
+        Notify.create({
+          type: 'positive',
+          message: `Congratulations! You earned ${data.reviewerPoints} points for reviewing this task!`,
+        });
       } else {
         Notify.create({ type: 'positive', message: 'Review submitted successfully!' });
       }

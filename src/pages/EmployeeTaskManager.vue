@@ -1,5 +1,5 @@
 <template>
-  <q-page class="app-page q-pa-lg" style="background:#f8f9fa">
+  <q-page class="app-page q-pa-lg" style="background: #f8f9fa">
     <!-- ========================================================= -->
     <!-- PAGE HEADER -->
     <!-- ========================================================= -->
@@ -7,12 +7,13 @@
     <div class="row items-center justify-end q-mb-lg">
       <div class="row items-center q-gutter-sm">
         <q-btn
-          color="secondary"
+          color="primary"
           icon="auto_fix_high"
           label="Automate"
           class="q-px-md"
           @click="automateFullSchedule"
           :loading="automating"
+          style="background: #c8d830 !important"
         >
           <q-tooltip>Reorganize all tasks by priority with 3-day gaps</q-tooltip>
         </q-btn>
@@ -34,7 +35,7 @@
           v-if="stat.label === 'Overdue'"
           @click="openOverdueDialog"
           class="cursor-pointer"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           <EmployeeStatCard
             :label="stat.label"
@@ -81,7 +82,7 @@
         :active-tab-label="activeTabLabel"
         :view-mode="viewMode"
         :tabs="[
-          { name: 'all', label: 'All Tasks' },
+          { name: 'all', label: 'Current Tasks' },
           { name: 'progress', label: 'In Progress' },
           { name: 'completed', label: 'Completed' },
         ]"
@@ -238,7 +239,13 @@
 
               <q-linear-progress
                 :value="taskProgress(props.row) / 100"
-                :color="isTaskDeadlineOnLeave(props.row) ? 'red' : 'primary'"
+                :color="
+                  isTaskDeadlineOnLeave(props.row)
+                    ? 'red'
+                    : $q.dark.isActive
+                      ? 'blue-10'
+                      : 'primary'
+                "
                 track-color="grey-3"
                 rounded
                 size="7px"
@@ -678,236 +685,184 @@
     </q-dialog>
 
     <!-- ========================================================= -->
-<!-- EDIT SUBTASKS DIALOG -->
-<!-- ========================================================= -->
+    <!-- EDIT SUBTASKS DIALOG -->
+    <!-- ========================================================= -->
 
-<q-dialog v-model="showEditDialog">
-  <q-card class="edit-subtasks-dialog" v-if="selectedTask">
-
-    <!-- HEADER -->
-    <q-card-section class="edit-subtasks-header">
-      <div class="row items-center no-wrap">
-
-        <q-avatar
-          color="white"
-          text-color="indigo"
-          icon="edit_note"
-          size="46px"
-          class="q-mr-md"
-        />
-
-        <div class="col">
-          <div class="text-h6 text-weight-bold">
-            Edit Subtasks
-          </div>
-
-          <div class="text-caption text-indigo-1 q-mt-xs">
-            Update the subtasks and estimated time for this task
-          </div>
-        </div>
-
-        <q-btn
-          icon="close"
-          flat
-          round
-          dense
-          color="white"
-          @click="showEditDialog = false"
-        />
-      </div>
-    </q-card-section>
-
-    <!-- TASK INFO -->
-    <q-card-section class="edit-task-info">
-      <div class="row items-center no-wrap">
-
-        <q-avatar
-          color="blue-1"
-          text-color="primary"
-          icon="assignment"
-          size="38px"
-          class="q-mr-md"
-        />
-
-        <div class="col">
-          <div class="text-subtitle1 text-weight-bold text-grey-9">
-            {{ selectedTask.name }}
-          </div>
-
-          <div class="text-caption text-grey-6 q-mt-xs">
-            {{ editSubtasks.length }} subtask{{ editSubtasks.length === 1 ? '' : 's' }}
-          </div>
-        </div>
-
-      </div>
-    </q-card-section>
-
-    <q-separator />
-
-    <!-- SUBTASKS -->
-    <q-card-section class="q-pa-lg">
-
-      <div class="row items-center justify-between q-mb-md">
-
-        <div>
-          <div class="text-subtitle1 text-weight-bold">
-            Subtask List
-          </div>
-
-          <div class="text-caption text-grey-6">
-            Define what needs to be completed and how long it should take.
-          </div>
-        </div>
-
-        <q-badge
-          color="indigo-1"
-          text-color="indigo-9"
-          :label="`${editSubtasks.length} items`"
-          class="q-px-sm q-py-xs"
-        />
-
-      </div>
-
-      <!-- SUBTASK ROWS -->
-      <div
-        v-for="(subtask, index) in editSubtasks"
-        :key="subtask.id"
-        class="edit-subtask-card q-mb-md"
-      >
-
-        <div class="row items-center no-wrap">
-
-          <!-- NUMBER -->
-          <div class="subtask-number">
-            {{ index + 1 }}
-          </div>
-
-          <!-- TITLE -->
-          <div class="col q-ml-md">
-
-            <div class="text-caption text-grey-6 q-mb-xs">
-              Subtask name
-            </div>
-
-            <q-input
-              v-model="subtask.title"
-              outlined
-              dense
-              placeholder="Enter subtask name"
-              bg-color="white"
-              class="subtask-title-input"
+    <q-dialog v-model="showEditDialog">
+      <q-card class="edit-subtasks-dialog" v-if="selectedTask">
+        <!-- HEADER -->
+        <q-card-section class="edit-subtasks-header">
+          <div class="row items-center no-wrap">
+            <q-avatar
+              color="white"
+              text-color="indigo"
+              icon="edit_note"
+              size="46px"
+              class="q-mr-md"
             />
 
-          </div>
+            <div class="col">
+              <div class="text-h6 text-weight-bold">Edit Subtasks</div>
 
-          <!-- HOURS -->
-          <div class="hours-field q-ml-md">
-
-            <div class="text-caption text-grey-6 q-mb-xs">
-              Estimated time
+              <div class="text-caption text-indigo-1 q-mt-xs">
+                Update the subtasks and estimated time for this task
+              </div>
             </div>
 
-            <q-input
-              v-model.number="subtask.estimated_hours"
-              type="number"
-              outlined
-              dense
-              min="0"
-              step="0.5"
-              bg-color="white"
-              class="hours-input"
-              placeholder="0"
-            >
-              <template #prepend>
-                <q-icon name="schedule" color="orange-7" />
-              </template>
+            <q-btn icon="close" flat round dense color="white" @click="showEditDialog = false" />
+          </div>
+        </q-card-section>
 
-              <template #append>
-                <span class="hours-label">hours</span>
-              </template>
-            </q-input>
+        <!-- TASK INFO -->
+        <q-card-section class="edit-task-info">
+          <div class="row items-center no-wrap">
+            <q-avatar
+              color="blue-1"
+              text-color="primary"
+              icon="assignment"
+              size="38px"
+              class="q-mr-md"
+            />
 
+            <div class="col">
+              <div class="text-subtitle1 text-weight-bold text-grey-9">
+                {{ selectedTask.name }}
+              </div>
+
+              <div class="text-caption text-grey-6 q-mt-xs">
+                {{ editSubtasks.length }} subtask{{ editSubtasks.length === 1 ? '' : 's' }}
+              </div>
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <!-- SUBTASKS -->
+        <q-card-section class="q-pa-lg">
+          <div class="row items-center justify-between q-mb-md">
+            <div>
+              <div class="text-subtitle1 text-weight-bold">Subtask List</div>
+
+              <div class="text-caption text-grey-6">
+                Define what needs to be completed and how long it should take.
+              </div>
+            </div>
+
+            <q-badge
+              color="indigo-1"
+              text-color="indigo-9"
+              :label="`${editSubtasks.length} items`"
+              class="q-px-sm q-py-xs"
+            />
           </div>
 
-          <!-- DELETE -->
-          <q-btn
-            flat
-            round
-            dense
-            icon="delete_outline"
-            color="negative"
-            class="q-ml-md delete-subtask-btn"
-            @click="removeEditSubtask(subtask.id)"
+          <!-- SUBTASK ROWS -->
+          <div
+            v-for="(subtask, index) in editSubtasks"
+            :key="subtask.id"
+            class="edit-subtask-card q-mb-md"
           >
-            <q-tooltip>Remove subtask</q-tooltip>
-          </q-btn>
+            <div class="row items-center no-wrap">
+              <!-- NUMBER -->
+              <div class="subtask-number">
+                {{ index + 1 }}
+              </div>
 
-        </div>
+              <!-- TITLE -->
+              <div class="col q-ml-md">
+                <div class="text-caption text-grey-6 q-mb-xs">Subtask name</div>
 
-      </div>
+                <q-input
+                  v-model="subtask.title"
+                  outlined
+                  dense
+                  placeholder="Enter subtask name"
+                  bg-color="white"
+                  class="subtask-title-input"
+                />
+              </div>
 
-      <!-- EMPTY -->
-      <div
-        v-if="editSubtasks.length === 0"
-        class="edit-empty-subtasks"
-      >
-        <q-icon
-          name="playlist_add"
-          size="42px"
-          color="indigo-3"
-        />
+              <!-- HOURS -->
+              <div class="hours-field q-ml-md">
+                <div class="text-caption text-grey-6 q-mb-xs">Estimated time</div>
 
-        <div class="text-subtitle2 text-weight-bold q-mt-sm">
-          No subtasks yet
-        </div>
+                <q-input
+                  v-model.number="subtask.estimated_hours"
+                  type="number"
+                  outlined
+                  dense
+                  min="0"
+                  step="0.5"
+                  bg-color="white"
+                  class="hours-input"
+                  placeholder="0"
+                >
+                  <template #prepend>
+                    <q-icon name="schedule" color="orange-7" />
+                  </template>
 
-        <div class="text-caption text-grey-6 q-mt-xs">
-          Add your first subtask to break this task into smaller steps.
-        </div>
-      </div>
+                  <template #append>
+                    <span class="hours-label">hours</span>
+                  </template>
+                </q-input>
+              </div>
 
-      <!-- ADD -->
-      <q-btn
-        outline
-        no-caps
-        color="primary"
-        icon="add"
-        label="Add Subtask"
-        class="full-width q-mt-md add-subtask-btn"
-        @click="addEditSubtask"
-      />
+              <!-- DELETE -->
+              <q-btn
+                flat
+                round
+                dense
+                icon="delete_outline"
+                color="negative"
+                class="q-ml-md delete-subtask-btn"
+                @click="removeEditSubtask(subtask.id)"
+              >
+                <q-tooltip>Remove subtask</q-tooltip>
+              </q-btn>
+            </div>
+          </div>
 
-    </q-card-section>
+          <!-- EMPTY -->
+          <div v-if="editSubtasks.length === 0" class="edit-empty-subtasks">
+            <q-icon name="playlist_add" size="42px" color="indigo-3" />
 
-    <!-- FOOTER -->
-    <q-separator />
+            <div class="text-subtitle2 text-weight-bold q-mt-sm">No subtasks yet</div>
 
-    <q-card-actions
-      align="right"
-      class="edit-subtasks-footer q-pa-md"
-    >
+            <div class="text-caption text-grey-6 q-mt-xs">
+              Add your first subtask to break this task into smaller steps.
+            </div>
+          </div>
 
-      <q-btn
-        flat
-        no-caps
-        label="Cancel"
-        color="grey-7"
-        @click="showEditDialog = false"
-      />
+          <!-- ADD -->
+          <q-btn
+            outline
+            no-caps
+            color="primary"
+            icon="add"
+            label="Add Subtask"
+            class="full-width q-mt-md add-subtask-btn"
+            @click="addEditSubtask"
+          />
+        </q-card-section>
 
-      <q-btn
-        unelevated
-        no-caps
-        color="primary"
-        icon="save"
-        label="Save Changes"
-        @click="saveEditedSubtasks"
-      />
+        <!-- FOOTER -->
+        <q-separator />
 
-    </q-card-actions>
+        <q-card-actions align="right" class="edit-subtasks-footer q-pa-md">
+          <q-btn flat no-caps label="Cancel" color="grey-7" @click="showEditDialog = false" />
 
-  </q-card>
-</q-dialog>
+          <q-btn
+            unelevated
+            no-caps
+            color="primary"
+            icon="save"
+            label="Save Changes"
+            @click="saveEditedSubtasks"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
 
     <!-- ========================================================= -->
     <!-- MANAGE DRAWER -->
@@ -1099,13 +1054,10 @@
             </div>
 
             <!-- ================= DEPENDENCIES ================= -->
-            
+
             <div class="section-title q-mt-xl q-mb-md">Dependencies</div>
-            
-            <q-list
-              v-if="selectedTask.dependencies && selectedTask.dependencies.length > 0"
-              dense
-            >
+
+            <q-list v-if="selectedTask.dependencies && selectedTask.dependencies.length > 0" dense>
               <q-item
                 v-for="dep in selectedTask.dependencies"
                 :key="dep.id || dep"
@@ -1115,9 +1067,9 @@
                   <q-icon name="link" color="grey-6" size="sm" />
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label class="text-body2"
-                    >{{ dep.title || dep.name || dep.id || dep }}</q-item-label
-                  >
+                  <q-item-label class="text-body2">{{
+                    dep.title || dep.name || dep.id || dep
+                  }}</q-item-label>
                 </q-item-section>
               </q-item>
             </q-list>
@@ -1413,11 +1365,18 @@
     <q-dialog v-model="showClashDialog" persistent>
       <q-card style="min-width: 600px; max-width: 750px" class="rounded-borders">
         <q-card-section class="row items-center bg-red-1 text-negative q-pb-md">
-          <q-avatar icon="warning" color="negative" text-color="white" size="40px" class="q-mr-md" />
+          <q-avatar
+            icon="warning"
+            color="negative"
+            text-color="white"
+            size="40px"
+            class="q-mr-md"
+          />
           <div>
             <div class="text-h6 text-weight-bold">Task Clash Detected</div>
             <div class="text-caption text-grey-8">
-              Multiple tasks share the exact same deadline date. Click Automate to resolve conflicts according to priority with at least 3-day gaps.
+              Multiple tasks share the exact same deadline date. Click Automate to resolve conflicts
+              according to priority with at least 3-day gaps.
             </div>
           </div>
           <q-space />
@@ -1429,7 +1388,9 @@
             <div class="text-subtitle2 text-weight-bold text-grey-9 q-mb-xs row items-center">
               <q-icon name="event" class="q-mr-xs" color="primary" />
               Deadline: {{ formatDate(conflict.deadline) }}
-              <q-badge color="negative" class="q-ml-sm">{{ conflict.count }} conflicting tasks</q-badge>
+              <q-badge color="negative" class="q-ml-sm"
+                >{{ conflict.count }} conflicting tasks</q-badge
+              >
             </div>
             <q-list bordered separator class="rounded-borders bg-grey-1">
               <q-item v-for="task in conflict.tasks" :key="task.id" class="q-py-sm">
@@ -1484,7 +1445,8 @@
         <q-separator />
         <q-card-section>
           <div class="text-caption q-mb-md">
-            Select a new deadline. The scheduling system will check for conflicts and notify your PM if changes are made.
+            Select a new deadline. The scheduling system will check for conflicts and notify your PM
+            if changes are made.
           </div>
           <q-input
             v-model="editDeadlineValue"
@@ -1532,8 +1494,12 @@
               </q-item-section>
               <q-item-section>
                 <q-item-label class="text-weight-bold">Task: {{ task.name }}</q-item-label>
-                <q-item-label caption>Project: {{ task.project || 'Unknown Project' }}</q-item-label>
-                <q-item-label caption class="text-red">{{ formatDate(task.deadline) }}</q-item-label>
+                <q-item-label caption
+                  >Project: {{ task.project || 'Unknown Project' }}</q-item-label
+                >
+                <q-item-label caption class="text-red">{{
+                  formatDate(task.deadline)
+                }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-icon name="chevron_right" color="grey-5" />
@@ -1560,7 +1526,9 @@
         </q-card-section>
         <q-card-section>
           <div v-if="selectedOverdueTask">
-            <div class="text-subtitle1 text-weight-bold q-mb-sm">{{ selectedOverdueTask.title }}</div>
+            <div class="text-subtitle1 text-weight-bold q-mb-sm">
+              {{ selectedOverdueTask.title }}
+            </div>
             <div class="text-caption text-grey-7 q-mb-md">
               Current deadline: {{ formatDate(selectedOverdueTask.deadline) }}
             </div>
@@ -1570,11 +1538,7 @@
                 label="Set Deadline"
                 @click.stop="openSetDeadlineDialog(selectedOverdueTask)"
               />
-              <q-btn
-                color="secondary"
-                label="Automate"
-                @click.stop="automateOverdueTask"
-              />
+              <q-btn color="secondary" label="Automate" @click.stop="automateOverdueTask" />
             </div>
           </div>
         </q-card-section>
@@ -1595,10 +1559,10 @@
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup />
-          <q-btn 
-            color="primary" 
-            label="Save" 
-            @click.stop="setDeadline" 
+          <q-btn
+            color="primary"
+            label="Save"
+            @click.stop="setDeadline"
             :loading="updatingDeadline"
           />
         </q-card-actions>
@@ -1758,7 +1722,7 @@ const colleagues = ref<{ id: number; name: string }[]>([]);
 const fetchColleagues = async () => {
   try {
     const response = await fetch('http://localhost:3001/api/users/employees', {
-      headers: { Authorization: `Bearer ${authStore.token}` }
+      headers: { Authorization: `Bearer ${authStore.token}` },
     });
     const result = await response.json();
     if (result.success && result.users) {
@@ -1794,18 +1758,21 @@ const submitForReview = async () => {
   }
 
   try {
-    const response = await fetch(`http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/submit-review`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${authStore.token}`,
+    const response = await fetch(
+      `http://localhost:3001/api/employee/tasks/${selectedTask.value.id}/submit-review`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authStore.token}`,
+        },
+        body: JSON.stringify({
+          reviewer_id: selectedReviewer.value,
+          task_owner_id: authStore.user?.id,
+          completion_comment: reviewComment.value || 'Task completed, please review',
+        }),
       },
-      body: JSON.stringify({
-        reviewer_id: selectedReviewer.value,
-        task_owner_id: authStore.user?.id,
-        completion_comment: reviewComment.value || 'Task completed, please review',
-      }),
-    });
+    );
 
     const result = await response.json();
     if (result.success) {
@@ -1971,7 +1938,13 @@ function openSetDeadlineDialog(task: any) {
   console.log('=== OPEN SET DEADLINE DIALOG ===');
   console.log('Task:', task);
   selectedOverdueTask.value = task;
-  newDeadline.value = task.deadline ? new Date(new Date(task.deadline).getTime() - (new Date(task.deadline).getTimezoneOffset() * 60000)).toISOString().split('T')[0] || '' : '';
+  newDeadline.value = task.deadline
+    ? new Date(
+        new Date(task.deadline).getTime() - new Date(task.deadline).getTimezoneOffset() * 60000,
+      )
+        .toISOString()
+        .split('T')[0] || ''
+    : '';
   showSetDeadlineDialog.value = true;
   console.log('Dialog state:', showSetDeadlineDialog.value);
 }
@@ -1981,12 +1954,12 @@ async function setDeadline() {
   console.log('Task ID:', selectedOverdueTask.value?.id);
   console.log('New deadline:', newDeadline.value);
   console.log('Already updating:', updatingDeadline.value);
-  
+
   if (updatingDeadline.value) {
     console.log('Already updating, skipping duplicate call');
     return;
   }
-  
+
   if (!selectedOverdueTask.value || !newDeadline.value) {
     console.error('Missing task or deadline');
     Notify.create({
@@ -1997,7 +1970,7 @@ async function setDeadline() {
   }
 
   updatingDeadline.value = true;
-  
+
   try {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -2055,7 +2028,7 @@ async function setDeadline() {
 async function automateOverdueTask() {
   console.log('=== AUTOMATE OVERDUE TASK ===');
   console.log('Selected task:', selectedOverdueTask.value);
-  
+
   if (!selectedOverdueTask.value) return;
 
   automating.value = true;
@@ -2136,9 +2109,12 @@ const fetchLeaveDates = async () => {
   if (!empId) return;
 
   try {
-    const response = await fetch(`http://localhost:3001/api/daily-logs/employee/${empId}/leave-dates`, {
-      headers: { Authorization: `Bearer ${authStore.token}` }
-    });
+    const response = await fetch(
+      `http://localhost:3001/api/daily-logs/employee/${empId}/leave-dates`,
+      {
+        headers: { Authorization: `Bearer ${authStore.token}` },
+      },
+    );
     const data = await response.json();
     if (data.success && data.leaveDates) {
       leaveDates.value = data.leaveDates;
@@ -2189,9 +2165,10 @@ const resolveClashes = async () => {
       await fetchTasks();
       $q.notify({
         type: 'positive',
-        message: data.updatedTasks && data.updatedTasks.length > 0
-          ? `Conflicts resolved! ${data.updatedTasks.length} tasks rescheduled with 3-day gaps.`
-          : 'All deadline conflicts resolved.',
+        message:
+          data.updatedTasks && data.updatedTasks.length > 0
+            ? `Conflicts resolved! ${data.updatedTasks.length} tasks rescheduled with 3-day gaps.`
+            : 'All deadline conflicts resolved.',
         position: 'top',
       });
     } else {
@@ -2230,9 +2207,10 @@ const automateFullSchedule = async () => {
       showClashDialog.value = false;
       $q.notify({
         type: 'positive',
-        message: data.updatedTasks && data.updatedTasks.length > 0
-          ? `Schedule automated! ${data.updatedTasks.length} tasks reorganized by priority with 3-day gaps.`
-          : 'Schedule is already optimal. No changes needed.',
+        message:
+          data.updatedTasks && data.updatedTasks.length > 0
+            ? `Schedule automated! ${data.updatedTasks.length} tasks reorganized by priority with 3-day gaps.`
+            : 'Schedule is already optimal. No changes needed.',
         position: 'top',
       });
     } else {
@@ -2267,9 +2245,12 @@ const projects = ref<any[]>([]);
 
 const fetchProjects = async () => {
   try {
-    const response = await fetch(`http://localhost:3001/api/employee/${authStore.user?.id}/projects`, {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    });
+    const response = await fetch(
+      `http://localhost:3001/api/employee/${authStore.user?.id}/projects`,
+      {
+        headers: { Authorization: `Bearer ${authStore.token}` },
+      },
+    );
     const result = await response.json();
     if (result.success && result.projects) {
       projects.value = result.projects;
@@ -2300,14 +2281,11 @@ const fetchUserPointsAndRank = async () => {
 
   try {
     // Fetch current user's points
-    const userResponse = await fetch(
-      `http://localhost:3001/api/users/${authStore.user.id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${authStore.token}`,
-        },
+    const userResponse = await fetch(`http://localhost:3001/api/users/${authStore.user.id}`, {
+      headers: {
+        Authorization: `Bearer ${authStore.token}`,
       },
-    );
+    });
 
     const userResult = await userResponse.json();
 
@@ -2328,15 +2306,11 @@ const fetchUserPointsAndRank = async () => {
       // IMPORTANT:
       // Use the same employee filtering as Employee Reviews leaderboard.
       const employeeUsers = allUsersResult.users.filter(
-        (u: any) =>
-          u.access_level === 'employee' ||
-          u.role_name !== 'Project Manager',
+        (u: any) => u.access_level === 'employee' || u.role_name !== 'Project Manager',
       );
 
       // Same sorting logic as Employee Reviews leaderboard.
-      const sortedUsers = employeeUsers.sort(
-        (a: any, b: any) => (b.points || 0) - (a.points || 0),
-      );
+      const sortedUsers = employeeUsers.sort((a: any, b: any) => (b.points || 0) - (a.points || 0));
 
       console.log(
         'Employee leaderboard:',
@@ -2352,9 +2326,7 @@ const fetchUserPointsAndRank = async () => {
       // Convert both IDs to Number so "123" and 123 match.
       const currentUserId = Number(authStore.user.id);
 
-      const userRankIndex = sortedUsers.findIndex(
-        (u: any) => Number(u.id) === currentUserId,
-      );
+      const userRankIndex = sortedUsers.findIndex((u: any) => Number(u.id) === currentUserId);
 
       console.log(
         'Current user ID:',
@@ -2365,8 +2337,7 @@ const fetchUserPointsAndRank = async () => {
         userRankIndex >= 0 ? userRankIndex + 1 : 'Not found',
       );
 
-      userRank.value =
-        userRankIndex >= 0 ? userRankIndex + 1 : 0;
+      userRank.value = userRankIndex >= 0 ? userRankIndex + 1 : 0;
     }
   } catch (error) {
     console.error('Error fetching user points and rank:', error);
@@ -2434,7 +2405,7 @@ const newTask = ref({
   priority: 'Medium',
 
   deadline: '',
-  
+
   expected_effort: 0,
 
   subtasks: [] as { id?: number; title: string; estimated_hours: number }[],
@@ -2839,7 +2810,7 @@ function openAddTask() {
     priority: 'Medium',
 
     deadline: '',
-    
+
     expected_effort: 0,
 
     subtasks: [],
@@ -2887,7 +2858,11 @@ async function createTask() {
       description: newTask.value.description || 'No description added.',
       project_id: newTask.value.project,
       priority: newTask.value.priority.toLowerCase(),
-      deadline: newTask.value.deadline || new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
+      deadline:
+        newTask.value.deadline ||
+        new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
+          .toISOString()
+          .split('T')[0],
       expected_effort: newTask.value.expected_effort || 0,
       user_id: authStore.user?.id ? Number(authStore.user.id) : undefined,
       assignee_ids: authStore.user ? [Number(authStore.user.id)] : [],
@@ -3351,7 +3326,7 @@ async function submitInterrupt() {
 
 function openEditDeadline(task: Task) {
   selectedTask.value = task;
-  editDeadlineValue.value = task.deadline ? (task.deadline.split('T')[0] || '') : '';
+  editDeadlineValue.value = task.deadline ? task.deadline.split('T')[0] || '' : '';
   showEditDeadlineDialog.value = true;
 }
 
@@ -3362,7 +3337,7 @@ function getMinDate() {
 
 async function submitDeadlineEdit() {
   if (!selectedTask.value || !editDeadlineValue.value) return;
-  
+
   updatingEditDeadline.value = true;
   try {
     const response = await fetch(
@@ -3378,7 +3353,7 @@ async function submitDeadlineEdit() {
     );
 
     const result = await response.json();
-    
+
     if (result.success) {
       $q.notify({
         color: 'positive',
@@ -3878,7 +3853,7 @@ async function submitDeadlineEdit() {
 
 .edit-subtask-card:hover {
   border-color: #9fa8da;
-  box-shadow: 0 4px 14px rgba(63, 81, 181, 0.10);
+  box-shadow: 0 4px 14px rgba(63, 81, 181, 0.1);
   transform: translateY(-1px);
 }
 
@@ -4154,5 +4129,4 @@ async function submitDeadlineEdit() {
   color: #edf2f7 !important;
   border-color: #34434c !important;
 }
-
 </style>
