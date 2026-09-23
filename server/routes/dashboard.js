@@ -28,7 +28,7 @@ export default function dashboardRoutes(pool) {
           SELECT u.id,
             COALESCE(SUM(
               CASE WHEN ta2.cnt > 0
-                THEN (t.expected_effort * (100 - t.progress) / 100) / ta2.cnt
+                THEN ((t.expected_effort * (100 - t.progress) / 100) / ta2.cnt) / GREATEST(1, DATEDIFF(t.deadline, CURDATE()) / 7.0)
                 ELSE 0 END
             ), 0) AS remaining
           FROM user u
@@ -142,7 +142,7 @@ export default function dashboardRoutes(pool) {
           r.name AS role_name, u.max_hours_per_week,
           COALESCE(SUM(
             CASE WHEN ta2.cnt > 0
-              THEN (t.expected_effort * (100 - t.progress) / 100) / ta2.cnt
+              THEN ((t.expected_effort * (100 - t.progress) / 100) / ta2.cnt) / GREATEST(1, DATEDIFF(t.deadline, CURDATE()) / 7.0)
               ELSE 0 END
           ), 0) AS remaining_hours,
           COUNT(DISTINCT t.project_id) AS project_count
