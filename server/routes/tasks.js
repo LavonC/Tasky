@@ -15,7 +15,7 @@ export default function taskRoutes(pool) {
     try {
       const orgId = req.user.org_id;
       const pmId = req.user.id;
-      const { project, status, priority, assignee, search, sort } = req.query;
+      const { project, status, priority, assignee, search, sort, deadline } = req.query;
 
       let query = `
         SELECT t.*, p.name AS project_name, p.color AS project_color,
@@ -46,6 +46,17 @@ export default function taskRoutes(pool) {
       if (priority && priority !== 'all') {
         query += ' AND t.priority = ?';
         params.push(priority);
+      }
+      if (deadline && deadline !== 'all') {
+        if (deadline === 'overdue') {
+          query += ' AND t.deadline < CURDATE() AND t.status != "completed"';
+        } else if (deadline === 'today') {
+          query += ' AND t.deadline = CURDATE()';
+        } else if (deadline === 'next-7-days') {
+          query += ' AND t.deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)';
+        } else if (deadline === 'next-30-days') {
+          query += ' AND t.deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)';
+        }
       }
       if (search) {
         query += ' AND (t.title LIKE ? OR t.description LIKE ?)';
