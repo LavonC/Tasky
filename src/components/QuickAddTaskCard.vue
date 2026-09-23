@@ -14,7 +14,7 @@
       <q-btn
         unelevated
         no-caps
-        color="white"
+        :color="$q.dark.isActive ? 'blue-10' : 'white'"
         text-color="black"
         icon="person_add"
         label="Self-Assign Task"
@@ -64,5 +64,4 @@ defineEmits(['create']);
 :global(body.body--dark) .quick-add-subtitle {
   color: #ffffff !important;
 }
-
 </style>

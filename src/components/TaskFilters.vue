@@ -59,7 +59,6 @@
         :options="projectOptions"
         outlined
         dense
-        rounded
         emit-value
         map-options
         class="inside-filter"
@@ -346,11 +345,21 @@ watch(searchType, (newType) => {
 
 .inside-filter {
   width: 150px;
-  margin-right: 5px;
+  margin-right: 0px;
 }
 
 .inside-filter :deep(.q-field__control) {
-  min-height: 36px;
+  min-height: 32px;
+  border-radius: 12px;
+}
+
+.inside-filter :deep(.q-field__control:before) {
+  border: 1px solid #d9d9d9;
+  border-radius: 12px;
+}
+
+.inside-filter :deep(.q-field__control:hover:before) {
+  border-color: #bdbdbd;
 }
 
 .inside-filter :deep(.q-field__native) {
@@ -449,5 +458,4 @@ watch(searchType, (newType) => {
 :global(body.body--dark) .task-type-btn {
   color: #b8c7d1 !important;
 }
-
 </style>

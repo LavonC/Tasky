@@ -163,16 +163,19 @@
           <q-item
             clickable
             v-ripple
-            class="bg-lime-5 collapse-btn nav-item q-py-sm text-black"
-            :class="sidebarCollapsed ? 'justify-center' : ''"
+            class="collapse-btn nav-item q-py-sm"
+            :class="sidebarCollapsed ? 'justify-center' : 'justify-end'"
             @click="sidebarCollapsed = !sidebarCollapsed"
           >
             <q-item-section avatar>
-              <q-icon :name="sidebarCollapsed ? 'chevron_right' : 'chevron_left'" size="21px" />
+              <q-icon
+                class="collapse-icon"
+                :name="sidebarCollapsed ? 'chevron_right' : 'chevron_left'"
+                size="21px"
+              />
             </q-item-section>
 
             <q-item-section v-if="!sidebarCollapsed" class="text-body2 text-weight-medium">
-              
             </q-item-section>
           </q-item>
         </q-list>
@@ -306,7 +309,6 @@
   background: rgba(255, 255, 255, 0.045);
 }
 
-
 /* Employee active navigation must remain readable in dark mode.
    app.scss also contains the global fallback for Quasar's
    q-item--active/router-link--active classes. */
@@ -326,7 +328,19 @@
 .collapse-btn {
   margin-top: 4px;
 }
-
+.collapse-icon {
+  background: #cddc39 !important;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+}
+.collapse-btn:hover {
+  background: transparent !important;
+}
 /* ================= HEADER ================= */
 
 .employee-header {
@@ -391,7 +405,6 @@
 .employee-header :deep(.q-btn) {
   color: #374151 !important;
 }
-
 </style>
 
 <script setup lang="ts">
@@ -471,7 +484,7 @@ const currentPage = computed(() => {
       icon: 'settings',
       link: '/employee/settings',
       subtitle: 'Manage your account preferences.',
-    }
+    },
   ];
 
   return (

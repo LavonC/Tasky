@@ -1,12 +1,20 @@
 <template>
-  <q-page class="q-pa-lg text-black" style="background:#f8f9fa">
+  <q-page class="q-pa-lg text-black" style="background: #f8f9fa">
     <!-- Header -->
     <div class="row items-center justify-between q-mb-md">
-      <div class="row items-center">
-     </div>
+      <div class="row items-center"></div>
       <div class="row q-gutter-sm">
-        <q-btn color="info" label="Check Deadlines" @click="checkDeadlines" :loading="checkingDeadlines" />
-        <q-btn color="indigo" label="Mark All Read" @click="markAllRead" />
+        <q-btn
+          :color="$q.dark.isActive ? 'red' : 'red-6'"
+          label="Check Deadlines"
+          @click="checkDeadlines"
+          :loading="checkingDeadlines"
+        />
+        <q-btn
+          :color="$q.dark.isActive ? 'blue-10' : 'blue-10'"
+          label="Mark All Read"
+          @click="markAllRead"
+        />
       </div>
     </div>
 
@@ -41,10 +49,27 @@
             </q-item-section>
             <q-item-section side>
               <div class="row items-center no-wrap">
-                <q-btn v-if="!notification.read" flat round dense icon="check" color="green" size="sm" @click="markAsRead(notification.id)">
+                <q-btn
+                  v-if="!notification.read"
+                  flat
+                  round
+                  dense
+                  icon="check"
+                  color="green"
+                  size="sm"
+                  @click="markAsRead(notification.id)"
+                >
                   <q-tooltip>Mark as read</q-tooltip>
                 </q-btn>
-                <q-btn flat round dense icon="delete_outline" color="negative" size="sm" @click="deleteNotification(notification.id)">
+                <q-btn
+                  flat
+                  round
+                  dense
+                  icon="delete_outline"
+                  color="negative"
+                  size="sm"
+                  @click="deleteNotification(notification.id)"
+                >
                   <q-tooltip>Delete notification</q-tooltip>
                 </q-btn>
               </div>
@@ -77,7 +102,10 @@ onMounted(loadNotifications);
 
 async function loadNotifications() {
   await notificationStore.fetchNotifications();
-  notifications.value = notificationStore.notifications.map((n: any) => ({ ...n, read: Boolean(n.is_read) }));
+  notifications.value = notificationStore.notifications.map((n: any) => ({
+    ...n,
+    read: Boolean(n.is_read),
+  }));
 }
 
 async function checkDeadlines() {
@@ -151,5 +179,9 @@ async function deleteNotification(id: number) {
 </script>
 
 <style scoped>
-.notification-card { border-radius: 14px; border-color: #e5eaf0; box-shadow: 0 7px 20px rgba(32, 54, 83, .05); }
+.notification-card {
+  border-radius: 14px;
+  border-color: #e5eaf0;
+  box-shadow: 0 7px 20px rgba(32, 54, 83, 0.05);
+}
 </style>

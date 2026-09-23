@@ -1,8 +1,13 @@
 <template>
-  <q-page class="q-pa-md" style="background:#f8f9fa">
+  <q-page class="q-pa-md" style="background: #f8f9fa">
     <div class="row items-center justify-between q-mb-md">
       <div class="text-h4 text-weight-bold"></div>
-      <q-btn color="primary" icon="add" label="Add Daily Task" @click="showAddDialog = true" />
+      <q-btn
+        :color="$q.dark.isActive ? 'blue-10' : 'primary'"
+        icon="add"
+        label="Add Daily Task"
+        @click="showAddDialog = true"
+      />
     </div>
 
     <!-- Daily Tracker Tasks -->
@@ -28,18 +33,34 @@
               <q-space />
               <div class="text-body2 text-weight-bold">{{ task.progress }}%</div>
             </div>
-            <q-linear-progress :value="task.progress / 100" color="primary" />
+            <q-linear-progress
+              :value="task.progress / 100"
+              :color="$q.dark.isActive ? 'blue-10' : 'primary'"
+            />
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn flat color="primary" label="Edit" @click="editTask(task)" />
+            <q-btn
+              flat
+              :color="$q.dark.isActive ? 'blue-12' : 'primary'"
+              label="Edit"
+              @click="editTask(task)"
+            />
             <q-btn flat color="negative" label="Delete" @click="deleteTask(task.id)" />
           </q-card-actions>
         </q-card>
       </div>
     </div>
     <div v-if="dailyTasks.length > rowsPerPage" class="row items-center justify-between q-mb-md">
-      <div class="text-caption text-grey-7">Showing {{ pageStart }}–{{ pageEnd }} of {{ dailyTasks.length }} daily tasks</div>
-      <q-pagination v-model="currentPage" :max="totalPages" color="primary" direction-links boundary-links />
+      <div class="text-caption text-grey-7">
+        Showing {{ pageStart }}–{{ pageEnd }} of {{ dailyTasks.length }} daily tasks
+      </div>
+      <q-pagination
+        v-model="currentPage"
+        :max="totalPages"
+        color="primary"
+        direction-links
+        boundary-links
+      />
     </div>
 
     <!-- Empty State -->
@@ -87,7 +108,7 @@
         <q-list separator>
           <q-item v-for="(project, index) in projectSummary" :key="index">
             <q-item-section avatar>
-              <q-icon name="folder" color="primary" />
+              <q-icon name="folder" :color="$q.dark.isActive ? 'blue-10' : 'primary'" />
             </q-item-section>
             <q-item-section>
               <q-item-label>{{ project.name || 'No Project' }}</q-item-label>
@@ -99,7 +120,7 @@
             <q-item-section side>
               <q-linear-progress
                 :value="project.avgProgress / 100"
-                color="primary"
+                :color="$q.dark.isActive ? 'blue-10' : 'primary'"
                 style="width: 100px"
               />
             </q-item-section>
@@ -141,6 +162,7 @@
             />
             <q-input
               v-model.number="newTask.progress"
+              :color="$q.dark.isActive ? 'blue-12' : 'primary'"
               label="Progress (%)"
               outlined
               type="number"
@@ -152,7 +174,7 @@
             <q-select
               v-model="newTask.status"
               label="Status"
-              :options="statusOptions.map(s => ({ label: formatStatus(s), value: s }))"
+              :options="statusOptions.map((s) => ({ label: formatStatus(s), value: s }))"
               option-label="label"
               option-value="value"
               emit-value
@@ -172,7 +194,7 @@
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup />
-          <q-btn color="primary" label="Save" @click="saveTask" />
+          <q-btn :color="$q.dark.isActive ? 'blue-10' : 'primary'" label="Save" @click="saveTask" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -214,10 +236,21 @@ const currentPage = ref(1);
 const rowsPerPage = ref(4);
 const loading = ref(false);
 const projects = ref<any[]>([]);
-const paginatedDailyTasks = computed(() => dailyTasks.value.slice((currentPage.value - 1) * rowsPerPage.value, currentPage.value * rowsPerPage.value));
-const totalPages = computed(() => Math.max(1, Math.ceil(dailyTasks.value.length / rowsPerPage.value)));
-const pageStart = computed(() => dailyTasks.value.length ? (currentPage.value - 1) * rowsPerPage.value + 1 : 0);
-const pageEnd = computed(() => Math.min(currentPage.value * rowsPerPage.value, dailyTasks.value.length));
+const paginatedDailyTasks = computed(() =>
+  dailyTasks.value.slice(
+    (currentPage.value - 1) * rowsPerPage.value,
+    currentPage.value * rowsPerPage.value,
+  ),
+);
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(dailyTasks.value.length / rowsPerPage.value)),
+);
+const pageStart = computed(() =>
+  dailyTasks.value.length ? (currentPage.value - 1) * rowsPerPage.value + 1 : 0,
+);
+const pageEnd = computed(() =>
+  Math.min(currentPage.value * rowsPerPage.value, dailyTasks.value.length),
+);
 
 // Fetch projects for selection
 const fetchProjects = async () => {
@@ -250,7 +283,9 @@ const fetchDailyTasks = async () => {
 
   loading.value = true;
   try {
-    const response = await fetch(`http://localhost:3001/api/employee/daily-tracker/${authStore.user?.id}`);
+    const response = await fetch(
+      `http://localhost:3001/api/employee/daily-tracker/${authStore.user?.id}`,
+    );
     const result = await response.json();
 
     console.log('Fetch result:', result);
@@ -260,7 +295,15 @@ const fetchDailyTasks = async () => {
         id: entry.id,
         title: entry.title || 'Untitled',
         description: entry.description || '',
-        date: entry.date ? new Date(new Date(entry.date).getTime() - (new Date(entry.date).getTimezoneOffset() * 60000)).toISOString().split('T')[0] : new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
+        date: entry.date
+          ? new Date(
+              new Date(entry.date).getTime() - new Date(entry.date).getTimezoneOffset() * 60000,
+            )
+              .toISOString()
+              .split('T')[0]
+          : new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
+              .toISOString()
+              .split('T')[0],
         progress: parseFloat(entry.progress) || 0,
         status: entry.status || 'not-started',
         project_name: entry.project_id ? `Project ${entry.project_id}` : '',
@@ -311,8 +354,6 @@ const projectSummary = computed(() => {
     avgProgress: Math.round(data.totalProgress / data.taskCount),
   }));
 });
-
-
 
 function getStatusColor(status: string) {
   const colors: Record<string, string> = {

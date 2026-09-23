@@ -21,7 +21,7 @@
       <q-btn-toggle
         :model-value="viewMode"
         unelevated
-        toggle-color="lime-5"
+        toggle-color="lime-6"
         :options="[
           { value: 'list', icon: 'view_list' },
           { value: 'grid', icon: 'grid_view' },
@@ -119,5 +119,4 @@ defineEmits(['view-change', 'tab-change']);
 :global(body.body--dark) .q-btn-toggle {
   background: #26343c;
 }
-
 </style>
