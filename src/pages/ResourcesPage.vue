@@ -154,19 +154,26 @@
       </div>
     </div>
 
-    <div class="row q-col-gutter-lg q-mt-sm">
-      <div class="col-4 column">
-  <ResourceUtilizationChart
-    :resources="filteredEmployees"
-  />
-</div>
-<div class="col-4 column">
- <ActiveTasksChart :resources="filteredEmployees" /> 
- </div>
- <div class="col-4 column">
- <WorkloadScatterChart :resources="filteredEmployees" /> 
- </div>
- </div>
+    <div class="row q-col-gutter-lg q-mt-sm items-stretch">
+      <div class="col-4">
+        <ResourceUtilizationChart
+          :resources="filteredEmployees"
+          style="height: 100%; margin-bottom: 0;"
+        />
+      </div>
+      <div class="col-4">
+        <ActiveTasksChart
+          :resources="filteredEmployees"
+          style="height: 100%; margin-bottom: 0;"
+        />
+      </div>
+      <div class="col-4">
+        <WorkloadScatterChart
+          :resources="filteredEmployees"
+          style="height: 100%; margin-bottom: 0;"
+        />
+      </div>
+    </div>
 
     <!-- Resource Detail Dialog -->
     <ResourceDetailDialog
