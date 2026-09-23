@@ -258,7 +258,6 @@ const statusOptions = [
   { label: 'All Statuses', value: 'all' },
   { label: 'Planning', value: 'planning' },
   { label: 'Active', value: 'active' },
-  { label: 'On Hold', value: 'on-hold' },
   { label: 'Completed', value: 'completed' },
 ];
 
