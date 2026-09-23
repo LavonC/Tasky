@@ -46,7 +46,7 @@
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Cancel" color="primary" v-close-popup />
+        <q-btn label="Cancel" color="primary" v-close-popup />
         <q-btn label="Send" color="primary" @click="submitComment" :loading="loading" :disable="!isFormValid" />
       </q-card-actions>
     </q-card>

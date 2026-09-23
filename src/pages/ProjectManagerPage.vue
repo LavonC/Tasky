@@ -401,7 +401,7 @@
     <!-- Performance Tab -->
     <q-tab-panel name="performance" class="q-pa-none">
       <div class="row q-col-gutter-md">
-        <div class="col-12 graph-card">
+        <div class="col-12 graph-card ">
           <ProjectPerformanceTable />
         </div>
       </div>
@@ -436,7 +436,7 @@
         </div>
       </div>
       <div class="row q-col-gutter-md">
-        <div class="col-12 graph-card">
+        <div class="col-12 graph-card project-performance-card">
           <ProjectPerformanceTable />
         </div>
       </div>
@@ -1917,6 +1917,10 @@ function showEmployeePerformance(user: any) {
 :global(body.body--dark) .q-dialog .q-card {
   background: #1d2930 !important;
   color: #edf2f7 !important;
+}
+
+.project-performance-card {
+  min-height: 350px;
 }
 
 </style>
