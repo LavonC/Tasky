@@ -139,27 +139,25 @@
           </q-item>
 
           <!-- Collapse -->
+          <!-- Collapse button -->
           <q-item
-  clickable
-  v-ripple
-  class="bg-lime-5 collapse-btn nav-item q-py-sm text-blue-black"
-  :class="sidebarCollapsed ? 'justify-center' : ''"
-  @click="sidebarCollapsed = !sidebarCollapsed"
->
-  <q-item-section avatar>
-    <q-icon
-      :name="sidebarCollapsed ? 'chevron_right' : 'chevron_left'"
-      size="21px"
-    />
-  </q-item-section>
+            clickable
+            v-ripple
+            class="collapse-btn nav-item q-py-sm"
+            :class="sidebarCollapsed ? 'justify-center' : 'justify-end'"
+            @click="sidebarCollapsed = !sidebarCollapsed"
+          >
+            <q-item-section avatar>
+              <q-icon
+                class="collapse-icon"
+                :name="sidebarCollapsed ? 'chevron_right' : 'chevron_left'"
+                size="21px"
+              />
+            </q-item-section>
 
-  <q-item-section
-    v-if="!sidebarCollapsed"
-    class="text-body2 text-weight-medium collapse-text"
-  >
-    
-  </q-item-section>
-</q-item>
+            <q-item-section v-if="!sidebarCollapsed" class="text-body2 text-weight-medium">
+            </q-item-section>
+          </q-item>
         </q-list>
       </div>
     </q-drawer>
@@ -335,7 +333,7 @@ function handleLogout() {
 }
 
 .nav-active {
-  background: #E1FF6B !important;
+  background: #e1ff6b !important;
   color: #000000 !important;
   border-radius: 8px;
 
@@ -356,18 +354,20 @@ function handleLogout() {
 
 .collapse-btn {
   margin-top: 4px;
-  overflow: hidden !important;
-  color: #000000 !important;
 }
-
-.collapse-btn .q-icon {
-  color: #000000 !important;
+.collapse-icon {
+  background: #cddc39 !important;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
 }
-
-.collapse-text {
-  color: #000000 !important;
+.collapse-btn:hover {
+  background: transparent !important;
 }
-
 :global(body.body--dark) .pm-sidebar .collapse-btn,
 :global(body.body--dark) .pm-sidebar .collapse-btn .q-icon,
 :global(body.body--dark) .pm-sidebar .collapse-text {
@@ -413,5 +413,4 @@ function handleLogout() {
 :global(body.body--dark) .pm-sidebar .nav-item:not(.nav-active):hover {
   background: rgba(255, 255, 255, 0.07) !important;
 }
-
 </style>
