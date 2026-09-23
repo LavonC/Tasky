@@ -62,11 +62,7 @@
         <div class="text-weight-bold text-red q-mr-sm">{{ taskStore.stats.overdue || 0 }}</div>
         <div class="text-caption text-grey-7">Overdue</div>
       </div>
-      <div class="row items-center">
-        <q-icon name="block" color="orange" size="20px" class="q-mr-xs" />
-        <div class="text-weight-bold text-orange q-mr-sm">{{ taskStore.stats.blocked || 0 }}</div>
-        <div class="text-caption text-grey-7">Blocked</div>
-      </div>
+
     </div>
 
     <!-- Toolbar -->
