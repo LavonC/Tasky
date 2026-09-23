@@ -5,6 +5,7 @@
       <div class="row items-center"></div>
       <div class="row q-gutter-sm">
         <q-btn
+          v-if="authStore.userRole === 'employee'"
           :color="$q.dark.isActive ? 'red' : 'red-6'"
           label="Check Deadlines"
           @click="checkDeadlines"
@@ -89,6 +90,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useNotificationStore } from '../../stores/notificationStore';
+import { useAuthStore } from '../../stores/authStore';
 
 defineOptions({
   name: 'EmployeeNotifications',
@@ -96,6 +98,7 @@ defineOptions({
 
 const notifications = ref<any[]>([]);
 const notificationStore = useNotificationStore();
+const authStore = useAuthStore();
 const checkingDeadlines = ref(false);
 
 onMounted(loadNotifications);
