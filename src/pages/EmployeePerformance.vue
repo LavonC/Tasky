@@ -25,7 +25,7 @@
 
     <div v-else class="column q-gutter-lg">
       <div class="row q-col-gutter-md">
-        <div v-for="card in statCards" :key="card.label" class="col-12 col-sm-6 col-md-4">
+        <div v-for="card in statCards" :key="card.label" class="col-12 col-sm-6">
           <PerformanceStatCard v-bind="card" :value="formatMetric(card.value, card.suffix)" trend="" :positive="true" />
         </div>
       </div>
