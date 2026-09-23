@@ -192,19 +192,20 @@
     />
     </div>
 
-    <div class="row q-col-gutter-lg">
+    <div class="row q-col-gutter-lg items-stretch">
       <!-- Left Column -->
-      <div class="col-5 column">
-        <ProjectProgressWidget />
+      <div class="col-5">
+        <ProjectProgressWidget style="height: 100%; margin-bottom: 0;" />
       </div>
 
       <!-- Right Column -->
-      <div class="col-4 column">
-        <TaskStatusDistribution />
+      <div class="col-4">
+        <TaskStatusDistribution style="height: 100%; margin-bottom: 0;" />
       </div>
 
-      <div class="col-3 column">
+      <div class="col-3">
         <ProjectSummary
+          style="height: 100%; margin-bottom: 0;"
           :projects="analyticsStore.projectProgress"
           :deadline-risks="analyticsStore.deadlineRisks"
           :in-progress-tasks="analyticsStore.taskDistribution?.status?.['in-progress'] || 0"
