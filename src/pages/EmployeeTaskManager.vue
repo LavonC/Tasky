@@ -810,7 +810,7 @@
           <q-btn
             outline
             no-caps
-            color="primary"
+            :color="$q.dark.isActive ? 'blue-10' : 'primary'"
             icon="add"
             label="Add Subtask"
             class="full-width q-mt-md add-subtask-btn"
@@ -827,7 +827,7 @@
           <q-btn
             unelevated
             no-caps
-            color="primary"
+            :color="$q.dark.isActive ? 'blue-10' : 'primary'"
             icon="save"
             label="Save Changes"
             @click="saveEditedSubtasks"
@@ -956,7 +956,7 @@
 
               <q-linear-progress
                 :value="taskProgress(selectedTask) / 100"
-                color="primary"
+                :color="$q.dark.isActive ? 'blue-10' : 'primary'"
                 track-color="blue-1"
                 rounded
                 size="9px"
@@ -978,7 +978,7 @@
               <q-btn
                 flat
                 no-caps
-                color="primary"
+                :color="$q.dark.isActive ? 'blue-12' : 'primary'"
                 icon="add"
                 label="Add Subtasks"
                 class="q-mt-sm"
@@ -992,7 +992,7 @@
               <div class="row items-start no-wrap">
                 <q-checkbox
                   v-model="subtask.completed"
-                  color="primary"
+                  :color="$q.dark.isActive ? 'blue-10' : 'primary'"
                   :disable="subtask.originally_completed"
                   @update:model-value="updateSubtaskCompletion(selectedTask, subtask)"
                 />
@@ -1395,7 +1395,7 @@
           <q-btn flat label="Cancel" color="grey-7" v-close-popup />
           <q-btn
             unelevated
-            color="primary"
+            :color="$q.dark.isActive ? 'blue-10' : 'lime-5'"
             icon="auto_fix_high"
             label="Automate"
             @click="resolveClashes"
@@ -1433,7 +1433,7 @@
           <q-btn
             unelevated
             no-caps
-            color="primary"
+            :color="$q.dark.isActive ? 'blue-10' : 'primary'"
             label="Update Deadline"
             @click="submitDeadlineEdit"
             :disable="!editDeadlineValue"
@@ -1506,11 +1506,15 @@
             </div>
             <div class="row q-gutter-md">
               <q-btn
-                color="primary"
+                :color="$q.dark.isActive ? 'blue-10' : 'primary'"
                 label="Set Deadline"
                 @click.stop="openSetDeadlineDialog(selectedOverdueTask)"
               />
-              <q-btn color="secondary" label="Automate" @click.stop="automateOverdueTask" />
+              <q-btn
+                :color="$q.dark.isActive ? 'lime-5' : 'lime-5'"
+                label="Automate"
+                @click.stop="automateOverdueTask"
+              />
             </div>
           </div>
         </q-card-section>
@@ -1532,7 +1536,7 @@
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup />
           <q-btn
-            color="primary"
+            :color="$q.dark.isActive ? 'blue-10' : 'primary'"
             label="Save"
             @click.stop="setDeadline"
             :loading="updatingDeadline"
