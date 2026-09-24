@@ -1913,14 +1913,24 @@ defineExpose({
     }
   }
 
-  /* Dependency Link Lines */
+  /* Dependency Link Lines
+     IMPORTANT: only set colors here, never width/height. DHTMLX sizes every line
+     segment inline (horizontal = 2px tall, vertical = 2px wide and N px tall), so
+     forcing `height: 2px !important` collapses every vertical segment to a 2px
+     stub and leaves only the pieces next to the task bars visible. */
+  --dhx-gantt-link-background: #000000;
+
   .gantt_line_wrapper div {
     background-color: #000000 !important;
-    height: 2px !important;
+  }
+
+  .gantt_link_corner {
+    border-color: #000000 !important;
   }
 
   .gantt_link_arrow {
     border-left-color: #000000 !important;
+    color: #000000 !important;
   }
 
   .gantt_link_point {
@@ -2402,12 +2412,21 @@ body.body--dark .timeline-card .is-external-row {
 }
 
 /* Dependency lines need contrast against the dark grid. */
+body.body--dark .timeline-card {
+  --dhx-gantt-link-background: #71808a;
+}
+
 body.body--dark .timeline-card .gantt_line_wrapper div {
   background-color: #71808a !important;
 }
 
+body.body--dark .timeline-card .gantt_link_corner {
+  border-color: #71808a !important;
+}
+
 body.body--dark .timeline-card .gantt_link_arrow {
   border-left-color: #71808a !important;
+  color: #71808a !important;
 }
 
 body.body--dark .timeline-card .gantt_link_point {
