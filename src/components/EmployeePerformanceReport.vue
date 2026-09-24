@@ -9,8 +9,8 @@
         <div class="row items-center">
           <q-btn flat round dense icon="arrow_back" v-close-popup class="q-mr-sm" />
           <q-avatar size="40px" class="q-mr-md">
-            <img :src="employee.avatar_url || `https://i.pravatar.cc/150?img=${employee.id}`" />
-          </q-avatar>
+  <img :src="employee.avatar || `https://i.pravatar.cc/150?img=${employee.id}`" />
+</q-avatar>
           <div class="column">
             <div class="text-h6 text-weight-bold">
               {{ employee.first_name }} {{ employee.last_name }}
