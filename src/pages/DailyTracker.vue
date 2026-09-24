@@ -111,9 +111,9 @@
               <q-icon name="folder" :color="$q.dark.isActive ? 'blue-10' : 'primary'" />
             </q-item-section>
             <q-item-section>
-              <q-item-label>{{ project.name || 'No Project' }}</q-item-label>
+              <q-item-label>{{ project.taskCount }} tasks</q-item-label>
               <q-item-label caption
-                >{{ project.taskCount }} tasks • {{ project.avgProgress }}% avg
+                > {{ project.avgProgress }}% avg
                 progress</q-item-label
               >
             </q-item-section>
