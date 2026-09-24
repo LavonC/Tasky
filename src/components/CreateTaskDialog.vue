@@ -275,9 +275,10 @@ watch(
   (val) => {
     isOpen.value = val;
     if (val) {
-      // Always fetch projects and members when dialog opens
+      // Always fetch projects, members, and tasks when dialog opens
       projectStore.fetchProjects();
       orgStore.fetchMembers();
+      taskStore.fetchTasks();
 
       if (props.taskToEdit) {
         isEdit.value = true;
