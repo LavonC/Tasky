@@ -267,7 +267,9 @@ const taskStatusData = computed(() => {
   const colors: Record<string, string> = {
     completed: '#4caf50',
     'in-progress': '#2196f3',
+    'in-review': '#9c27b0',
     'not-started': '#9e9e9e',
+    blocked: '#f44336',
   };
 
   return Object.entries(stats)
